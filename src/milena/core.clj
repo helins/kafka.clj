@@ -174,7 +174,10 @@
 
    server+ : a Kafka node as a string
            | a list of Kafka nodes
-   opts : optional producer options (cf. Kafka documentation)"
+   opts : optional producer options (cf. Kafka documentation)
+
+   Producer are thread-safe and it is more efficient to share
+   one amongst multiple threads"
 
   [server+ key-serializer value-serializer & [opts]]
 
@@ -192,7 +195,11 @@
 
    server+ : a Kafka node as a string
            | a list of Kafka nodes
-   opts : optional consumer options (cf. Kafka documentation)"
+   opts : optional consumer options (cf. Kafka documentation)
+
+   <!> Consumers are NOT thread safe !
+       1 consumer / thread or a queueing policy must be
+       implemented."
 
   [server+ group-id key-deserializer value-deserializer & [opts]]
 
