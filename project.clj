@@ -1,5 +1,5 @@
 (defproject dvlopt/milena
-            "0.0.0-alpha1"
+            "0.0.0-alpha2"
   :description  "A straightforward clojure client for Kafka"
   :url          "https://github.com/dvlopt/milena"
   :license      {:name "Eclipse Public License"
@@ -18,5 +18,4 @@
                            :dependencies [[org.clojure/tools.namespace "0.2.11"]
                                           [criterium "0.4.4"]
                                           ;[org.clojure/test.check "0.9.0"]]
-                                          ]}
-                 :uberjar {:aot :all}})
+                                          ]}})
