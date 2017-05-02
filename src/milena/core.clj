@@ -51,19 +51,17 @@
 
 
 
-(defn- -servers
+(defn nodes-string
 
-  "Produce a string of Kafka nodes for producers and consumers
+  "Produce a string of Kafka nodes for producers and consumers.
 
-   server+ : string
-           | [string...]"
+   nodes : a list of [host port] representing Kafka nodes"
 
-  [server+]
+  [& [nodes]]
 
-  (if (sequential? server+)
-      (string/join ","
-                   server+)
-      server+))
+  (string/join ","
+               (map (fn [[host port]] (str host ":" port))
+                    nodes)))
 
 
 
@@ -109,7 +107,7 @@
 
 
 
-(def serializer
+(def serializers
 
   "Basic serializers provided by Kafka"
 
@@ -124,7 +122,7 @@
 
 
 
-(def deserializer 
+(def deserializers
 
   "Basic deserializers provided by Kafka"
 
@@ -172,19 +170,29 @@
 
   "Build a Kafka producer.
 
-   server+ : a Kafka node as a string
-           | a list of Kafka nodes
-   opts : optional producer options (cf. Kafka documentation)
+   config : read the signature
+            (cf. milena.core/nodes-string)
+   kopts : optional producer options (cf. Kafka documentation)
 
    Producer are thread-safe and it is more efficient to share
-   one amongst multiple threads"
+   one amongst multiple threads."
 
-  [server+ key-serializer value-serializer & [opts]]
+  [& [{:as   config
+       :keys [nodes
+              serializer
+              serializer-key
+              serializer-value]
+       :or   {nodes            [["localhost" 9092]]
+              serializer       (serializers :byte-array)
+              serializer-key   serializer
+              serializer-value serializer}}
+      kopts]]
 
-  (KafkaProducer. (merge opts
-                         {"bootstrap.servers" (-servers server+)})
-                  key-serializer
-                  value-serializer))
+  (KafkaProducer. (assoc kopts
+                         "bootstrap.servers"
+                         (nodes-string nodes))
+                  serializer-key
+                  serializer-value))
 
 
 
@@ -193,21 +201,29 @@
 
   "Build a Kafka consumer.
 
-   server+ : a Kafka node as a string
-           | a list of Kafka nodes
-   opts : optional consumer options (cf. Kafka documentation)
+   config : read the signature
+   kopts : optional consumer options (cf. Kafka documentation)
 
    <!> Consumers are NOT thread safe !
        1 consumer / thread or a queueing policy must be
        implemented."
 
-  [server+ group-id key-deserializer value-deserializer & [opts]]
+  [& [{:keys [nodes
+              deserializer
+              deserializer-key
+              deserializer-value]
+       :or   {nodes             [["localhost" 9092]]
+              deserializer      (deserializers :byte-array)
+              deserializer-key   deserializer
+              deserializer-value deserializer}}
+      kopts]]
 
-  (KafkaConsumer. (merge opts
-                         {"bootstrap.servers"  (-servers server+)
-                          "group.id"           group-id})
-                  key-deserializer
-                  value-deserializer))
+  (KafkaConsumer. (assoc kopts
+                         "bootstrap.servers"
+                         (nodes-string nodes))
+                  deserializer-key
+                  deserializer-value))
+
 
 
 

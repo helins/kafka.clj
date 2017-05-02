@@ -70,7 +70,8 @@
     :as        message}]
 
   (ProducerRecord. ktopic
-                   (int kpart)
+                   (some-> kpart
+                           int)
                    timestamp
                    kkey
                    kvalue))
