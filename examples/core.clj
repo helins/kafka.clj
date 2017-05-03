@@ -5,15 +5,17 @@
 
 
 ;; Create a producer
-(def p (ml/producer "localhost:9092"
-                    (ml/serializer :string)
-                    (ml/serializer :long)))
+(def p (ml/producer {:nodes            [["localhost" 9092]
+                                        ["localhost" 9093]]
+                     :serializer-key   (ml/serializers :string)
+                     :serializer-value (ml/serializers :long)}))
 
 ;; Create a consumer
-(def c (ml/consumer "localhost:9092"
-                    "my-group-id"
-                    (ml/deserializer :string)
-                    (ml/deserializer :long)))
+(def c (ml/consumer {:nodes              [["localhost" 9092]
+                                          ["localhost" 9093]]
+                     :deserializer-key   (ml/deserializers :string)
+                     :deserializer-value (ml/deserializers :long)}
+                    {"group-id" "my-group-id"}))
 
 ;; Get a list of all partitions by topics the consumer is authorized to consume
 (ml/topics c)
@@ -118,11 +120,7 @@
 ;;; If cheshire was required, we could do this
 
 (def serializer-json (ml/make-serializer (fn [topic data]
-                                           (-> data
-                                               cheshire/generate-string
-                                               .getBytes))))
+                                           (cheshire/generate-string (.getBytes data)))))
 
 (def deserializer-json (ml/make-deserializer (fn [topic data]
-                                               (-> data
-                                                   String.
-                                                   cheshire/parse-string))))
+                                               (cheshire/parse-string (String. data)))))
