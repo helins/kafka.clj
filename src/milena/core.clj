@@ -858,19 +858,21 @@
    A timeout of 0 returns what is available in the consumer buffer
    without blocking."
 
-  ([^KafkaConsumer consumer timeout]
+  [^KafkaConsumer consumer timeout]
 
-   (try (let [^ConsumerRecords records (.poll consumer
-                                              (max 0 timeout))]
-          (when-not (.isEmpty records)
-              (map convert/ConsumerRecord->hmap
-                   (-> records .iterator iterator-seq))))
-        (catch WakeupException       _
-          nil)
-        (catch InterruptException    _
-          nil)
-        (catch IllegalStateException _
-          nil))))
+  (try (let [^ConsumerRecords records (.poll consumer
+                                             (max 0
+                                                  timeout))]
+         (when-not (.isEmpty records)
+             (map convert/ConsumerRecord->hmap
+                  (iterator-seq (.iterator records)))))
+       (catch WakeupException       _
+         nil)
+       (catch InterruptException    _
+         nil)
+       (catch IllegalStateException _
+         ;; happens when timeout < 0
+         nil)))
 
 
 
@@ -881,40 +883,26 @@
 
    f : a classic 2-args reducing fn 
    seed : the initial value for the reducing fn
-   f-continue? : an optional fn accepting all last messages
-                 and returning true or false whether polling
-                 should continue or not.
+
+   Will stop when there are no more messages or 'f' returns
+   a (reduced) value, just like in (reduce).
 
    cf. milena.core/poll"
 
-  ([consumer timeout f acc]
+  [consumer timeout f acc]
 
-   (if-let [msgs (poll consumer
-                       timeout)]
-     (recur consumer
-            timeout
-            f
-            (reduce f
-                    acc
-                    msgs))
-     acc))
-
-
-  ([consumer timeout f acc f-continue?]
-
-   (let [msgs (poll consumer
-                    timeout)
-         acc' (reduce f
-                      acc
-                      msgs)]
-     (if (and msgs
-              (f-continue? msgs))
-         (recur consumer
-                timeout
-                f
-                acc'
-                f-continue?)
-         acc'))))
+  (if-let [msgs (poll consumer
+                      timeout)]
+    (let [acc' (reduce f
+                       acc
+                       msgs)]
+      (if (reduced? acc')
+          acc'
+          (recur consumer
+                 timeout
+                 f
+                 acc')))
+    acc))
 
 
 
