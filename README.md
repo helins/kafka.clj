@@ -1,7 +1,12 @@
 # Milena
 
+![alt text](https://s-media-cache-ak0.pinimg.com/600x315/a4/11/25/a411251488b63fb207751b1545aeb551.jpg "Milena")
+
 A straightforward clojure client for Kafka. Doesn't try to be too clever, simply
 provides clear functions using simple clojure data structures.
+
+Franz Kafka and Milena Jesenska wrote passionate letters to each other. Isn't that
+relevant ?
 
 ## Status
 
@@ -15,7 +20,7 @@ Everything is commented as clearly as possible. Hence :
 lein codox
 ```
 
-# Basic
+### Basic
 
 ```clj
 (require '[milena.core :as ml])
@@ -123,10 +128,10 @@ lein codox
 (ml/close c)
 ```
 
-# Serde
+### Serde
 
 If we had cheshire, for instance, we could do the following and use those for
-ml/producer or ml/consumer :
+(ml/producer) or (ml/consumer) :
 
 ```clj
 (def serializer-json
