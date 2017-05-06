@@ -66,6 +66,22 @@
 
 
 
+(defn- -stringify-keys
+
+  "Simply stringify symbol or keyword keys in a map"
+
+  [hmap]
+
+  (reduce-kv (fn [hmap' k v]
+               (assoc hmap'
+                      (name k)
+                      v))
+             {}
+             hmap))
+
+
+
+
 ;;; Serialization
 
 
@@ -188,7 +204,7 @@
               serializer-value serializer}}
       kopts]]
 
-  (KafkaProducer. (assoc kopts
+  (KafkaProducer. (assoc (-stringify-keys kopts)
                          "bootstrap.servers"
                          (nodes-string nodes))
                   serializer-key
@@ -197,32 +213,54 @@
 
 
 
+(declare listen)
+
+(declare close)
+
+
 (defn consumer
 
   "Build a Kafka consumer.
 
-   config : read the signature
+   config :
+     nodes : cf. milena.core/nodes-string
+     deserializer : a common deserializer for the key and the value
+                    defaulting to (serializers :byte-array)
+     deserializer-key : a deserializer only for the key defaulting
+                        to 'deserializer'
+     deserializer-value : a deserializer only for the value defaulting
+                          to 'deserializer'
+     listen : cf. milena.core/listen
    kopts : optional consumer options (cf. Kafka documentation)
 
    <!> Consumers are NOT thread safe !
        1 consumer / thread or a queueing policy must be
        implemented."
 
-  [& [{:keys [nodes
-              deserializer
-              deserializer-key
-              deserializer-value]
-       :or   {nodes             [["localhost" 9092]]
-              deserializer      (deserializers :byte-array)
-              deserializer-key   deserializer
-              deserializer-value deserializer}}
+  [& [{:keys   [nodes
+                deserializer
+                deserializer-key
+                deserializer-value
+                listening]
+       listen' :listen
+       :or     {nodes              [["localhost" 9092]]
+                deserializer       (deserializers :byte-array)
+                deserializer-key   deserializer
+                deserializer-value deserializer}}
       kopts]]
-
-  (KafkaConsumer. (assoc kopts
-                         "bootstrap.servers"
-                         (nodes-string nodes))
-                  deserializer-key
-                  deserializer-value))
+  
+  (let [consumer (KafkaConsumer. (assoc (-stringify-keys kopts)
+                                        "bootstrap.servers"
+                                        (nodes-string nodes))
+                                 deserializer-key
+                                 deserializer-value)]
+    (when listen'
+      (try (listen consumer
+                   listen')
+           (catch Throwable e
+             (close consumer)
+             (throw e))))
+    consumer))
 
 
 
@@ -233,7 +271,7 @@
    for a given topic.
 
    <!> Producer will block for ever is the topic doesn't exist
-       and dynamic creation has been disabled server-side."
+       and dynamic creation has been disabled"
 
   [producer|consumer ktopic]
 
