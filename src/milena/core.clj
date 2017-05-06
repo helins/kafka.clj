@@ -55,13 +55,16 @@
 
   "Produce a string of Kafka nodes for producers and consumers.
 
-   nodes : a list of [host port] representing Kafka nodes"
+   nodes : a list of [host port] representing Kafka nodes
+         | an already prepared connection string"
 
-  [& [nodes]]
+  [nodes]
 
-  (string/join ","
-               (map (fn [[host port]] (str host ":" port))
-                    nodes)))
+  (if (string? nodes)
+      nodes
+      (string/join ","
+                   (map (fn [[host port]] (str host ":" port))
+                        nodes))))
 
 
 
@@ -342,7 +345,7 @@
 ;;; Produce
 
 
-(defn ksend
+(defn psend
 
   "Send a message to Kafka via a producer.
 
@@ -364,7 +367,7 @@
 
 
 
-(defn kderef
+(defn pderef
 
   "Deref a future returned by milena.core/ksend by converting
    the metadata about the sent record to a map."
@@ -402,7 +405,7 @@
 ;;; Consume
 
 
-(defn interrupt-consumer
+(defn cinterrupt
 
   "From another thread, unblock the consumer. The blocking thread
    will throw an org.apache.kafka.common.errors.WakeupException.
@@ -425,11 +428,11 @@
   "If the body doesn't compute before the required timeout,
    milena.core/interrupt-consumer will be called on the consumer."
 
-  [consumer timeout & body]
+  [consumer timeout-ms & body]
 
   `(locking consumer
      (let [consumer# ~consumer
-           timeout#  ~timeout
+           timeout#  ~timeout-ms
            p#        (promise)
            ft#       (future (Thread/sleep timeout#)
                              (when-not (realized? p#)
@@ -446,7 +449,7 @@
 
 
 
-(defn topics
+(defn ctopics
 
   "Get metadata about partitions for all topics the consumer
    is authorized to consume.
@@ -561,7 +564,7 @@
 
 
 
-(defn offsets-search
+(defn offsets-ts
 
   "Search for offsets by timestamp
 
@@ -623,7 +626,7 @@
 
 
 
-(defn offsets-earliest
+(defn offsets-first
 
   "Get the earliest offsets exiting for the required partitions
 
@@ -990,7 +993,7 @@
 
 (defn commit-sync
 
-  "Blocking commit of offsets.
+  "Blocking commit of consumer offsets.
 
    offsets : optional map of [topic partition] -> offset
 
@@ -1024,7 +1027,7 @@
 
 (defn commit-async
 
-  "Non-blocking commit of offsets.
+  "Non-blocking commit of consumer offsets.
  
    cf. milena.core/commit-sync
        milena.converters/f->OffsetCommitCallback"
