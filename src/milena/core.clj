@@ -271,7 +271,8 @@
    for a given topic.
 
    <!> Producer will block for ever is the topic doesn't exist
-       and dynamic creation has been disabled"
+       and dynamic creation has been disabled. Consumer will
+       return an empty list."
 
   [producer|consumer ktopic]
 
@@ -280,45 +281,6 @@
                             ktopic))
        (catch Throwable _
          nil)))
-
-
-
-
-(defn topic?
-
-  "Using a producer or a consumer, returns if the given topic
-   exists.
-
-   cf. milena.core/partitions"
-
-  [consumer|producer ktopic]
-
-  (boolean (.partitionsFor consumer|producer
-                           ktopic)))
-
-
-
-
-(defn partition?
-
-  "Using a producer or a consumer, returns if the given
-   [topic partition] exists.
-
-   cf. milena.core/partitions"
-
-  ([consumer|producer ktopic kpart]
-
-   (boolean (some #(= (.partition ^PartitionInfo %)
-                      kpart)
-                  (.partitionsFor consumer|producer
-                                  ktopic))))
-
-
-  ([consumer|producer [ktopic kpart]]
-
-   (partition? consumer|producer
-               ktopic
-               kpart)))
 
 
 
