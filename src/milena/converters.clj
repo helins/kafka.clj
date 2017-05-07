@@ -6,6 +6,8 @@
    The conversions are straightforward and haven't been
    fully optimized."
 
+  {:author "Adam Helinski"}
+
   (:require [clojure.set :as sets])
   (:import (org.apache.kafka.common Metric
                                     MetricName
