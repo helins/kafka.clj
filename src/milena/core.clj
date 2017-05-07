@@ -8,6 +8,8 @@
    <!> Sometimes, fns try and catch certain exceptions when it is meaningful.
        This behavior is subject to changes for the time being."
 
+  {:author "Adam Helinski"}
+
   (:require [clojure.string    :as string]
             [milena.converters :as convert])
   (:import java.util.concurrent.TimeUnit
@@ -856,16 +858,21 @@
 
 (defn poll
 
-  "Poll messages or wait up to 'timeout' if there aren't any.
+  "Poll messages. If there aren't any, wait until there are some or
+  until 'timeout-ms' is elapsed.
+  
+  or wait up to 'timeout' if there aren't any.
 
    A timeout of 0 returns what is available in the consumer buffer
    without blocking."
 
-  [^KafkaConsumer consumer timeout]
+  [^KafkaConsumer consumer & [timeout-ms]]
 
   (try (let [^ConsumerRecords records (.poll consumer
-                                             (max 0
-                                                  timeout))]
+                                             (if timeout-ms
+                                                 (max 0
+                                                      timeout-ms)
+                                                 Long/MAX_VALUE))]
          (when-not (.isEmpty records)
              (map convert/ConsumerRecord->hmap
                   (iterator-seq (.iterator records)))))
@@ -892,20 +899,18 @@
 
    cf. milena.core/poll"
 
-  [consumer timeout f acc]
+  [consumer timeout-ms f acc]
 
-  (if-let [msgs (poll consumer
-                      timeout)]
-    (let [acc' (reduce f
-                       acc
-                       msgs)]
-      (if (reduced? acc')
-          acc'
-          (recur consumer
-                 timeout
-                 f
-                 acc')))
-    acc))
+  (loop [acc acc]
+    (if-let [msgs (poll consumer
+                        timeout-ms)]
+      (let [acc' (reduce f
+                         acc
+                         msgs)]
+        (if (reduced? acc')
+            acc'
+            (recur acc')))
+      acc)))
 
 
 
