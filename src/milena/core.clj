@@ -311,6 +311,9 @@
 
 
 
+(declare cinterrupt)
+
+
 (defn close
 
   "Close a producer or a consumer.
@@ -327,7 +330,7 @@
    (try (.close producer|consumer)
         (when (instance? KafkaConsumer
                          producer|consumer)
-          (ml/cinterrupt producer|consumer))
+          (cinterrupt producer|consumer))
         true
         (catch IllegalStateException _
           true)
@@ -342,7 +345,7 @@
                 TimeUnit/MICROSECONDS)
         (when (instance? KafkaConsumer
                          producer|consumer)
-          (ml/cinterrupt producer|consumer))
+          (cinterrupt producer|consumer))
         true
         (catch Throwable _
           false))))
