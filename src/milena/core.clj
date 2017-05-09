@@ -667,7 +667,7 @@
 
 
 
-(defn offsets-latest
+(defn offsets-last
 
   "Get the latest offsets existing for the required partitions
 
