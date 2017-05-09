@@ -252,10 +252,9 @@
        :or     {nodes              [["localhost" 9092]]
                 deserializer       (deserializers :byte-array)
                 deserializer-key   deserializer
-                deserializer-value deserializer}}
-      kopts]]
+                deserializer-value deserializer}}]]
   
-  (let [consumer (KafkaConsumer. (assoc (-stringify-keys kopts)
+  (let [consumer (KafkaConsumer. (assoc (-stringify-keys config)
                                         "bootstrap.servers"
                                         (nodes-string nodes))
                                  deserializer-key
