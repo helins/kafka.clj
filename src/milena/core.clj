@@ -191,25 +191,28 @@
 
   "Build a Kafka producer.
 
-   config : read the signature
-            (cf. milena.core/nodes-string)
-   kopts : optional producer options (cf. Kafka documentation)
+   config :
+     config : a configuration map for the producer as described in
+              Kafka documentation (keys can be keywords)
+     nodes : cf. milena.core/nodes-string
+     serializer... : cf. milena.core/serializers
+                         milena.core/make-serializer
 
    Producer are thread-safe and it is more efficient to share
    one amongst multiple threads."
 
-  [& [{:as   config
-       :keys [nodes
+  [& [{:as   opts
+       :keys [config
+              nodes
               serializer
               serializer-key
               serializer-value]
        :or   {nodes            [["localhost" 9092]]
               serializer       (serializers :byte-array)
               serializer-key   serializer
-              serializer-value serializer}}
-      kopts]]
+              serializer-value serializer}}]]
 
-  (KafkaProducer. (assoc (-stringify-keys kopts)
+  (KafkaProducer. (assoc (-stringify-keys config)
                          "bootstrap.servers"
                          (nodes-string nodes))
                   serializer-key
@@ -228,21 +231,19 @@
   "Build a Kafka consumer.
 
    config :
+     config : a configuration map for the consumer as described in
+              Kafka documentation (keys can be keywords)
      nodes : cf. milena.core/nodes-string
-     deserializer : a common deserializer for the key and the value
-                    defaulting to (serializers :byte-array)
-     deserializer-key : a deserializer only for the key defaulting
-                        to 'deserializer'
-     deserializer-value : a deserializer only for the value defaulting
-                          to 'deserializer'
-     listen : cf. milena.core/listen
-   kopts : optional consumer options (cf. Kafka documentation)
+     serializer... : cf. milena.core/deserializers
+                         milena.core/make-deserializer
 
    <!> Consumers are NOT thread safe !
        1 consumer / thread or a queueing policy must be
        implemented."
 
-  [& [{:keys   [nodes
+  [& [{:as     opts
+       :keys   [config
+                nodes
                 deserializer
                 deserializer-key
                 deserializer-value
