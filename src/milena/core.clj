@@ -328,9 +328,6 @@
   ([producer|consumer]
    
    (try (.close producer|consumer)
-        (when (instance? KafkaConsumer
-                         producer|consumer)
-          (cinterrupt producer|consumer))
         true
         (catch IllegalStateException _
           true)
@@ -343,9 +340,6 @@
    (try (.close producer|consumer
                 (long (* 1000 (max 0 timeout-ms)))
                 TimeUnit/MICROSECONDS)
-        (when (instance? KafkaConsumer
-                         producer|consumer)
-          (cinterrupt producer|consumer))
         true
         (catch Throwable _
           false))))
