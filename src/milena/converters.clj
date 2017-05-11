@@ -245,6 +245,38 @@
 
 
 
+(defn TP+offset->tp+offset
+
+  "Remap [topic partition] -> offset to TopicPartition -> offset"
+
+  [TP+o]
+
+  (reduce (fn [offsets [TP offset]]
+            (assoc offsets
+                   (TopicPartition->vec TP)
+                   offset))
+          {}
+          TP+o))
+
+
+
+
+(defn tpart+offset->TP+O&M
+
+  "Remap [topic partition] -> offset to TopicPartition -> OffsetAndMetadata"
+
+  [offsets]
+
+  (reduce-kv (fn [offsets' kpartition offset]
+               (assoc offsets'
+                      (to-TopicPartition kpartition)
+                      (OffsetAndMetadata. offset)))
+           {}
+           offsets))
+
+
+
+
 (defn f->Callback
 
   "For producer callbacks.
@@ -270,18 +302,20 @@
 
   "For registering callbacks when a consumer has been assigned or revoked partitions.
 
-   'f' takes an arg specifying if the event is an :assignment or a :revokation
-   and a list of the affected [topic partition]."
+   'f' takes an arg specifying if the event is :assigned or :revoved and a list of the
+   affected [topic partition]."
 
   [f]
 
   (reify ConsumerRebalanceListener
 
-    (onPartitionsAssigned [_ t-ps] (f :assigned (map TopicPartition->vec
-                                                     t-ps)))
+    (onPartitionsAssigned [_ t-ps] (f :assigned
+                                      (map TopicPartition->vec
+                                           t-ps)))
 
-    (onPartitionsRevoked  [_ t-ps] (f :revoked  (map TopicPartition->vec
-                                                     t-ps)))))
+    (onPartitionsRevoked  [_ t-ps] (f :revoked
+                                      (map TopicPartition->vec
+                                           t-ps)))))
 
 
 
