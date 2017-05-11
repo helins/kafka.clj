@@ -99,6 +99,7 @@ lein codox
                            1000)
                         (reduced sum')
                         sum')))
+                {}
                 c
                 200)
 
