@@ -39,6 +39,8 @@ lein codox
                                     ["localhost" 9093]]
                  :serializer-key   (mc/deserializers :string)
                  :serializer-value (mc/deserializers :long)}
+                 :config           {:group.id           "foo.bar"
+                                    :enable.auto.commit false}
                  :listen           [["t1" 0]
                                     ["t2" 0]]}))
 
@@ -90,15 +92,15 @@ lein codox
 
 ;; sum all numbers in "t1" p0 but stop polling when
 ;; the sum is > 1000
-(mc/poll-reduce c
-                200
-                (fn [sum msg]
+(mc/poll-reduce (fn [sum msg]
                   (let [sum' (+ sum
                                 (:value msg))]
                     (if (> sum'
                            1000)
                         (reduced sum')
-                        sum'))))
+                        sum')))
+                c
+                200)
 
 ;; seek to offset 100 on topic "t1" p0 and poll from there
 ;; for 500 ms
@@ -108,6 +110,9 @@ lein codox
 
 (mc/poll c
          500)
+
+;; synchronously commit offsets from last poll
+(mc/commit c)
 
 ;; like a few other fns, ml/seek accepts either
 ;; 'topic' 'partition' or [['topic' 'partition']]
