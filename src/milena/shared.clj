@@ -116,14 +116,9 @@
 
 
 
+(extend-protocol IWrapped
 
-(extend-type KafkaProducer
-
-  IWrapped
-
-    (closed? [_]
-      nil)
-
+  KafkaProducer
 
     (close
       ([this]
@@ -136,18 +131,10 @@
 
 
      (raw [this]
-       this))
+       this)
 
 
-
-
-(extend-type KafkaConsumer
-
-  IWrapped
-
-    (closed? [_]
-      nil)
-
+  KafkaConsumer
 
     (close
       ([this]
@@ -158,6 +145,15 @@
                          (-timeout-micros timeout-ms)
                          TimeUnit/MICROSECONDS))))
 
+
+    (raw [this]
+      this)
+
+
+  Object
+
+    (closed? [_]
+      nil)
 
     (raw [this]
       this))

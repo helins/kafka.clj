@@ -6,7 +6,8 @@
 
   (:require [milena.shared     :as shared]
             [milena.converters :as convert])
-  (:import (org.apache.kafka.common.errors WakeupException
+  (:import milena.shared.Wrapper
+           (org.apache.kafka.common.errors WakeupException
                                            InterruptException
                                            AuthorizationException)
            (org.apache.kafka.clients.consumer KafkaConsumer
@@ -19,6 +20,7 @@
                                                   IntegerDeserializer
                                                   LongDeserializer
                                                   StringDeserializer)))
+
 
 
 
@@ -162,6 +164,18 @@
   [consumer]
 
   (shared/raw consumer))
+
+
+
+
+(defn consumer?
+
+  "Is this a consumer ?"
+
+  [x]
+
+  (instance? KafkaConsumer
+             (shared/raw x)))
 
 
 
