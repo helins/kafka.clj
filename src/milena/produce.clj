@@ -9,7 +9,8 @@
   (:require [clojure.core      :as clj]
             [milena.shared     :as shared]
             [milena.converters :as convert])
-  (:import org.apache.kafka.clients.producer.KafkaProducer
+  (:import milena.shared.Wrapper
+           org.apache.kafka.clients.producer.KafkaProducer
            (org.apache.kafka.common.serialization Serializer
                                                   ByteArraySerializer
                                                   ByteBufferSerializer
@@ -143,6 +144,18 @@
   [consumer]
 
   (shared/raw consumer))
+
+
+
+
+(defn producer?
+
+  "Is this a producer ?"
+
+  [x]
+
+  (instance? KafkaProducer
+             (shared/raw x)))
 
 
 
