@@ -40,19 +40,20 @@
 
 (defn make-serializer
   
-  "Given a fn that takes a topic and data to serialize,
-   make a Kafka serializer for producers"
+  "If given a fn, create a Kafka serializer, otherwise return the argument"
 
   [f]
 
-  (reify Serializer
-    
-    (serialize [_ ktopic data] (f ktopic
-                                  data))
+  (if (fn? f)
+    (reify Serializer
+      
+      (serialize [_ ktopic data] (f ktopic
+                                    data))
 
-    (close [_] nil)
+      (close [_] nil)
 
-    (configure [_ _ _] nil)))
+      (configure [_ _ _] nil))
+    f))
 
 
 
@@ -82,7 +83,7 @@
      serializer... : cf. serializers 
                          (make-serializer)
 
-   Producer are thread-safe and it is more efficient to share
+   Producers are thread-safe and it is more efficient to share
    one amongst multiple threads."
 
   [& [{:as   opts
@@ -99,8 +100,8 @@
   (shared/wrap (KafkaProducer. (assoc (shared/stringify-keys config)
                                       "bootstrap.servers"
                                       (shared/nodes-string nodes))
-                               serializer-key
-                               serializer-value)))
+                               (make-serializer serializer-key)
+                               (make-serializer serializer-value))))
 
 
 
