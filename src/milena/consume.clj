@@ -42,19 +42,20 @@
 
 (defn make-deserializer
 
-  "Given a fn that takes a topic and data to deserialize,
-   make a Kafka deserializer for consumers"
+  "If given a fn, create a Kafka deserializer, otherwise return the argument"
 
   [f]
 
-  (reify Deserializer
-    
-    (deserialize [_ ktopic data] (f ktopic
-                                    data))
+  (if (fn? f)
+    (reify Deserializer
+      
+      (deserialize [_ ktopic data] (f ktopic
+                                      data))
 
-    (close [_] nil)
+      (close [_] nil)
 
-    (configure [_ _ _] nil)))
+      (configure [_ _ _] nil))
+    f))
 
 
 
@@ -105,10 +106,10 @@
                 deserializer-value deserializer}}]]
   
   (let [consumer (shared/wrap (KafkaConsumer. (assoc (shared/stringify-keys config)
-                                              "bootstrap.servers"
-                                              (shared/nodes-string nodes))
-                                       deserializer-key
-                                       deserializer-value))]
+                                                     "bootstrap.servers"
+                                                     (shared/nodes-string nodes))
+                                              (make-deserializer deserializer-key)
+                                              (make-deserializer deserializer-value)))]
     (when listen'
       (try (listen consumer
                    listen')
