@@ -4,7 +4,9 @@
 
   {:author "Adam Helinski"}
 
-  (:require [milena.shared     :as shared]
+  (:refer-clojure :exclude [first last])
+  (:require [clojure.core      :as clj]
+            [milena.shared     :as shared]
             [milena.converters :as convert])
   (:import milena.shared.Wrapper
            (org.apache.kafka.common.errors WakeupException
@@ -23,6 +25,8 @@
 
 
 
+
+;;;;;;;;;;
 
 
 (def deserializers
@@ -97,8 +101,7 @@
                 nodes
                 deserializer
                 deserializer-key
-                deserializer-value
-                listening]
+                deserializer-value]
        listen' :listen
        :or     {nodes              [["localhost" 9092]]
                 deserializer       (deserializers :byte-array)
@@ -177,6 +180,51 @@
 
   (instance? KafkaConsumer
              (shared/raw x)))
+
+
+
+
+(defn unblock
+
+  "From another thread, unblock the consumer. The blocking thread
+   will throw an org.apache.kafka.common.errors.WakeupException against
+   which fns in this library are protected (eg. (poll) returns nil).
+
+   If the thread isn't blocking on a fn which can throw such an
+   exception, the next call to such a fn will raise it instead.
+
+   Must be used sparingly, not to compensate for a bad design."
+
+  [^KafkaConsumer consumer]
+
+  (.wakeup ^KafkaConsumer (raw consumer))
+  consumer)
+
+
+
+
+(defmacro safe-consume
+
+  "If the body doesn't compute before the required timeout,
+   milena.consume/unblock will be called on the consumer."
+
+  [consumer timeout-ms & body]
+
+  `(locking consumer
+     (let [consumer# ~consumer
+           timeout#  ~timeout-ms
+           p#        (promise)
+           ft#       (future (Thread/sleep timeout#)
+                             (when-not (realized? p#)
+                               (unblock consumer#)))
+           ret#      (try ~@body
+                          (catch Throwable e#
+                            (future-cancel ft#)
+                            (throw e#)))]
+       (deliver p#
+                ret#)
+       (future-cancel ft#)
+       ret#)))
 
 
 
@@ -266,7 +314,7 @@
                                            (raw consumer))]
     (if source
         (if (sequential? source)
-            (if (sequential? (first source))
+            (if (sequential? (clj/first source))
                 (.assign consumer'
                          (map convert/to-TopicPartition
                               source))
@@ -405,9 +453,9 @@
 
 
 
-(defn earliest
+(defn first
 
-  "Get the earliest offsets exiting for the given partitions.
+  "Get the first offset for the given partitions.
 
    kpartitions : a list of [topic partition]
 
@@ -443,18 +491,24 @@
 
 
 
-(defn latest
+(defn last
 
-  "Get the latest offsets existing for the required partitions.
+  "Get the latest offsets for the required partitions, ie. the offset of the last
+   message + 1.
 
    cf. (earliest)" 
 
   ([consumer kpartitions]
 
    (shared/try-nil
-     (convert/TP+offset->tp+offset (.endOffsets ^KafkaConsumer (raw consumer)
-                                                (map convert/to-TopicPartition
-                                                     kpartitions)))))
+     (reduce-kv (fn [hmap k v]
+                  (assoc hmap
+                         k
+                         v))
+                {}
+                (convert/TP+offset->tp+offset (.endOffsets ^KafkaConsumer (raw consumer)
+                                              (map convert/to-TopicPartition
+                                                   kpartitions))))))
 
 
   ([consumer ktopic kpart]
@@ -521,7 +575,7 @@
 
 (defn position
 
-  "Returns the current position of the consumer, or nil
+  "Return the offset of the next record this consumer will fetch, or nil
    if something is wrong/unavailable.
 
    ktopic : topic
@@ -676,13 +730,14 @@
                                           nil)
                                         (catch InterruptException _
                                           nil)
-                                        (catch AuthorizationException _
-                                          ;; not authorized, hence there is nothing
+                                        #_(catch AuthorizationException _
+                                          ;; not authorized, hence there is nothing to see
                                           nil)
                                         (catch IllegalStateException _
                                           ;; when the consumer is not subscribed nor assigned
                                           nil))]
-      (when-not (.isEmpty records)
+      (when (and records
+                 (not (.isEmpty records)))
           (map convert/ConsumerRecord->hmap
                (iterator-seq (.iterator records)))))))
 
@@ -691,18 +746,18 @@
 
 (defn poll-do
 
-  "Poll messages and perform side-effects.
+  "Poll messages and perform side-effects by calling 'process'.
+  
+   Stops when there are no more messages or 'process' returns a falsy value.
 
-   f : a fn accepting Kafka messages and returning true
-       or false whether polling should continue or not
+   cf. poll"
 
-   cf. (poll)"
+  [process consumer & [timeout-ms]]
 
-  [f consumer & [timeout-ms]]
-
-  (while (when-let [kmsgs (poll consumer
-                                timeout-ms)]
-           (f kmsgs))))
+  (while 
+    (when-let [kmsgs (poll consumer
+                           timeout-ms)]
+      (process kmsgs))))
 
 
 
@@ -717,7 +772,7 @@
    Will stop when there are no more messages or 'f' returns
    a (reduced) value, just like in (reduce).
 
-   cf. (poll)"
+   cf. poll"
 
   [f seed consumer timeout-ms]
 
@@ -731,6 +786,53 @@
             acc'
             (recur acc')))
       acc)))
+
+
+
+
+(defn poller
+
+  "Given a consumer, continuously poll messages in a separate thread and perform side-effects
+   by calling 'process'.
+
+   Stops when there are no more messages, an error occurs, or 'process' returns a falsy value.
+
+   When stopped, 'done' is called with an error (if one occured), allowing for some clean-up
+   or bookkeeping.
+
+   It is safe to operate on the consumer from 'process' and 'done', for instance for committing
+   offsets, since everything happens on one thread.
+  
+   Returns a no-arg fn stopping this procedure and returning a future."
+
+  [consumer & [{:keys [timeout-ms
+                       close?
+                       process
+                       done]
+                :or   {close?  true
+                       process (fn [messages] true)
+                       done    (fn [error]    nil)}}]]
+
+  (let [v*continue? (volatile! true)
+        v*err       (volatile! nil)
+        th          (future
+                      (try (while (when-let [msgs (and @v*continue?
+                                                       (poll consumer
+                                                             timeout-ms))]
+                                    (process msgs)))
+                           (catch Throwable err
+                             (vreset! v*err
+                                      err))
+                           (finally
+                             (when close?
+                               (close consumer))
+                             (done @v*err)))
+                      @v*err)]
+    (fn halt []
+      (vreset! v*continue?
+               false)
+      (unblock consumer)
+      th)))
 
 
 
@@ -859,51 +961,6 @@
                                kpart)))
            {}
            kpartitions)))
-
-
-
-
-(defn unblock
-
-  "From another thread, unblock the consumer. The blocking thread
-   will throw an org.apache.kafka.common.errors.WakeupException against
-   which fns in this library are protected (eg. (poll) returns nil).
-
-   If the thread isn't blocking on a fn which can throw such an
-   exception, the next call to such a fn will raise it instead.
-
-   Must be used sparingly, not to compensate for a bad design."
-
-  [^KafkaConsumer consumer]
-
-  (.wakeup ^KafkaConsumer (raw consumer))
-  consumer)
-
-
-
-
-(defmacro safe-consume
-
-  "If the body doesn't compute before the required timeout,
-   milena.consume/unblock will be called on the consumer."
-
-  [consumer timeout-ms & body]
-
-  `(locking consumer
-     (let [consumer# ~consumer
-           timeout#  ~timeout-ms
-           p#        (promise)
-           ft#       (future (Thread/sleep timeout#)
-                             (when-not (realized? p#)
-                               (unblock consumer#)))
-           ret#      (try ~@body
-                          (catch Throwable e#
-                            (future-cancel ft#)
-                            (throw e#)))]
-       (deliver p#
-                ret#)
-       (future-cancel ft#)
-       ret#)))
 
 
 

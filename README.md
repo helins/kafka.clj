@@ -34,7 +34,7 @@ lein codox
                  :serializer-value (mp/serializers :long)}))
 
 ;; make a consumer and assign it to topic "t1" partition 0
-                                          "t2" partition 0
+;;                                        "t2" partition 0
 (def c (mc/make {:nodes            [["localhost" 9092]
                                     ["localhost" 9093]]
                  :serializer-key   (mc/deserializers :string)
@@ -76,10 +76,10 @@ lein codox
                  (println [:fail i])))))
 
 
-;; get the earliest offsets on topic "t1" partition 0
-(mc/earliest c
-             "t1"
-             0)
+;; get the first offsets on topic "t1" partition 0
+(mc/first c
+          "t1"
+          0)
 
 ;; set position to the first available offset on topic "t1" p0
 (mc/rewind c
@@ -99,7 +99,7 @@ lein codox
                            1000)
                         (reduced sum')
                         sum')))
-                {}
+                0
                 c
                 200)
 

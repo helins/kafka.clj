@@ -15,6 +15,8 @@
 
 
 
+;;;;;;;;;;
+
 
 (defmacro try-nil
 
@@ -40,6 +42,23 @@
         true
         (catch Throwable _#
           false)))
+
+
+
+
+(defmacro try-either
+
+  "Wrap forms in a try catch and return [err result] where only one item is non-nil.
+
+   Similar to the Either monard."
+
+  [& forms]
+
+  `(try [nil
+         (do ~@forms)]
+        (catch Throwable err#
+          [err#
+           nil])))
 
 
 
