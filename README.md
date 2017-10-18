@@ -2,152 +2,158 @@
 
 ![alt text](https://s-media-cache-ak0.pinimg.com/600x315/a4/11/25/a411251488b63fb207751b1545aeb551.jpg "Milena")
 
-A straightforward clojure client for Kafka. Doesn't try to be too clever, simply
-provides clear functions using simple clojure data structures.
+Franz Kafka and Milena Jesenska wrote passionate letters to each other.
 
-Franz Kafka and Milena Jesenska wrote passionate letters to each other. Isn't that
-relevant ?
+This library allows the user to exchange records with Kafka while speaking
+clojure.
+
+The user should be using almost always these namespaces :
+
+- `milena.admin`
+  For managing topics, configurations and ACLs.
+
+- `milena.serialize`
+  `milena.produce`
+  For serializing and sending records.
+
+- `milena.deserialize`
+  `milena.consume`
+  For deserializing and consuming records.
+
+
+Although not strictly needed, it is best for the user to be familiar with the
+original [java library](https://kafka.apache.org/documentation/#api). The goal
+of this clojure wrapper is to avoid clunky java interop while being up to date.
+The [API](https://dvlopt.github.io/doc/milena/) translates clojure data
+structures to java objects and vice-versa for the user. As such, documentation
+often refers to those namespaces :
+
+- `milena.interop.clj`
+  For translating clojure data structures to java objects.
+
+- `milena.interop.java`
+  For translating java objects to clojure data structures.
+
+The user should never need to use those functions directly but can at least
+understand what is going on.
 
 ## Status
 
-Still in alpha for the time being, explaining why it isn't available on clojars yet.
-Expected to evolve.
+While being already used in production, this library is still alpha (soon to be
+beta). The main reason being that all the java admin stuff is itself brand new
+and might change in the future.
+
+Otherwise, after quite a few breaking changes, other namespaces should now be
+quite stable.
 
 ## Usage
 
-Everything is commented as clearly as possible. Hence :
-```
-lein codox
-```
+Everything is commented as clearly as possible and often with examples.
 
-### Basic
+[Read the full API](https://dvlopt.github.io/doc/milena/)
 
-```clj
-(require '[milena.produce :as mp]
-         '[milena.consume :as mc])
+As a convention, :keywords and symbols starting with a "?" are nilable.
 
-
-;; make a producer
-(def p (mp/make {:nodes            [["localhost" 9092]
-                                    ["localhost" 9093]]
-                 :serializer-key   (mp/serializers :string)
-                 :serializer-value (mp/serializers :long)}))
-
-;; make a consumer and assign it to topic "t1" partition 0
-;;                                        "t2" partition 0
-(def c (mc/make {:nodes            [["localhost" 9092]
-                                    ["localhost" 9093]]
-                 :serializer-key   (mc/deserializers :string)
-                 :serializer-value (mc/deserializers :long)}
-                 :config           {:group.id           "foo.bar"
-                                    :enable.auto.commit false}
-                 :listen           [["t1" 0]
-                                    ["t2" 0]]}))
-
-;; pause "t2"
-(mc/pause c
-          [["t2" 0]])
-
-(mc/paused c)
-;; => #{["t2" 0]}
-
-(mc/paused? c
-            [["t2" 0]])
-;; => true
-
-;; what is this consumer "listening" to ?
-(mc/listening c)
-
-(mc/listening? c
-               [["t2" 0]])
-;; => true, although it is paused
-
-
-;; send 2500 messages with callback on completion
-;; printing any failure
-(dotimes [i 2500]
-  (mp/commit p
-             {:topic     "t1"
-              :partition 0
-              :key       "count"
-              :value     i}
-             (fn [exception metadata]
-               (when exception
-                 (println [:fail i])))))
-
-
-;; get the first offsets on topic "t1" partition 0
-(mc/first c
-          "t1"
-          0)
-
-;; set position to the first available offset on topic "t1" p0
-(mc/rewind c
-           [["t1" 0]])
-
-(mc/position c
-             "t1"
-             0)
-;; => 0
-
-;; sum all numbers in "t1" p0 but stop polling when
-;; the sum is > 1000
-(mc/poll-reduce (fn [sum msg]
-                  (let [sum' (+ sum
-                                (:value msg))]
-                    (if (> sum'
-                           1000)
-                        (reduced sum')
-                        sum')))
-                0
-                c
-                200)
-
-;; seek to offset 100 on topic "t1" p0 and poll from there
-;; for 500 ms
-(mc/seek c
-         [["t1" 0]]
-         100)
-
-(mc/poll c
-         500)
-
-;; synchronously commit offsets from last poll
-(mc/commit c)
-
-;; like a few other fns, ml/seek accepts either
-;; 'topic' 'partition' or [['topic' 'partition']]
-(mc/seek c
-         "t1"
-         0)
-
-
-;; resume polling on previously paused topic "t2" p0
-(mc/resume c
-           "t2"
-           0)
-
-;; get metrics for the producer
-(mp/metrics p)
-
-;; close producer and consumer
-(mp/close p)
-(mc/close c)
-```
-
-### Serde
-
-If we had cheshire, for instance, we could do the following and use those for
-(mp/make) or (mc/make) :
+### Basics
 
 ```clj
-(def serializer-json
-     (mp/make-serializer (fn [topic data]
-                           (.getBytes (chesire/generate-string data)))))
+;; We need a few things
+(require '[milena.admin       :as admin]
+         '[milena.produce     :as produce]
+         '[milena.consume     :as consume]
+         '[milena.serialize   :as serialize]
+         '[milena.deserialize :as deserialize])
 
-(def deserializer-json
-     (mc/make-deserializer (fn [topic data]
-                             (chesire/parse-string (String. data)))))
+
+;; First, we are going to create a topic.
+;; We need an admin client.
+(def A
+     (admin/make {:?nodes [["localhost"] 9092]}))
+
+
+;; Let's create the topic.
+(admin/topics-create A
+                     {"my-topic" {:?partitions         1
+                                  :?replication-factor 1
+                                  :?config             {:cleanup.policy "compact"}}})
+
+
+;; There it is, amongst other topics.
+(admin/topics A)
+;; => <Future {"my-topic" {:internal? false}
+               ...}>
+
+
+;; Now, let's send some records.
+;; We need a producer.
+(def P
+     (produce/make {:?nodes            [["localhost" 9092]]
+                    :?serializer-key   serialize/string
+                    :?serializer-value serialize/long}))
+
+
+;; Let's send 5 records to our new topic on partition 0.
+;; We'll provide an optional callback.
+(dotimes [i 5]
+  (produce/commit P
+                  {:topic      "my-topic"
+                   :?partition 0
+                   :?key       (format "message-%d"
+                                       i)
+                   :?value     i}
+                  (fn callback [?exception ?meta]
+                    (println i :okay? (boolean ?exception)))))
+
+
+;; Okay, time to consume some records !
+;; We need a consumer (with a little bit of optional configuration).
+(def C
+     (consume/make {:?nodes              [["localhost" 9092]]
+                    :?deserializer-key   deserialize/string
+                    :?deserializer-value deserialize/long
+                    :?config             {:group.id           "my_test"
+                                          :enable.auto.commit false}}))
+
+
+
+;; The consumer needs to be assigned.
+(consume/listen C
+                [["my-topic" 0]])
+
+
+;; Time to get a batch of records.
+(consume/poll C)
+
+
+;; Wait, let's do something different !
+;; We need to rewind the partition to the beginning.
+(consume/rewind C
+                "my-topic"
+                0)
+
+
+;; So, we'd like to sum all the available values.
+;; At the end of the partition, we'll wait for up to 500 milliseconds for new records.
+(reduce (fn [sum record]
+          (+ sum
+             (:value record)))
+        0
+        (consume/poll-seq C
+                          500))
+
+
+;; The job is done.
+;; Let's commit the offsets so next time we won't forget where we ended.
+;; This will commit the offset of the last record from the last time we polled records.
+(consume/commit-sync C)
+
+
+;; That's it for now !
+;; Check the full API, there is more you can do.
+;; Oh, and don't forget to close your resources, it's cleaner.
+(admin/close   A)
+(produce/close P)
+(consume/close C)
 ```
 
 ## License

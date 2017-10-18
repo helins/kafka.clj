@@ -4,151 +4,37 @@
 
   {:author "Adam Helinski"}
 
-  (:refer-clojure :exclude [deref
-                            flush])
-  (:require [clojure.core      :as clj]
-            [milena.shared     :as shared]
-            [milena.converters :as convert])
-  (:import milena.shared.Wrapper
+  (:refer-clojure :exclude [flush])
+  (:require [milena.interop      :as $.interop]
+            [milena.interop.clj  :as $.interop.clj]
+            [milena.interop.java :as $.interop.java]
+            [milena.serialize    :as $.serialize])
+  (:import java.util.concurrent.TimeUnit
            org.apache.kafka.clients.producer.KafkaProducer
-           (org.apache.kafka.common.serialization Serializer
-                                                  ByteArraySerializer
-                                                  ByteBufferSerializer
-                                                  DoubleSerializer
-                                                  IntegerSerializer
-                                                  LongSerializer
-                                                  StringSerializer)))
+           org.apache.kafka.common.serialization.Serializer))
 
 
 
 
-;;;;;;;;;;;
+;;;;;;;;;; Private helpers
 
 
-(def serializers
+(defn- -to-serializer
 
-  "Basic serializers provided by Kafka"
+  "Given a fn, creates a serializer. Otherwise, returns the arg."
 
-  {:byte-array  (ByteArraySerializer.)
-   :byte-buffer (ByteBufferSerializer.)
-   :double      (DoubleSerializer.)
-   :int         (IntegerSerializer.)
-   :long        (LongSerializer.)
-   :string      (StringSerializer.)
-   })
-  
+  ^Serializer
 
+  [arg]
 
-
-(defn make-serializer
-  
-  "If given a fn, create a Kafka serializer, otherwise return the argument"
-
-  [f]
-
-  (if (fn? f)
-    (reify Serializer
-      
-      (serialize [_ ktopic data] (f ktopic
-                                    data))
-
-      (close [_] nil)
-
-      (configure [_ _ _] nil))
-    f))
+  (if (fn? arg)
+    ($.serialize/make arg)
+    arg))
 
 
 
 
-(defn serialize
-
-  "Serialize data using a Kafka serializer"
-
-  [^Serializer serializer ktopic data]
-
-  (.serialize serializer
-              ktopic
-              data))
-
-
-
-
-(defn make
-
-  "Build a Kafka producer.
-
-   config :
-     config : a configuration map for the producer as described in
-              Kafka documentation (keys can be keywords)
-     nodes : a connection string to Kafka nodes
-           | a list of [host port]
-     serializer... : cf. serializers 
-                         (make-serializer)
-
-   Producers are thread-safe and it is more efficient to share
-   one amongst multiple threads."
-
-  [& [{:as   opts
-       :keys [config
-              nodes
-              serializer
-              serializer-key
-              serializer-value]
-       :or   {nodes            [["localhost" 9092]]
-              serializer       (serializers :byte-array)
-              serializer-key   serializer
-              serializer-value serializer}}]]
-
-  (shared/wrap (KafkaProducer. (assoc (shared/stringify-keys config)
-                                      "bootstrap.servers"
-                                      (shared/nodes-string nodes))
-                               (make-serializer serializer-key)
-                               (make-serializer serializer-value))))
-
-
-
-
-(defn closed?
-
-  "Is this producer closed ?"
-
-  [producer]
-
-  (shared/closed? producer))
-
-
-
-
-(defn close
-
-  "Try to close the producer cleanly.
-
-   Will block until all sends are done or the optional timeout is elapsed."
-
-  ([producer]
-
-   (shared/close producer))
-
-
-  ([producer timeout-ms]
-
-   (shared/close producer
-                 timeout-ms)))
-
-
-
-
-(defn raw
-
-  "Unwrap this consumer and get the raw Kafka object.
-  
-   At your own risks."
-
-  [consumer]
-
-  (shared/raw consumer))
-
-
+;;;;;;;;;; API
 
 
 (defn producer?
@@ -158,139 +44,252 @@
   [x]
 
   (instance? KafkaProducer
-             (shared/raw x)))
+             x))
 
 
 
 
 (defn partitions
   
-  "Get a list of partitions for a given topic.
+  "Gets a list of partitions for a given topic.
 
-   <!> Will block for ever is the topic doesn't exist and dynamic
-       creation has been disabled."
-
-  [producer ktopic]
-
-  (shared/partitions producer
-                     ktopic))
+   <!> Blocks for ever is the topic doesn't exist and dynamic creation has been disabled.
 
 
+   @ producer
+     Kafka producer.
+
+   @ topic
+     Topic name.
+
+   => List of partitions.
+      Cf. `interop.clj/partition-info`
 
 
-(defn- -commit
+   Throws
 
-  "Helper for (commit).
+     org.apache.kafka.common.errors
 
-   Effectively commit a message"
+       WakeupException
+       When `unblock` is called before or while this fn is called.
 
-  [producer message & [f]]
+       InterruptException
+       When the calling thread is interrupted."
 
-  (.send ^KafkaProducer (raw producer)
-         (convert/hmap->ProducerRecord message)
-         (some-> f
-                 convert/f->Callback)))
+  [^KafkaProducer producer topic]
+
+  (map $.interop.clj/partition-info
+       (.partitionsFor producer
+                       topic)))
 
 
 
 
 (defn commit
 
-  "Asynchronously commit a message to Kafka via a producer and
-   call the optional callback on acknowledgment.
+  "Asynchronously commits a message to Kafka via a producer and calls the optional callback
+   on acknowledgment.
 
-   message : a map containing :topic
-                              :partition
-                              :timestamp
-                              :key
-                              :value
-             where only :topic is mandatory
-             (cf. milena.converters/hmap->ProducerRecord)
-   callback : an optional callback invoked on completion and taking as
-              arguments an exception and metadata about the sent record,
-              only one being non-nil whether an exception was thrown or not
-              (cf. milena.converters/f->Callback)
-   metadata : a map containing :topic
-                               :partition
-                               :timestamp
-                               :offset
-                               :checksum
+   @ producer
+     Kafka producer.
 
-   Without a callback, this fn might throw if something goes wrong.
+   @ record
+     Cf. `milena.interop.java/producer-record`
 
-   Returns a future resolving to a raw metadata Kafka object. It is advised to
-   use (deref) to deref and convert it."
+   @ callback
+     Cf. `milena.interop.java/callback`
 
-  ([producer message]
-
-   (when (and message
-              (not (closed? producer)))
-     (-commit producer
-              message)))
+   => Future resolving to the metadata or throwing if an error occured.
+      Cf. `milena.interop.clj/record-metadata`
 
 
-  ([producer message callback]
+   Possible exceptions are :
 
-   (when message
-     (if (closed? producer)
-         (do (callback (IllegalStateException. "Cannot send after the producer is closed")
-                       nil)
-             nil)
-         (try (-commit producer
-                       message
-                       callback)
-              (catch Throwable e
-                (callback e
-                          nil)
-                nil))))))
+     java.lang
 
+       IllegalStateException
+       When a 'transactional.id' has been configured and no transaction has been started.
 
+     org.apache.kafka.common.errors
+   
+       InterruptException
+       When the thread is interrupted while blocked.
 
+       SerializationException
+       When the key or value are not valid objects given the configured serializers.
 
-(defn deref
+       TimeoutException
+       When the time take for fetching metadata or allocating memory for the record has surpassed 'max.block.ms'.
 
-  "Deref a future returned by (commit) and convert the metadata
-   the sent record to a map."
-
-  ([kfuture]
-
-   (when kfuture
-     (convert/RecordMetadata->hmap (clj/deref kfuture))))
+       KafkaException
+       Any other unrecoverable error.
 
 
-  ([kfuture timeout-ms timeout-val]
+  Ex. (commit producer
+              {:topic \"my-topic\"
+               :key   \"some-key\"
+               :value 42}
+              (fn callback [?exception ?meta]
+                (when-not ?exception
+                  (println :committed ?meta))))
 
-   (when kfuture
-     (convert/RecordMetadata->hmap (clj/deref kfuture
-                                              timeout-ms
-                                              timeout-val)))))
+
+  Cf. `milena.produce/deref`"
+
+  ([^KafkaProducer producer record]
+
+   ($.interop/future-proxy (.send producer
+                                  ($.interop.java/producer-record record))
+                           $.interop.clj/record-metadata))
+
+
+  ([^KafkaProducer producer record callback]
+
+   ($.interop/future-proxy (.send producer
+                                  ($.interop.java/producer-record record)
+                                  ($.interop.java/callback callback))
+                           $.interop.clj/record-metadata)))
 
 
 
 
 (defn flush
 
-  "Flush the producer.
+  "Flushes the producer.
   
-   Sends all buffered messages immediately, even is 'linger.ms' is greater than 0,
-   and blocks until completion. Other thread can continue sending messages but no
-   garantee is made they will be part of the flush.
+   Sends all buffered messages immediately, even is 'linger.ms' is greater than 0, and blocks until
+   completion. Other thread can continue sending messages but no garantee is made they will be part
+   of the flush.
 
-   Returns true or false whether the flush succeeded or not."
+   
+   @ producer
+     Kafka producer.
 
-  [producer]
+   => nil
 
-  (shared/try-bool (.flush ^KafkaProducer (raw producer))))
+
+   Throws
+  
+     org.apache.kafka.common.errors
+
+       InterruptException
+       When the thread is interrupted while flushing."
+
+  [^KafkaProducer producer]
+
+  (.flush producer))
 
 
 
 
 (defn metrics
 
-  "Get metrics about this producer"
+  "Gets metrics about this producer.
 
-  [producer]
+   @ producer
+     Kafka producer.
+  
+   => Cf. `milena.interop.clj/metrics`"
 
-  (shared/metrics producer))
+  [^KafkaProducer producer]
+
+  ($.interop.clj/metrics (.metrics producer)))
 
 
+
+
+(defn close
+
+  "Tries to close the producer cleanly.
+
+   Blocks until all sends are done or the optional timeout is elapsed.
+
+
+   @ producer
+     Kafka producer.
+
+   @ timeout-ms
+     Timeout in milliseconds.
+
+   => nil
+  
+
+   Throws
+
+     org.apache.kafka.common.errors
+
+       InterruptException
+       Whenf the thread is interrupted while blocked."
+
+  ([^KafkaProducer producer]
+
+   (.close producer))
+
+
+  ([^KafkaProducer producer timeout-ms]
+
+   (.close producer
+           (max timeout-ms
+                0)
+           TimeUnit/MILLISECONDS)))
+
+
+
+
+(defn make
+
+  "Builds a Kafka producer.
+
+   Producers are thread-safe and it is efficient to share one between multiple threads.
+
+
+   @ ?opts
+     {:?nodes
+       List of [host port].
+
+      :?config
+       Kafka configuration map.
+       Cf. https://kafka.apache.org/documentation/#producerconfigs
+     
+      :?serializer
+       Kafka serializer or fn eligable for becoming one.
+       Cf. `milena.serialize`
+           `milena.serialize/make`
+
+      :?serializer-key
+       Defaulting to `?serializer`.
+
+      :?serializer-value
+       Defaulting to `?deserializer`.}
+
+   => org.apache.kafka.clients.producer.KafkaProducer
+
+
+   Ex. (make {:?nodes            [[\"some_host\" 9092]]
+              :?config           {:client.id \"my_id\"}
+              :?serializer-key   milena.serialize/string
+              :?serializer-value (fn [_ data]
+                                   (nippy/freeze data))})"
+
+  ^KafkaProducer
+
+  ([]
+
+   (make nil))
+
+
+  ([{:as   ?opts
+     :keys [?nodes
+            ?config
+            ?serializer
+            ?serializer-key
+            ?serializer-value]
+     :or   {?nodes            [["localhost" 9092]]
+            ?serializer       $.serialize/byte-array
+            ?serializer-key   ?serializer
+            ?serializer-value ?serializer}}]
+
+   (KafkaProducer. ($.interop/config ?config
+                                     ?nodes)
+                   (-to-serializer ?serializer-key)
+                   (-to-serializer ?serializer-value))))
