@@ -9,17 +9,12 @@ clojure.
 
 The user should be using almost always these namespaces :
 
-- `milena.admin`
-  For managing topics, configurations and ACLs.
+- `milena.admin` for managing topics, configurations and ACLs.
 
-- `milena.serialize`
-  `milena.produce`
-  For serializing and sending records.
+- `milena.serialize`, `milena.produce` for serializing and sending records.
 
-- `milena.deserialize`
-  `milena.consume`
-  For deserializing and consuming records.
-
+- `milena.deserialize`, `milena.consume` for deserializing and consuming
+records.
 
 Although not strictly needed, it is best for the user to be familiar with the
 original [java library](https://kafka.apache.org/documentation/#api). The goal
@@ -28,11 +23,9 @@ The [API](https://dvlopt.github.io/doc/milena/) translates clojure data
 structures to java objects and vice-versa for the user. As such, documentation
 often refers to those namespaces :
 
-- `milena.interop.clj`
-  For translating clojure data structures to java objects.
+- `milena.interop.clj` for translating clojure data structures to java objects.
 
-- `milena.interop.java`
-  For translating java objects to clojure data structures.
+- `milena.interop.java` for translating java objects to clojure data structures.
 
 The user should never need to use those functions directly but can at least
 understand what is going on.
@@ -48,11 +41,15 @@ quite stable.
 
 ## Usage
 
+Simply add the following to your dependencies :
+
+    [dvlopt/milena "0.0.0-alpha8"]
+
 Everything is commented as clearly as possible and often with examples.
 
 [Read the full API](https://dvlopt.github.io/doc/milena/)
 
-As a convention, :keywords and symbols starting with a "?" are nilable.
+As a convention, :keywords and symbols starting with a *?* are nilable.
 
 ### Basics
 
@@ -81,7 +78,7 @@ As a convention, :keywords and symbols starting with a "?" are nilable.
 ;; There it is, amongst other topics.
 (admin/topics A)
 ;; => <Future {"my-topic" {:internal? false}
-               ...}>
+;;             ...}>
 
 
 ;; Now, let's send some records.
@@ -143,7 +140,7 @@ As a convention, :keywords and symbols starting with a "?" are nilable.
 
 
 ;; The job is done.
-;; Let's commit the offsets so next time we won't forget where we ended.
+;; Let's synchronously commit the offsets so next time we won't forget where we ended.
 ;; This will commit the offset of the last record from the last time we polled records.
 (consume/commit-sync C)
 
