@@ -1,5 +1,5 @@
 (defproject dvlopt/milena
-            "0.0.0-alpha8"
+            "0.0.0-alpha9"
 
   :description  "A straightforward clojure client for Kafka"
   :url          "https://github.com/dvlopt/milena"
@@ -8,10 +8,10 @@
   :dependencies [[org.apache.kafka/kafka-clients "0.11.0.1"]]
   :profiles     {:dev {:source-paths ["dev"]
                        :main         user
-                       :dependencies [[org.clojure/clojure         "1.9.0-beta1"]
-                                      [org.clojure/spec.alpha      "0.1.134"]
-                                      [org.clojure/test.check      "0.9.0"]
-                                      [criterium                   "0.4.4"]]
+                       :dependencies [[org.clojure/clojure            "1.9.0-beta2"]
+                                      [org.clojure/test.check         "0.9.0"]
+                                      [criterium                      "0.4.4"]
+                                      [org.apache.kafka/kafka-streams "0.11.0.1"]]
                        :plugins      [[venantius/ultra "0.5.1"]
                                       [lein-midje      "3.0.0"]
                                       [lein-codox      "0.10.3"]]

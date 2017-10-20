@@ -1088,9 +1088,9 @@
 
   ([consumer ?timeout-ms]
 
-   (map $.interop.clj/consumer-record
-        (-poll-raw consumer
-                   ?timeout-ms))))
+   (some->> (-poll-raw consumer
+                    ?timeout-ms)
+            (map $.interop.clj/consumer-record))))
 
 
 
@@ -1114,8 +1114,9 @@
 
   ([consumer ?timeout-ms]
 
-   ($.interop.clj/consumer-records-by-partitions (-poll-raw consumer
-                                                            ?timeout-ms))))
+   (some-> (-poll-raw consumer
+                      ?timeout-ms)
+           $.interop.clj/consumer-records-by-partitions )))
 
 
 

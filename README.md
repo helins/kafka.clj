@@ -43,13 +43,13 @@ quite stable.
 
 Simply add the following to your dependencies :
 
-    [dvlopt/milena "0.0.0-alpha8"]
+    [dvlopt/milena "0.0.0-alpha9"]
 
 Everything is commented as clearly as possible and often with examples.
 
 [Read the full API](https://dvlopt.github.io/doc/milena/)
 
-As a convention, :keywords and symbols starting with a *?* are nilable.
+As a convention, :keywords and symbols starting with a **?** are nilable.
 
 ### Basics
 
