@@ -1,6 +1,6 @@
 (ns milena.interop
 
-  "Miscellaneous interop utilities"
+  "Miscellaneous interop utilities."
 
   {:author "Adam Helinski"}
 
@@ -16,7 +16,7 @@
 
 (defn nodes-string
 
-  "Produce a string of Kafka nodes for admins, producers, and consumers.
+  "Produces a string of Kafka nodes for admins, producers, and consumers.
 
    @ nodes
      List of [host port] representing Kafka nodes.
@@ -28,11 +28,11 @@
   [nodes]
 
   (if (string? nodes)
-      nodes
-      (string/join ","
-                   (map (fn host-port [[host port]]
-                          (str host ":" port))
-                        nodes))))
+    nodes
+    (string/join ","
+                 (map (fn host-port [[host port]]
+                        (str host ":" port))
+                      nodes))))
 
 
 

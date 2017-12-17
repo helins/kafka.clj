@@ -1,6 +1,6 @@
 (ns milena.produce
 
-  "Everything related to Kafka producers"
+  "Everything related to Kafka producers."
 
   {:author "Adam Helinski"}
 
@@ -10,26 +10,7 @@
             [milena.interop.java :as $.interop.java]
             [milena.serialize    :as $.serialize])
   (:import java.util.concurrent.TimeUnit
-           org.apache.kafka.clients.producer.KafkaProducer
-           org.apache.kafka.common.serialization.Serializer))
-
-
-
-
-;;;;;;;;;; Private helpers
-
-
-(defn- -to-serializer
-
-  "Given a fn, creates a serializer. Otherwise, returns the arg."
-
-  ^Serializer
-
-  [arg]
-
-  (if (fn? arg)
-    ($.serialize/make arg)
-    arg))
+           org.apache.kafka.clients.producer.KafkaProducer))
 
 
 
@@ -39,7 +20,7 @@
 
 (defn producer?
 
-  "Is this a producer ?"
+  "Is `x` a producer ?"
 
   [x]
 
@@ -53,7 +34,7 @@
   
   "Gets a list of partitions for a given topic.
 
-   <!> Blocks for ever is the topic doesn't exist and dynamic creation has been disabled.
+   <!> Blocks forever is the topic does not exist and dynamic creation has been disabled.
 
 
    @ producer
@@ -71,10 +52,10 @@
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called before or while this fn is called.
+         When `unblock` is called before or while this fn is called.
 
        InterruptException
-       When the calling thread is interrupted."
+         When the calling thread is interrupted."
 
   [^KafkaProducer producer topic]
 
@@ -108,30 +89,30 @@
      java.lang
 
        IllegalStateException
-       When a 'transactional.id' has been configured and no transaction has been started.
+         When a 'transactional.id' has been configured and no transaction has been started.
 
      org.apache.kafka.common.errors
    
        InterruptException
-       When the thread is interrupted while blocked.
+         When the thread is interrupted while blocked.
 
        SerializationException
-       When the key or value are not valid objects given the configured serializers.
+         When the key or value are not valid objects given the configured serializers.
 
        TimeoutException
-       When the time take for fetching metadata or allocating memory for the record has surpassed 'max.block.ms'.
+         When the time take for fetching metadata or allocating memory for the record has surpassed 'max.block.ms'.
 
        KafkaException
-       Any other unrecoverable error.
+         Any other unrecoverable error.
 
 
   Ex. (commit producer
               {:topic \"my-topic\"
                :key   \"some-key\"
                :value 42}
-              (fn callback [?exception ?meta]
-                (when-not ?exception
-                  (println :committed ?meta))))
+              (fn callback [exception meta]
+                (when-not exception
+                  (println :committed meta))))
 
 
   Cf. `milena.produce/deref`"
@@ -173,7 +154,7 @@
      org.apache.kafka.common.errors
 
        InterruptException
-       When the thread is interrupted while flushing."
+         When the thread is interrupted while flushing."
 
   [^KafkaProducer producer]
 
@@ -243,33 +224,33 @@
    Producers are thread-safe and it is efficient to share one between multiple threads.
 
 
-   @ ?opts
-     {:?nodes
+   @ opts (nilable)
+     {:nodes (nilable)
        List of [host port].
 
-      :?config
+      :config (nilable)
        Kafka configuration map.
        Cf. https://kafka.apache.org/documentation/#producerconfigs
      
-      :?serializer
+      :serializer (nilable)
        Kafka serializer or fn eligable for becoming one.
        Cf. `milena.serialize`
            `milena.serialize/make`
 
-      :?serializer-key
+      :serializer-key (nilable)
        Defaulting to `?serializer`.
 
-      :?serializer-value
+      :serializer-value (nilable)
        Defaulting to `?deserializer`.}
 
    => org.apache.kafka.clients.producer.KafkaProducer
 
 
-   Ex. (make {:?nodes            [[\"some_host\" 9092]]
-              :?config           {:client.id \"my_id\"}
-              :?serializer-key   milena.serialize/string
-              :?serializer-value (fn [_ data]
-                                   (nippy/freeze data))})"
+   Ex. (make {:nodes            [[\"some_host\" 9092]]
+              :config           {:client.id \"my_id\"}
+              :serializer-key   milena.serialize/string
+              :serializer-value (fn [_ data]
+                                  (nippy/freeze data))})"
 
   ^KafkaProducer
 
@@ -278,18 +259,18 @@
    (make nil))
 
 
-  ([{:as   ?opts
-     :keys [?nodes
-            ?config
-            ?serializer
-            ?serializer-key
-            ?serializer-value]
-     :or   {?nodes            [["localhost" 9092]]
-            ?serializer       $.serialize/byte-array
-            ?serializer-key   ?serializer
-            ?serializer-value ?serializer}}]
+  ([{:as   opts
+     :keys [nodes
+            config
+            serializer
+            serializer-key
+            serializer-value]
+     :or   {nodes            [["localhost" 9092]]
+            serializer       $.serialize/byte-array
+            serializer-key   serializer
+            serializer-value serializer}}]
 
-   (KafkaProducer. ($.interop/config ?config
-                                     ?nodes)
-                   (-to-serializer ?serializer-key)
-                   (-to-serializer ?serializer-value))))
+   (KafkaProducer. ($.interop/config config
+                                     nodes)
+                   ($.serialize/make serializer-key)
+                   ($.serialize/make serializer-value))))

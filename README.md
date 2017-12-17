@@ -1,10 +1,13 @@
 # Milena
 
+[![Clojars
+Project](https://img.shields.io/clojars/v/dvlopt/milena.svg)](https://clojars.org/dvlopt/milena)
+
 ![alt text](https://s-media-cache-ak0.pinimg.com/600x315/a4/11/25/a411251488b63fb207751b1545aeb551.jpg "Milena")
 
 Franz Kafka and Milena Jesenska wrote passionate letters to each other.
 
-This library allows the user to exchange records with Kafka while speaking
+This Kafka client library allows the user to exchange records while speaking
 clojure.
 
 The user should be using almost always these namespaces :
@@ -36,20 +39,9 @@ While being already used in production, this library is still alpha (soon to be
 beta). The main reason being that all the java admin stuff is itself brand new
 and might change in the future.
 
-Otherwise, after quite a few breaking changes, other namespaces should now be
-quite stable.
-
 ## Usage
 
-Simply add the following to your dependencies :
-
-    [dvlopt/milena "0.0.0-alpha9"]
-
-Everything is commented as clearly as possible and often with examples.
-
-[Read the full API](https://dvlopt.github.io/doc/milena/)
-
-As a convention, :keywords and symbols starting with a **?** are nilable.
+Read the full [API](https://dvlopt.github.io/doc/milena/)
 
 ### Basics
 
@@ -65,14 +57,14 @@ As a convention, :keywords and symbols starting with a **?** are nilable.
 ;; First, we are going to create a topic.
 ;; We need an admin client.
 (def A
-     (admin/make {:?nodes [["localhost"] 9092]}))
+     (admin/make {:nodes [["localhost"] 9092]}))
 
 
 ;; Let's create the topic.
 (admin/topics-create A
-                     {"my-topic" {:?partitions         1
-                                  :?replication-factor 1
-                                  :?config             {:cleanup.policy "compact"}}})
+                     {"my-topic" {:partitions         1
+                                  :replication-factor 1
+                                  :config             {:cleanup.policy "compact"}}})
 
 
 ;; There it is, amongst other topics.
@@ -84,9 +76,9 @@ As a convention, :keywords and symbols starting with a **?** are nilable.
 ;; Now, let's send some records.
 ;; We need a producer.
 (def P
-     (produce/make {:?nodes            [["localhost" 9092]]
-                    :?serializer-key   serialize/string
-                    :?serializer-value serialize/long}))
+     (produce/make {:nodes            [["localhost" 9092]]
+                    :serializer-key   serialize/string
+                    :serializer-value serialize/long}))
 
 
 ;; Let's send 5 records to our new topic on partition 0.
@@ -94,22 +86,22 @@ As a convention, :keywords and symbols starting with a **?** are nilable.
 (dotimes [i 5]
   (produce/commit P
                   {:topic      "my-topic"
-                   :?partition 0
-                   :?key       (format "message-%d"
+                   :partition 0
+                   :key       (format "message-%d"
                                        i)
-                   :?value     i}
-                  (fn callback [?exception ?meta]
-                    (println i :okay? (boolean ?exception)))))
+                   :value     i}
+                  (fn callback [exception meta]
+                    (println i :okay? (boolean exception)))))
 
 
 ;; Okay, time to consume some records !
 ;; We need a consumer (with a little bit of optional configuration).
 (def C
-     (consume/make {:?nodes              [["localhost" 9092]]
-                    :?deserializer-key   deserialize/string
-                    :?deserializer-value deserialize/long
-                    :?config             {:group.id           "my_test"
-                                          :enable.auto.commit false}}))
+     (consume/make {:nodes              [["localhost" 9092]]
+                    :deserializer-key   deserialize/string
+                    :deserializer-value deserialize/long
+                    :config             {:group.id           "my_test"
+                                         :enable.auto.commit false}}))
 
 
 

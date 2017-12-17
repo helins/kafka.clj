@@ -1,6 +1,6 @@
 (ns milena.admin
   
-  "Manage and inspect topics, brockers, configurations and ACLs"
+  "Manage and inspect topics, brockers, configurations and ACLs."
 
   {:author "Adam Helinski"}
 
@@ -19,7 +19,7 @@
 
 
 
-;;;;;;;;;;
+;;;;;;;;;; Misc
 
 
 (defn cluster
@@ -29,7 +29,7 @@
    @ client
      Admin client.
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/describe-cluster-options`
 
    => Cf. `milena.interop.clj/describe-cluster-result`"
@@ -40,14 +40,17 @@
             nil))
 
 
-  ([^AdminClient client ?opts]
+  ([^AdminClient client opts]
 
-   ($.interop.clj/describe-cluster-result (if ?opts
+   ($.interop.clj/describe-cluster-result (if opts
                                             (.describeCluster client
-                                                              ($.interop.java/describe-cluster-options ?opts))
+                                                              ($.interop.java/describe-cluster-options opts))
                                             (.describeCluster client)))))
 
 
+
+
+;;;;;;;;;; Topics
 
 
 (defn topics
@@ -57,7 +60,7 @@
    @ client
      Admin client.
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/list-topics-options`
 
    => A future
@@ -69,11 +72,11 @@
            nil))
 
 
-  ([^AdminClient client ?opts]
+  ([^AdminClient client opts]
 
-   ($.interop/future-proxy (.listings (if ?opts
+   ($.interop/future-proxy (.listings (if opts
                                         (.listTopics client
-                                                     ($.interop.java/list-topics-options ?opts))
+                                                     ($.interop.java/list-topics-options opts))
                                         (.listTopics client)))
                            $.interop.clj/topic-listings)))
 
@@ -88,7 +91,7 @@
    @ client
      Admin client.
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/list-topics-options`
 
    => Cf. `milena.interop.clj/describe-topics-result`
@@ -105,12 +108,12 @@
                     nil))
 
 
-  ([^AdminClient client topics ?opts]
+  ([^AdminClient client topics opts]
 
-   ($.interop.clj/describe-topics-result (if ?opts
+   ($.interop.clj/describe-topics-result (if opts
                                            (.describeTopics client
                                                             topics
-                                                            ($.interop.java/describe-topics-options ?opts))
+                                                            ($.interop.java/describe-topics-options opts))
                                            (.describeTopics client
                                                             topics)))))
 
@@ -131,16 +134,16 @@
      A map of topic-name to topic-args.
      Cf. `milena.interop.java/new-topic`
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/create-topics-options`
 
    => `milena.interop.clj/create-topics-result`
   
   
    Ex. (topics-create client
-                      {\"my-new-topic\" {:?partitions         4
-                                         :?replication-factor 1
-                                         :?config             {:cleanup.policy \"compact\"}}})"
+                      {\"my-new-topic\" {:partitions         4
+                                         :replication-factor 1
+                                         :config             {:cleanup.policy \"compact\"}}})"
 
   ([client new-topics]
    
@@ -149,16 +152,16 @@
                   nil))
 
 
-  ([^AdminClient client new-topics ?opts]
+  ([^AdminClient client new-topics opts]
 
-   (let [topics' (map (fn map-topics [[topic ?topic-opts]]
+   (let [topics' (map (fn map-topics [[topic topic-opts]]
                         ($.interop.java/new-topic topic
-                                                  ?topic-opts))
+                                                  topic-opts))
                       new-topics)]
-     ($.interop.clj/create-topics-result (if ?opts
+     ($.interop.clj/create-topics-result (if opts
                                            (.createTopics client
                                                           topics'
-                                                          ($.interop.java/create-topics-options ?opts))
+                                                          ($.interop.java/create-topics-options opts))
                                            (.createTopics client
                                                           topics'))))))
 
@@ -167,7 +170,7 @@
 
 (defn topics-delete
 
-  "Delete topics.
+  "Deletes topics.
   
 
    @ client
@@ -176,7 +179,7 @@
    @ topics
      List of topic names.
   
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/delete-topics-options`
 
    => `milena.interop.clj/delete-topics-result`
@@ -193,16 +196,19 @@
                   nil))
 
 
-  ([^AdminClient client topics ?opts]
+  ([^AdminClient client topics opts]
 
-   ($.interop.clj/delete-topics-result (if ?opts
+   ($.interop.clj/delete-topics-result (if opts
                                          (.deleteTopics client
                                                         topics
-                                                        ($.interop.java/delete-topics-options ?opts))
+                                                        ($.interop.java/delete-topics-options opts))
                                          (.deleteTopics client
                                                         topics)))))
 
 
+
+
+;;;;;;;;;; Configuration
 
 
 (defn config
@@ -216,7 +222,7 @@
    @ resources
      Cf. `milena.interop.java/config-resources`
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/describe-configs-options`
 
    => Cf. `milena.interop.clj/describe-configs-result`
@@ -235,12 +241,12 @@
            nil))
 
 
-  ([^AdminClient client resources ?opts]
+  ([^AdminClient client resources opts]
    (let [resources' ($.interop.java/config-resources resources)]
-     ($.interop.clj/describe-configs-result (if ?opts
+     ($.interop.clj/describe-configs-result (if opts
                                               (.describeConfigs client
                                                                 resources'
-                                                                ($.interop.java/describe-configs-options ?opts))
+                                                                ($.interop.java/describe-configs-options opts))
                                               (.describeConfigs client
                                                                 resources'))))))
 
@@ -259,6 +265,9 @@
      Resource configurations.
      Cf. `milena.interop.java/alter-configs`
 
+   @ opts (nilable)
+     Cf. `milena.interop.java/alter-configs-options`
+
    => Cf. `milena.interop.clj/alter-configs-result`
   
   
@@ -273,17 +282,20 @@
                  nil))
 
 
-  ([^AdminClient client configs ?opts]
+  ([^AdminClient client configs opts]
 
    (let [configs' ($.interop.java/alter-configs configs)]
-     ($.interop.clj/alter-configs-result (if ?opts
+     ($.interop.clj/alter-configs-result (if opts
                                            (.alterConfigs client
                                                           configs'
-                                                          ($.interop.java/alter-configs-options ?opts))
+                                                          ($.interop.java/alter-configs-options opts))
                                            (.alterConfigs client
                                                           configs'))))))
 
 
+
+
+;;;;;;;;;; ACLs
 
 
 (defn acls
@@ -294,11 +306,11 @@
    @ client
      Admin client.
 
-   @ ?acl-filter
+   @ acl-filter (nilable)
      ACL filter.
      Cf. `milena.interop.java/acl-binding-filter`
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `$.interop.java/describe-acls-options`
 
    => Cf. `milena.interop.clj/describe-acls-result`
@@ -307,10 +319,10 @@
    Ex. (acls client)
   
        (acls client
-             {:?resource       {:?name :topic
-                                :?type \"my-topic\"}
-              :?access-control {:?permission :allow
-                                :?operation  :create}})"
+             {:resource       {:name :topic
+                               :type \"my-topic\"}
+              :access-control {:permission :allow
+                               :operation  :create}})"
 
   ([client]
 
@@ -319,29 +331,29 @@
          nil))
 
 
-  ([client ?acl-filter]
+  ([client acl-filter]
 
    (acls client
-         ?acl-filter
+         acl-filter
          nil))
 
 
-  ([^AdminClient client ?acl-filter ?opts]
+  ([^AdminClient client acl-filter opts]
 
-   (let [?acl-filter' ($.interop.java/acl-binding-filter ?acl-filter)]
-     ($.interop.clj/describe-acls-result (if ?opts
+   (let [acl-filter' ($.interop.java/acl-binding-filter acl-filter)]
+     ($.interop.clj/describe-acls-result (if opts
                                            (.describeAcls client
-                                                          ?acl-filter'
-                                                          ($.interop.java/describe-acls-options ?opts))
+                                                          acl-filter'
+                                                          ($.interop.java/describe-acls-options opts))
                                            (.describeAcls client
-                                                          ?acl-filter'))))))
+                                                          acl-filter'))))))
 
 
 
 
 (defn acls-create 
 
-  "Create acls.
+  "Creates acls.
   
   
    @ client
@@ -351,7 +363,7 @@
      List of ACLs.
      Cf. `milena.interop.java/acl-binding`
 
-   @ ?opts
+   @ opts (nilable)
      Cf. `milena.interop.java/create-acls-options`
 
    => Cf. `milena.interop.clj/create-acls-result`"
@@ -362,14 +374,14 @@
                 nil))
 
 
-  ([^AdminClient client acls ?opts]
+  ([^AdminClient client acls opts]
 
    (let [acls' (map $.interop.java/acl-binding
                     acls)]
-     ($.interop.clj/create-acls-result (if ?opts
+     ($.interop.clj/create-acls-result (if opts
                                          (.createAcls client
                                                       acls'
-                                                      ($.interop.java/create-acls-options ?opts))
+                                                      ($.interop.java/create-acls-options opts))
                                          (.createAcls client
                                                       acls'))))))
 
@@ -378,7 +390,7 @@
 
 (defn acls-delete
 
-  "Delete acls.
+  "Deletes acls.
   
 
    @ client
@@ -392,10 +404,10 @@
 
 
    Ex. (acls-delete client
-                    [{:?resource       {:?name \"my-topic\"
-                                        :?type :topic}
-                      :?access-control {:?permission :allow
-                                        :?operation  :alter}}])"
+                    [{:resource       {:name \"my-topic\"
+                                       :type :topic}
+                      :access-control {:permission :allow
+                                       :operation  :alter}}])"
 
   ([client acl-filters]
 
@@ -404,23 +416,26 @@
                 nil))
 
 
-  ([^AdminClient client acl-filters ?opts]
+  ([^AdminClient client acl-filters opts]
 
    (let [acl-filters' (map $.interop.java/acl-binding-filter
                            acl-filters)]
-     ($.interop.clj/delete-acls-result (if ?opts
+     ($.interop.clj/delete-acls-result (if opts
                                          (.deleteAcls client
                                                       acl-filters'
-                                                      ($.interop.java/delete-acls-options ?opts))
+                                                      ($.interop.java/delete-acls-options opts))
                                          (.deleteAcls client
                                                       acl-filters'))))))
 
 
 
 
+;;;;;;;;;; Admin client
+
+
 (defn close
 
-  "Close the admin client and release all associated resources.
+  "Closes the admin client and releases all associated resources.
 
    @ client
      Admin client.
@@ -452,13 +467,13 @@
   "Builds a Kafka admin client.
   
 
-   @opts
-    {:?nodes
-      A list of [host port].
+   @ opts (nilable)
+     {:nodes (nilable)
+       A list of [host port].
 
-     :?config
-      Kafka configuration.
-      Cf. https://kafka.apache.org/documentation/#adminclientconfigs}
+      :config (nilable)
+       Kafka configuration.
+       Cf. https://kafka.apache.org/documentation/#adminclientconfigs}
 
   => org.apache.kafka.clients.admin.AdminClient
 
@@ -471,10 +486,10 @@
    (make nil))
 
 
-  ([{:as   ?opts
-     :keys [?nodes
-            ?config]
-     :or   {?nodes [["localhost" 9092]]}}]
+  ([{:as   opts
+     :keys [nodes
+            config]
+     :or   {nodes [["localhost" 9092]]}}]
 
-   (AdminClient/create ($.interop/config ?config
-                                         ?nodes))))
+   (AdminClient/create ($.interop/config config
+                                         nodes))))

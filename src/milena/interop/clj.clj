@@ -1,6 +1,6 @@
 (ns milena.interop.clj
 
-  "Convert java objects to clojure data structures"
+  "Convert java objects to clojure data structures."
 
   {:author "Adam Helinski"}
 
@@ -54,22 +54,22 @@
      org.apache.kafka.common.Node
 
    => {:host
-        Host name for this node
+        Host name for this node.
 
        :port
-        The port this node is listening on
+        The port this node is listening on.
 
-       :?rack
-        The name of the rack this node is on
+       :rack (nilable)
+        The name of the rack this node is on.
 
        :id
-        The numerical ID of this node}"
+        The numerical ID of this node.}"
 
   [^Node n]
 
   {:host  (.host n)
    :port  (.port n)
-   :?rack (.rack n)
+   :rack (.rack n)
    :id    (.id   n)})
 
 
@@ -375,7 +375,7 @@
   "@ rf
      org.apache.kafka.common.resource.ResourceFilter
 
-   => {:name
+   => {:name (nilable)
         Resource name.
 
        :type
@@ -384,8 +384,8 @@
 
   [^ResourceFilter rf]
 
-  {:?name (.name rf)
-   :type  (resource-type (.resourceType rf))})
+  {:name (.name rf)
+   :type (resource-type (.resourceType rf))})
 
 
 
@@ -486,9 +486,9 @@
   "@ acef
      org.apache.kafka.common.acl.AccessControlEntryFilter
 
-   => {:?principal
+   => {:principal (nilable)
 
-       :?host
+       :host (nilable)
         Host name or nil.
 
        :permission
@@ -499,8 +499,8 @@
 
   [^AccessControlEntryFilter acef]
 
-  {:?principal      (.principal      acef)
-   :?host           (.host           acef)
+  {:principal      (.principal      acef)
+   :host           (.host           acef)
    :permission      (.permissionType acef)
    :operation       (.operation      acef)})
 
@@ -586,7 +586,7 @@
       
       + topic-data
         {:internal?
-         Is this topic internal?}"
+          Is this topic internal?}"
 
   [^TopicListing tls]
 
@@ -789,16 +789,16 @@
   "@ dar$fr
      org.apache.kafka.clients.admin.DeleteAclsResult.FilterResult
 
-   => {:?exception
+   => {:exception (nilable)
         Exception or nil if no error occured.
 
-       :?acl
+       :acl (nilable)
         ACL of nil if an error occured.}"
 
   [^DeleteAclsResult$FilterResult dar$fr]
 
-  {:?exception   (.exception dar$fr)
-   :?acl         (acl-binding (.binding dar$fr))})
+  {:exception (.exception dar$fr)
+   :acl       (acl-binding (.binding dar$fr))})
 
 
 
@@ -851,7 +851,7 @@
    => {:topic
         Name of the topic the record was appended to.
 
-       :?partition
+       :?partition (nilable)
         Partition number of the topic or nil if unknown.
 
        :timestamp
@@ -862,13 +862,13 @@
 
   [^RecordMetadata rm]
 
-  {:topic      (.topic     rm)
-   :?partition (let [partition (.partition rm)]
-                 (when (not= partition
-                             RecordMetadata/UNKNOWN_PARTITION)
-                   partition))
-   :timestamp  (.timestamp rm)
-   :offset     (.offset    rm)})
+  {:topic     (.topic     rm)
+   :partition (let [partition (.partition rm)]
+                (when (not= partition
+                            RecordMetadata/UNKNOWN_PARTITION)
+                  partition))
+   :timestamp (.timestamp rm)
+   :offset    (.offset    rm)})
 
 
 

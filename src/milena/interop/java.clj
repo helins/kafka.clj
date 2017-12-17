@@ -1,6 +1,6 @@
 (ns milena.interop.java
 
-  "Convert clojure data structures to java objects"
+  "Convert clojure data structures to java objects."
 
   {:author "Adam Helinski"}
 
@@ -45,12 +45,12 @@
 
 (defn at-least-0
 
-  "Converts a number to a positive int, a negative value resulting in 0."
+  "Converts a number `n` (nilable) to a positive int, a negative value resulting in 0."
 
-  [?n]
+  [n]
 
-  (when (number? ?n)
-    (int (max ?n
+  (when (number? n)
+    (int (max n
               0))))
 
 
@@ -96,7 +96,7 @@
 
 (defn config-resource$type
 
-  "@ ?kw
+  "@ kw
      One of :unknown or nil
             :brokers
             :topics
@@ -110,10 +110,10 @@
    ConfigResource$Type/UNKNOWN)
 
 
-  ([?kw]
+  ([kw]
 
    (condp identical?
-          ?kw
+          kw
      nil      ConfigResource$Type/UNKNOWN
      :unknown ConfigResource$Type/UNKNOWN
      :brokers ConfigResource$Type/BROKER
@@ -127,7 +127,7 @@
   "@ name
      Resource name
   
-   @ ?type
+   @ type (nilable)
      Resource type.
      Cf. `config-resource$type`
   
@@ -145,9 +145,9 @@
                     name))
 
 
-  ([name ?type]
+  ([name type]
 
-   (ConfigResource. (config-resource$type ?type)
+   (ConfigResource. (config-resource$type type)
                     name)))
 
 
@@ -187,7 +187,7 @@
 
 (defn resource-type
 
-  "@ ?kw
+  "@ kw (nilable)
      One of :any or nil
             :cluster
             :groupc
@@ -204,10 +204,10 @@
    ResourceType/ANY)
 
 
-  ([?kw]
+  ([kw]
 
    (condp identical?
-          ?kw
+          kw
      nil               ResourceType/ANY
      :any              ResourceType/ANY
      :cluster          ResourceType/CLUSTER
@@ -221,11 +221,11 @@
 
 (defn resource
 
-  "@ ?args
+  "@ args (nilable)
      {:name
        Resource name.
 
-      :?type
+      :type (nilable)
        Cf. `resource-type`}
 
    => org.apache.kafka.common.resource.Resource
@@ -236,17 +236,17 @@
 
   ^Resource
 
-  ([{:as   ?args
+  ([{:as   args
      :keys [name
-            ?type]}]
+            type]}]
 
    (resource name
-             ?type))
+             type))
 
 
-  ([name ?type]
+  ([name type]
 
-   (Resource. (resource-type ?type)
+   (Resource. (resource-type type)
               name)))
 
 
@@ -254,11 +254,11 @@
 
 (defn resource-filter
 
-  "@ ?args
-     {:?name
+  "@ args (nilable)
+     {:name (nilable)
        Resource name.
 
-      :?type
+      :type (nilable)
        Resource type.
        Cf. `resource-type`}
 
@@ -266,8 +266,8 @@
   
    Ex. (resource-filter)
   
-       (resource-filter {:?name \"my-topic\"
-                         :?type :topic})"
+       (resource-filter {:name \"my-topic\"
+                         :type :topic})"
 
   ^ResourceFilter
 
@@ -297,8 +297,8 @@
 
 (defn acl-operation
 
-  "@ ?kw
-     One of :all              
+  "@ kw (nilable)
+     One of :all               or nil
             :alter
             :alter-config
             :any
@@ -316,10 +316,10 @@
 
   ^AclOperation
 
-  [?kw]
+  [kw]
 
   (condp identical?
-         ?kw
+         kw
     nil               AclOperation/ALL
     :all              AclOperation/ALL
     :alter            AclOperation/ALTER
@@ -340,7 +340,7 @@
 
 (defn acl-permission-type
 
-  "@ ?kw
+  "@ kw (nilable)
      One of :any or nil
             :allow
             :deny
@@ -350,10 +350,10 @@
 
   ^AclPermissionType
 
-  [?kw]
+  [kw]
 
   (condp identical?
-         ?kw
+         kw
     nil      AclPermissionType/ANY
     :any     AclPermissionType/ANY
     :allow   AclPermissionType/ALLOW
@@ -368,13 +368,13 @@
   "@ args
      {:principal
 
-      :?host
+      :host (nilable)
        The host name where \"*\" involves all hosts.
 
-      :?permission
+      :permission (nilable)
        Cf. `acl-permission-type`
 
-      :?operation
+      :operation (nilable)
        Cf. `acl-operation`}
          
 
@@ -384,42 +384,42 @@
 
   ([{:as   args
      :keys [principal
-            ?host
-            ?permission
-            ?operation]
-     :or   {?host            "*"
-            ?operation       :all
-            ?permission-type :any}}]
+            host
+            permission
+            operation]
+     :or   {host            "*"
+            operation       :all
+            permission-type :any}}]
 
    (access-control-entry principal
-                         ?host
-                         ?permission
-                         ?operation))
+                         host
+                         permission
+                         operation))
 
 
-  ([principal ?host ?permission ?operation]
+  ([principal host permission operation]
 
    (AccessControlEntry. principal
-                        (or ?host
+                        (or host
                             "*")
-                        (acl-operation ?operation)
-                        (acl-permission-type ?permission))))
+                        (acl-operation operation)
+                        (acl-permission-type permission))))
 
 
 
 
 (defn access-control-entry-filter
 
-  "@ ?args
-     {:?principal
+  "@ args (nilable)
+     {:principal (nilable)
       
-      :?host
+      :host (nilable)
        The host name where \"*\" involves any host.
 
-      :?permission
+      :permission (nilable)
        Cf. `acl-permission-type`
 
-      :?operation
+      :operation (nilable)
        Cf. `acl-operation`}
 
 
@@ -427,8 +427,8 @@
    => org.apache.kafka.common.acl.AccessControlEntryFilter
 
   
-   Ex. (access-control-entry-filter {:?permission :allow
-                                     :?operation  :create})"
+   Ex. (access-control-entry-filter {:permission :allow
+                                     :operation  :create})"
 
   ^AccessControlEntryFilter
 
@@ -437,28 +437,28 @@
    AccessControlEntryFilter/ANY)
 
 
-  ([{:as   ?args
-     :keys [?principal
-            ?host
-            ?permission
-            ?operation]
-     :or   {?host            "*"
-            ?operation       :all
-            ?permission-type :any}}]
+  ([{:as   args
+     :keys [principal
+            host
+            permission
+            operation]
+     :or   {host            "*"
+            operation       :all
+            permission-type :any}}]
 
-   (access-control-entry-filter ?principal
-                                ?host
-                                ?permission
-                                ?operation))
+   (access-control-entry-filter principal
+                                host
+                                permission
+                                operation))
 
 
-  ([?principal ?host ?permission ?operation]
+  ([principal host permission operation]
 
-   (AccessControlEntryFilter. ?principal
-                              (or ?host
+   (AccessControlEntryFilter. principal
+                              (or host
                                   "*")
-                              (acl-operation ?operation)
-                              (acl-permission-type ?permission))))
+                              (acl-operation operation)
+                              (acl-permission-type permission))))
 
 
 
@@ -494,20 +494,20 @@
 
 (defn acl-binding-filter
 
-  "@ ?args
-     {:?resource
+  "@ args (nilable)
+     {:resource (nilable)
        Cf. `resource-filter`
 
-      :?access-control
+      :access-control (nilable)
        Cf. `access-control-entry-filter`}
 
    => org.apache.kafka.common.acl.AclBindingFilter
   
    
-   Ex. (acl-binding-filter {:?resource       {:?name \"my-topic\"
-                                              :?type :topic}
-                            :?access-control {:?permission :allow
-                                              :?operation  :alter}})"
+   Ex. (acl-binding-filter {:resource       {:name \"my-topic\"
+                                             :type :topic}
+                            :access-control {:permission :allow
+                                             :operation  :alter}})"
 
   ^AclBindingFilter
 
@@ -516,18 +516,18 @@
    AclBindingFilter/ANY)
 
 
-  ([{:as   ?args
-     :keys [?resource
-            ?access-control]}]
+  ([{:as   args
+     :keys [resource
+            access-control]}]
 
-   (acl-binding-filter ?resource
-                       ?access-control))
+   (acl-binding-filter resource
+                       access-control))
 
 
-  ([?resource ?access-control]
+  ([resource access-control]
 
-   (AclBindingFilter. (resource-filter ?resource)
-                      (access-control-entry-filter ?access-control))))
+   (AclBindingFilter. (resource-filter resource)
+                      (access-control-entry-filter access-control))))
 
 
 
@@ -539,8 +539,8 @@
 
   "Options for `milena.admin/cluster`.
 
-   @ ?args
-     {:?timeout-ms
+   @ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
   
@@ -548,11 +548,11 @@
 
   ^DescribeClusterOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DescribeClusterOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
@@ -561,8 +561,8 @@
 
   "Options for `milena.admin/topics`.
 
-   @ ?args
-     {:?timeout-ms
+   @ args (nilable)
+     {:timeout-ms (nilable)
         An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
         if the values couldn't be retrieved within this timeout.
 
@@ -573,19 +573,19 @@
 
   ^ListTopicsOptions
 
-  ([{:as  ?args
-     :keys [?timeout-ms
+  ([{:as  args
+     :keys [timeout-ms
             internal?]
      :or   {internal? false}}]
 
-   (list-topics-options ?timeout-ms
+   (list-topics-options timeout-ms
                         internal?))
 
 
-  ([?timeout-ms internal?]
+  ([timeout-ms internal?]
 
    (doto (ListTopicsOptions.)
-     (.timeoutMs    (at-least-0 ?timeout-ms))
+     (.timeoutMs    (at-least-0 timeout-ms))
      (.listInternal internal?))))
 
 
@@ -595,8 +595,8 @@
 
   "Options for `milena.admin/topics-decribe`.
   
-   @ ?args
-     {:?timeout-ms
+   @ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
   
@@ -604,11 +604,11 @@
 
   ^DescribeTopicsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DescribeTopicsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
@@ -624,20 +624,20 @@
    @ topic
        The topic name
 
-   @ ?args
-       {:?partitions
+   @ args (nilable)
+       {:partitions (nilable)
          The number of partition for this new topic
 
-        :?replication-factor
+        :replication-factor (nilable)
          The replication factor for each partition
 
-        :?assigments
+        :assigments (nilable)
          A map of partition number -> list of replica ids (i.e. broker ids).
 
          Although not enforced, it is generally a good idea for all partitions to have
          the same number of replicas.
 
-        :?config
+        :config (nilable)
          Kafka configuration
 
          Cf. https://kafka.apache.org/documentation/#topicconfigs}
@@ -646,28 +646,28 @@
   
 
    Ex. (new-topic \"topic-name\"
-                  {:?partitions        4
-                   :?replication-facor 3})"
+                  {:partitions        4
+                   :replication-facor 3})"
 
   ^NewTopic
 
-  [topic {:as   ?args
-          :keys [?partitions
-                 ?replication-factor
-                 ?assignments
-                 ?config]
-          :or   {?partitions         1
-                 ?replication-factor 1}}]
+  [topic {:as   args
+          :keys [partitions
+                 replication-factor
+                 assignments
+                 config]
+          :or   {partitions         1
+                 replication-factor 1}}]
 
-  (let [new-topic (if ?assignments
+  (let [new-topic (if assignments
                     (NewTopic. topic
-                               ?assignments)
+                               assignments)
                     (NewTopic. topic
-                               ?partitions
-                               ?replication-factor))]
-    (when ?config
+                               partitions
+                               replication-factor))]
+    (when config
       (.configs new-topic
-                ($.interop/stringify-keys ?config)))
+                ($.interop/stringify-keys config)))
     new-topic))
 
 
@@ -677,29 +677,29 @@
 
   "Options for `milena.admin/topics-create`.
   
-   @ ?args
-     {:?timeout-ms
+   @ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.
 
-      :?fake
+      :fake (nilable)
        Validate request without actually creating the topic for real ?}
   
    => org.apache.kafka.clients.admin.CreateTopicsOptions"
 
   ^CreateTopicsOptions
 
-  ([{:as   ?args
-     :keys [?timeout-ms
+  ([{:as   args
+     :keys [timeout-ms
             fake?]}]
 
-   (create-topics-options ?timeout-ms
+   (create-topics-options timeout-ms
                           fake?))
 
-  ([?timeout-ms fake?]
+  ([timeout-ms fake?]
 
    (doto (CreateTopicsOptions.)
-     (.timeoutMs    (at-least-0 ?timeout-ms))
+     (.timeoutMs    (at-least-0 timeout-ms))
      (.validateOnly fake?))))
 
 
@@ -709,8 +709,8 @@
 
   "Options for `milena.admin/topics-delete`.
   
-   @ ?args
-     {:?timeout-ms
+   @ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
   
@@ -718,11 +718,11 @@
 
   ^DeleteTopicsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DeleteTopicsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
@@ -731,8 +731,8 @@
 
   "Options for `milena.admin/config`.
   
-   @ ?args
-     {:?timeout-ms
+   @ args
+     {:timeout-ms
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
   
@@ -740,11 +740,11 @@
 
   ^DescribeConfigsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DescribeConfigsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
@@ -824,31 +824,31 @@
 
 (defn alter-configs-options
 
-  "@ ?args
-     {:?timeout-ms
+  "@ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.
 
-      :?fake
+      :fake (nilable)
        Validate request without actually creating the topic for real ?}
   
    => org.apache.kafka.clients.admin.AlterConfigsOptions"
 
   ^AlterConfigsOptions
 
-  ([{:as   ?args
-     :keys [?timeout-ms
+  ([{:as   args
+     :keys [timeout-ms
             fake?]
      :or   {fake? false}}]
 
-   (alter-configs-options ?timeout-ms
+   (alter-configs-options timeout-ms
                           fake?))
 
 
-  ([?timeout-ms fake?]
+  ([timeout-ms fake?]
 
    (doto (AlterConfigsOptions.)
-     (.timeoutMs    (at-least-0 ?timeout-ms))
+     (.timeoutMs    (at-least-0 timeout-ms))
      (.validateOnly fake?))))
 
 
@@ -856,8 +856,8 @@
 
 (defn describe-acls-options
 
-  "@ ?args
-     {:?timeout-ms
+  "@ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
 
@@ -865,19 +865,19 @@
 
   ^DescribeAclsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DescribeAclsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
 
 (defn create-acls-options
 
-  "@ ?args
-     {:?timeout-ms
+  "@ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
 
@@ -885,19 +885,19 @@
 
   ^CreateAclsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (CreateAclsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
 
 (defn delete-acls-options
 
-  "@ ?args
-     {:?timeout-ms
+  "@ args (nilable)
+     {:timeout-ms (nilable)
        An optional timeout in milliseconds, futures will throw a org.apache.kafka.common.errors.TimeoutException
        if the values couldn't be retrieved within this timeout.}
 
@@ -905,11 +905,11 @@
 
   ^DeleteAclsOptions
 
-  [{:as   ?args
-    :keys [?timeout-ms]}]
+  [{:as   args
+    :keys [timeout-ms]}]
 
   (doto (DeleteAclsOptions.)
-    (.timeoutMs (at-least-0 ?timeout-ms))))
+    (.timeoutMs (at-least-0 timeout-ms))))
 
 
 
@@ -923,40 +923,40 @@
      {:topic
        Topic name.
 
-      :?partition
+      :partition (nilable)
        Optional partition number.
 
-      :?key
+      :key (nilable)
        Optional key.
 
-      :?value
+      :value (nilable)
        Optional value.
 
-      :?timestamp
+      :timestamp (nilable)
        Optional unix timestamp.
 
    =>  org.apache.kafka.clients.producer.ProducerRecord
   
   
    Ex. (producer-record {:topic  \"my-topic\"
-                         :?key   \"some-key\"
-                         :?value 42})"
+                         :key   \"some-key\"
+                         :value 42})"
 
   ^ProducerRecord
 
   [{:as   record
     :keys [topic
-           ?partition
-           ?key
-           ?value
-           ?timestamp]}]
+           partition
+           key
+           value
+           timestamp]}]
 
   (ProducerRecord. topic
-                   (some-> ?partition
+                   (some-> partition
                            int)
-                   ?timestamp
-                   ?key
-                   ?value
+                   timestamp
+                   key
+                   value
                    nil))
 
 
@@ -972,9 +972,9 @@
   => org.apache.kafka.clients.producer.Callback
 
 
-  Ex. (callback (fn [?exception ?meta]
-                  (when-not ?exception
-                    (println :committed ?meta))))"
+  Ex. (callback (fn [exception meta]
+                  (when-not exception
+                    (println :committed meta))))"
 
   ^Callback
 
@@ -998,7 +998,7 @@
 (defn consumer-rebalance-listener
 
   "@ f
-     Fn taking assigned? and a list of [topic partition].
+     Fn taking `assigned?` and a list of [topic partition].
 
        + assigned?
          Are these topic-partitions assigned or revoked ?
@@ -1052,9 +1052,9 @@
 (defn offset-commit-callback
 
   "@ f
-     Fn taking ?exception and ?offsets, one of them being nil depending whether an error occured or not.
+     Fn taking `exception` and `offsets`, one of them being nil depending whether an error occured or not.
    
-     + ?offsets
+     + `offsets` (nilable)
        Map of [topic partition] to offsets.
 
    => org.apache.kafka.clients.consumer.OffsetCommitCallback"
@@ -1067,11 +1067,11 @@
     
     OffsetCommitCallback
       
-      (onComplete [_ ?offsets ?exception]
-        (f ?exception
+      (onComplete [_ offsets exception]
+        (f exception
            (reduce (fn [offsets' [tp ^OffsetAndMetadata om]]
                      (assoc offsets'
                             ($.interop.clj/topic-partition tp)
                             (.offset om)))
                    {}
-                   ?offsets)))))
+                   offsets)))))

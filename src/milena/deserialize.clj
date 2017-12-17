@@ -1,6 +1,6 @@
 (ns milena.deserialize
 
-  "Kafka deserializers"
+  "Kafka deserializers."
 
   {:author "Adam Helinski"}
 
@@ -81,22 +81,24 @@
 
   "Given a fn, creates a Kafka deserializer.
 
-   Ex. (make (fn [topic data]
+   Ex. (make (fn my-deserializer [topic data]
                (nippy/thaw data)))"
 
   ^Deserializer
 
   [f]
 
-  (reify Deserializer
-    
-    (deserialize [_ topic data]
-      (f topic
-         data))
+  (if (fn? f)
+    (reify Deserializer
+      
+      (deserialize [_ topic data]
+        (f topic
+           data))
 
-    (close [_] nil)
+      (close [_] nil)
 
-    (configure [_ _ _] nil)))
+      (configure [_ _ _] nil))
+    f))
 
 
 

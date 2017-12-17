@@ -1,6 +1,6 @@
 (ns milena.serialize
 
-  "Kafka serializers"
+  "Kafka serializers."
 
   {:author "Adam Helinski"}
 
@@ -81,24 +81,26 @@
   
   "Given a fn, creates a Kafka serializer.
 
-   Ex. (make (fn [topic data]
+   Ex. (make (fn my-serializer [topic data]
                (nippy/freeze data)))"
 
   ^Serializer
   
   [f]
 
-  (reify Serializer
-    
-    (serialize [_ topic data]
-      (f topic
-         data))
+  (if (fn? f)
+    (reify Serializer
+      
+      (serialize [_ topic data]
+        (f topic
+           data))
 
-    (close [_]
-      nil)
+      (close [_]
+        nil)
 
-    (configure [_ _ _]
-      nil)))
+      (configure [_ _ _]
+        nil))
+    f))
 
 
 

@@ -1,6 +1,6 @@
 (ns milena.consume
 
-  "Everything related to Kafka consumers"
+  "Everything related to Kafka consumers."
 
   {:author "Adam Helinski"}
 
@@ -16,26 +16,7 @@
                                            AuthorizationException)
            (org.apache.kafka.clients.consumer KafkaConsumer
                                               ConsumerRecords
-                                              OffsetAndMetadata)
-           org.apache.kafka.common.serialization.Deserializer))
-
-
-
-
-;;;;;;;;;; Private helpers
-
-
-(defn- -to-deserializer
-
-  "Given a fn, creates a deserializer. Otherwise, returns the arg."
-
-  ^Deserializer
-
-  [arg]
-
-  (if (fn? arg)
-    ($.deserialize/make arg)
-    arg))
+                                              OffsetAndMetadata)))
 
 
 
@@ -45,7 +26,7 @@
 
 (defn consumer?
 
-  "Is this a consumer ?"
+  "Is `x` a consumer ?"
 
   [x]
 
@@ -72,16 +53,16 @@
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called before or while this fn is called.
+         When `unblock` is called before or while this fn is called.
 
        InterruptException
-       When the calling thread is interrupted before of while this fn is called.
+         When the calling thread is interrupted before of while this fn is called.
 
        TimeoutException
-       When the topic metadata could not be fetched before expiration of the configured request timeout.
+         When the topic metadata could not be fetched before expiration of the configured request timeout.
 
        KafkaException
-       Any other unrecoverable errors."
+         Any other unrecoverable errors."
 
   [^KafkaConsumer consumer]
 
@@ -116,19 +97,19 @@
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called before or while this fn is called.
+         When `unblock` is called before or while this fn is called.
 
        InterruptException
-       When the calling thread is interrupted.
+         When the calling thread is interrupted.
 
        AuthorizationException
-       When not authorized to the specified topic.
+         When not authorized to the specified topic.
 
        TimeoutException
-       When the topic metadata could not be fetched before expiration of the configured request timeout.
+         When the topic metadata could not be fetched before expiration of the configured request timeout.
 
        KafkaException
-       Any other unrecoverable errors."
+         Any other unrecoverable errors."
 
   [^KafkaConsumer consumer topic]
 
@@ -653,19 +634,19 @@
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called before or while this fn is called.
+         When `unblock` is called before or while this fn is called.
 
        InterruptException
-       When the calling thread is interrupted.
+         When the calling thread is interrupted.
 
        AuthorizationException
-       When not authorized to the specified topic.
+         When not authorized to the specified topic.
 
        TimeoutException
-       When the topic metadata could not be fetched before expiration of the configured request timeout.
+         When the topic metadata could not be fetched before expiration of the configured request timeout.
 
        KafkaException
-       Any other unrecoverable errors."
+         Any other unrecoverable errors."
 
   ([consumer topic-partitions]
 
@@ -890,7 +871,7 @@
    
    The blocking thread will throw an org.apache.kafka.common.errors.WakeupException.
 
-   If the thread isn't blocking on a fn which can throw such an exception, the next call
+   If the thread is not blocking on a fn which can throw such an exception, the next call
    to such a fn will raise it instead.
 
    Must be used sparingly, not to compensate for a bad design.
@@ -961,7 +942,7 @@
      org.apache.kafka.common.errors
   
        InterruptException
-       When the thread is interrupted while blocked."
+         When the thread is interrupted while blocked."
 
   ([^KafkaConsumer consumer]
 
@@ -994,22 +975,22 @@
      org.apache.kafka.clients.consumer
 
        InvalidOffsetException
-       When the offset for a partition or set of partitions is undefined or out of range and no offset reset
-       policy has been configured.
+         When the offset for a partition or set of partitions is undefined or out of range and no offset reset
+         policy has been configured.
 
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called while blocking.
+         When `unblock` is called while blocking.
 
        InterruptException
-       The calling thread is interrupted while blocking.
+         The calling thread is interrupted while blocking.
 
        AuthorizationException
-       When not authorized to any of the assigned topics or to the configured groupId.
+         When not authorized to any of the assigned topics or to the configured groupId.
 
        KafkaException
-       Any other unrecoverable errors (eg. deserializing key/value)."
+         Any other unrecoverable errors (eg. deserializing key/value)."
 
   ^ConsumerRecords
 
@@ -1019,12 +1000,12 @@
               nil))
 
 
-  ([^KafkaConsumer consumer ?timeout-ms]
+  ([^KafkaConsumer consumer timeout-ms]
 
    (let [^ConsumerRecords records (try
                                     (.poll consumer
-                                           (if ?timeout-ms
-                                             (max ?timeout-ms
+                                           (if timeout-ms
+                                             (max timeout-ms
                                                   0)
                                              Long/MAX_VALUE))
                                     #_(catch WakeupException _
@@ -1049,7 +1030,7 @@
    @ consumer
      Kafka consumer.
 
-   @ ?timeout-ms
+   @ timeout-ms (nilable)
      Optional timeout in milliseconds.
        Nil will wait forever.
        0   returns what is available in the consumer buffer without blocking.
@@ -1086,10 +1067,10 @@
          nil))
 
 
-  ([consumer ?timeout-ms]
+  ([consumer timeout-ms]
 
    (some->> (-poll-raw consumer
-                    ?timeout-ms)
+                    timeout-ms)
             (map $.interop.clj/consumer-record))))
 
 
@@ -1112,10 +1093,10 @@
                     nil))
 
 
-  ([consumer ?timeout-ms]
+  ([consumer timeout-ms]
 
    (some-> (-poll-raw consumer
-                      ?timeout-ms)
+                      timeout-ms)
            $.interop.clj/consumer-records-by-partitions )))
 
 
@@ -1125,15 +1106,15 @@
 
   "Helper for `poll-seq`."
 
-  [consumer ?timeout-ms ?records]
+  [consumer timeout-ms records]
 
   (lazy-seq
-    (when-let [records (or ?records
+    (when-let [records (or records
                            (poll consumer
-                                 ?timeout-ms))]
+                                 timeout-ms))]
       (cons (first records)
             (-poll-seq consumer
-                       ?timeout-ms
+                       timeout-ms
                        (next records))))))
 
 
@@ -1156,11 +1137,11 @@
              nil))
 
 
-  ([consumer ?timeout-ms]
+  ([consumer timeout-ms]
 
    (-poll-seq consumer
-             ?timeout-ms
-             nil)))
+              timeout-ms
+              nil)))
 
 
 
@@ -1196,22 +1177,22 @@
      org.apache.kafka.clients.consumer
 
        CommitFailedException
-       When the commit failed and cannot be retried (only occurs when using subscriptions or if there is an active
-       groupe with the same groupId).
+         When the commit failed and cannot be retried (only occurs when using subscriptions or if there is an active
+         groupe with the same groupId).
   
      org.apache.kafka.common.errors
 
        WakeupException
-       When `unblock` is called before or while this fn is called.
+         When `unblock` is called before or while this fn is called.
 
        InterruptException
-       When the calling thread is interrupted.
+         When the calling thread is interrupted.
 
        AuthorizationException
-       When not authorized to the specified topic.
+         When not authorized to the specified topic.
 
        KafkaException
-       Any other unrecoverable errors."
+         Any other unrecoverable errors."
 
   ^KafkaConsumer
 
@@ -1388,39 +1369,35 @@
        1 consumer / thread or a queueing policy must be implemented.
 
 
-   @ ?opts
-     {:?nodes
+   @ opts (nilable)
+     {:nodes (nilable)
        List of [host port].
 
-      :?config
+      :config (nilable)
        Kafka configuration map.
        Cf. https://kafka.apache.org/documentation/#newconsumerconfigs
 
-      :?deserializer
+      :deserializer (nilable)
        Kafka deserializer or fn eligable for becoming one.
        Cf. `milena.deserialize`
            `milena.deserialize/make`
 
-      :?deserializer-key
+      :deserializer-key (nilable)
        Defaulting to `?deserializer`.
 
-      :?deserializer-value
-       Defaulting to `?deserializer`.
-
-      :?listen
-       Subscribes or assigns this new consumer.
-       Cf. `listen`}
+      :deserializer-value (nilable)
+       Defaulting to `?deserializer`.}
 
    => org.apache.kafka.clients.consumer.KafkaConsumer
 
 
-   Ex. (make {:?nodes              [[\"some_host\" 9092]]
-              :?config             {:group.id           \"my_group\"
-                                    :enable.auto.commit false}
-              :?deserializer-key   milena.deserialize/string
-              :?deserializer-value (fn [_ data]
-                                     (nippy/thaw data))
-              :?listen             [[\"my-topic\" 3]]})"
+   Ex. (make {:nodes              [[\"some_host\" 9092]]
+              :config             {:group.id           \"my_group\"
+                                   :enable.auto.commit false}
+              :deserializer-key   milena.deserialize/string
+              :deserializer-value (fn [_ data]
+                                    (nippy/thaw data))
+              :listen             [[\"my-topic\" 3]]})"
 
   ^KafkaConsumer
 
@@ -1430,27 +1407,18 @@
    (make nil))
 
 
-  ([{:as     ?opts
-     :keys   [?nodes
-              ?config
-              ?deserializer
-              ?deserializer-key
-              ?deserializer-value
-              ?listen]
-     :or     {?nodes              [["localhost" 9092]]
-              ?deserializer       $.deserialize/byte-array
-              ?deserializer-key   ?deserializer
-              ?deserializer-value ?deserializer}}]
-   
-   (let [consumer (KafkaConsumer. ($.interop/config ?config
-                                                    ?nodes)
-                                  (-to-deserializer ?deserializer-key)
-                                  (-to-deserializer ?deserializer-value))]
-     (when ?listen
-       (try
-         (listen consumer
-                 ?listen)
-         (catch Throwable e
-           (close consumer)
-           (throw e))))
-     consumer)))
+  ([{:as   opts
+     :keys [nodes
+            config
+            deserializer
+            deserializer-key
+            deserializer-value]
+     :or   {nodes              [["localhost" 9092]]
+            deserializer       $.deserialize/byte-array
+            deserializer-key   deserializer
+            deserializer-value deserializer}}]
+ 
+   (KafkaConsumer. ($.interop/config config
+                                     nodes)
+                   ($.deserialize/make deserializer-key)
+                   ($.deserialize/make deserializer-value))))
