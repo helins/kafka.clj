@@ -478,8 +478,8 @@
   => org.apache.kafka.clients.admin.AdminClient
 
 
-  Ex. (make {:?nodes  [[\"some_host\" 9092]]
-             :?config {:client.id \"some_id\"}})"
+  Ex. (make {:nodes  [[\"some_host\" 9092]]
+             :config {:client.id \"some_id\"}})"
 
   ([]
 
