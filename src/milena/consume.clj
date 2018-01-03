@@ -405,7 +405,7 @@
 
 
 
-(defn find-first
+(defn offs-first
 
   "Finds the first available offset of the given topic-partition(s).
 
@@ -434,12 +434,12 @@
    => Offset.
 
 
-   Ex. (find-first consumer
+   Ex. (offs-first consumer
                    \"my-topic\"
                    0)
        => 421
 
-       (find-first consumer
+       (offs-first consumer
                    [[\"my-topic\"      0]
                     [\"another-topic\" 3]])
        => {[\"my-topic\"      0] 421
@@ -464,7 +464,7 @@
 
 
 
-(defn find-last
+(defn offs-latest
 
   "Finds the latest offset of the given partition(s), ie. the offset of the last message + 1.
 
@@ -488,9 +488,9 @@
      Partition number.
 
    => Offset.
-
-
-   Cf. `find-first`"
+  
+  
+   Cf. `offs-first`"
 
   ([^KafkaConsumer consumer topic-partitions]
 
@@ -510,7 +510,7 @@
 
 
 
-(defn find-ts
+(defn offs-by-ts
 
   "Finds offsets for the given partition(s) by timestamp, ie. the earliest offsets whose timestamp
    is greater than or equal to the corresponding ones.
@@ -547,15 +547,15 @@
    => Offset.
   
 
-   Ex. (find-ts consumer
-                \"my-topic\"
-                0
-                1507812268270)
+   Ex. (offs-by-ts consumer
+                   \"my-topic\"
+                   0
+                   1507812268270)
        => 42
 
-       (find-ts consumer
-                {[\"my-topic\"      0] 1507812268270
-                 [\"another-topic\" 3] 1507812338294})
+       (offs-by-ts consumer
+                   {[\"my-topic\"      0] 1507812268270
+                    [\"another-topic\" 3] 1507812338294})
        => {[\"my-topic\"      0] {:timestamp 1507812268270
                                   :offset    42
            [\"another-topic\" 3] {:timestamp 1507812338294
@@ -590,9 +590,9 @@
 
 
 
-(defn position 
+(defn offs-current
 
-  "Gets the current offset of a consumer on one or several partitions.
+  "Gets the current offset of a consumer on one or several partitions (ie. the offset of the next record).
 
 
    @ consumer
@@ -604,7 +604,7 @@
      List of [topic partition].
      Cf. `milena.interop.java/topic-partition`
 
-   => Map of [topic partition] to positions.
+   => Map of [topic partition] to offsets. 
 
    ---
 
@@ -617,14 +617,14 @@
    => Position. 
 
 
-   Ex. (position consumer
-                 \"my-topic\"
-                 0)
+   Ex. (offs-current consumer
+                     \"my-topic\"
+                     0)
        => 42
 
-       (position consumer
-                 [[\"my-topic\"      0]
-                  [\"another-topic\" 3]])
+       (offs-current consumer
+                     [[\"my-topic\"      0]
+                      [\"another-topic\" 3]])
        => {[\"my-topic\"      0] 42
            [\"another-topic\" 3] 84}
 
@@ -650,12 +650,12 @@
 
   ([consumer topic-partitions]
 
-   (reduce (fn reduce-topic-partitions [positions [topic partition :as topic-partition]]
-             (assoc positions
+   (reduce (fn reduce-topic-partitions [offsets [topic partition :as topic-partition]]
+             (assoc offsets
                     topic-partition
-                    (position consumer
-                              topic
-                              partition)))
+                    (offs-current consumer
+                                  topic
+                                  partition)))
            {}
            topic-partitions))
 
@@ -671,7 +671,7 @@
 
 (defn seek
 
-   "Seeks one or several partitions to a new offset.
+   "Seeks one or several partitions to a new offset (ie. offset of the next record).
 
     Happens lazily on the next call to `poll`.
 
@@ -683,8 +683,8 @@
 
     ---
 
-    @ positions
-      Map of [topic partition] to new positions.
+    @ offsets
+      Map of [topic partition] to offset.
       Cf. `milena.interop.java/topic-partition`
 
     ---
@@ -695,8 +695,8 @@
     @ partition
       Partition number.
 
-    @ position
-      New position.
+    @ offset
+      New offset.
 
     ---
 
@@ -714,23 +714,23 @@
 
   ^KafkaConsumer
 
-  ([consumer positions]
+  ([consumer offsets]
 
    (doseq [[[topic
-             partition] position] positions]
+             partition] offset] offsets]
      (seek consumer
            topic
            partition
-           position))
+           offset))
    consumer)
 
 
-  ([^KafkaConsumer consumer topic partition position]
+  ([^KafkaConsumer consumer topic partition offset]
 
    (.seek consumer
           ($.interop.java/topic-partition topic
                                           partition)
-          (max position
+          (max offset 
                0))
    consumer))
 
@@ -739,10 +739,9 @@
 
 (defn rewind
 
-  "Rewinds a consumer to the first offset (ie. offset of the first available message) for one or
-   several partitions.
+  "Rewinds a consumer to the first available offset for one or several partitions.
 
-   Happens lazily on the next call to `poll` or `position`.
+   Happens lazily on the next call to `poll` or `offs-current`.
 
    If no partition is given, applies to all currently assigned partitions.
   
@@ -803,10 +802,10 @@
 
 (defn fast-forward
 
-  "Fast forwards a consumer to the last offset (ie. offset of the last message + 1) for one or
+  "Fast forwards a consumer to the latest offset (ie. offset of the last message + 1) for one or
    several partitions.
    
-   Happens lazily on the next call to `poll` or `position`.
+   Happens lazily on the next call to `poll` or `offs-current`.
   
    If no partition is given, applies to all currently assigned partitions.
   
