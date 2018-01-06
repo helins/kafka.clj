@@ -1,5 +1,5 @@
 (defproject dvlopt/milena
-            "0.0.0-beta1"
+            "0.1.0"
 
   :description  "Clojure client for Kafka"
   :url          "https://github.com/dvlopt/milena"

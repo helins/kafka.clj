@@ -7,14 +7,9 @@
   (:require [milena.interop      :as $.interop]
             [milena.interop.clj  :as $.interop.clj]
             [milena.interop.java :as $.interop.java])
-  (:import (java.util.concurrent Future
-                                 TimeUnit)
+  (:import java.util.concurrent.TimeUnit
            org.apache.kafka.common.TopicPartitionInfo
-           (org.apache.kafka.clients.admin AdminClient
-                                           ListTopicsOptions
-                                           TopicListing
-                                           DescribeTopicsResult
-                                           TopicDescription)))
+           org.apache.kafka.clients.admin.AdminClient))
 
 
 
@@ -50,7 +45,7 @@
 
 
 
-;;;;;;;;;; Topics
+;;;;;;;;;; Topics and partitions
 
 
 (defn topics
@@ -204,6 +199,52 @@
                                                         ($.interop.java/delete-topics-options opts))
                                          (.deleteTopics client
                                                         topics)))))
+
+
+
+
+(defn partitions-create
+
+  "Increases the number of partitions for the given topics.
+
+   <!> Does not repartition existing topics and the partitioning of new records will be different <!>
+
+   
+   @ client
+     Admin client.
+
+   @ topics-to-new-partitions
+     Cf. `milena.interop.java/topics-to-new-partitions`
+
+   @ opts (nilable)
+     Cf. `milena.interop.java.create-partitions-options
+
+   => `milena.interop.clj/create-partitions-result`
+
+
+   Ex. (partitions-create client
+                          {:n           3
+                           :assignments [[1 2]
+                                         [2 3]
+                                         [3 1]]})"
+
+  ([client topics-to-new-partitions]
+
+   (partitions-create client
+                      topics-to-new-partitions
+                      nil))
+
+
+  ([^AdminClient client topics-to-new-partitions opts]
+
+   (let [new-partitions ($.interop.java/topics-to-new-partitions topics-to-new-partitions)
+         result         (if opts
+                          (.createPartitions client
+                                             new-partitions
+                                             ($.interop.java/create-partitions-options opts))
+                          (.createPartitions client
+                                             new-partitions))]
+     ($.interop.clj/create-partitions-result result))))
 
 
 

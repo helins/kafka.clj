@@ -28,6 +28,7 @@
                                            TopicDescription
                                            CreateTopicsResult
                                            DeleteTopicsResult
+                                           CreatePartitionsResult
                                            DescribeConfigsResult
                                            AlterConfigsResult
                                            Config
@@ -686,6 +687,21 @@
 
   (into {}
         (.values dtr)))
+
+
+
+
+(defn create-partitions-result
+
+  "@ cpr
+     org.apache.kafka.clients.admin.CreatePartitionsResult
+
+   => Map of topic name to future throwing on deref if an error occured."
+
+  [^CreatePartitionsResult cpr]
+
+  (into {}
+        (.values cpr)))
 
 
 

@@ -6,7 +6,8 @@
 
   (:require [milena.interop     :as $.interop]
             [milena.interop.clj :as $.interop.clj])
-  (:import org.apache.kafka.common.TopicPartition
+  (:import java.util.Map
+           org.apache.kafka.common.TopicPartition
            (org.apache.kafka.common.config ConfigResource
                                            ConfigResource$Type)
            (org.apache.kafka.common.resource ResourceType
@@ -24,7 +25,9 @@
                                            NewTopic
                                            CreateTopicsOptions
                                            DeleteTopicsOptions
+                                           CreatePartitionsOptions
                                            DescribeConfigsOptions
+                                           NewPartitions
                                            Config
                                            ConfigEntry
                                            AlterConfigsOptions
@@ -622,25 +625,25 @@
 
 
    @ topic
-       The topic name
+     The topic name
 
    @ args (nilable)
-       {:partitions (nilable)
-         The number of partition for this new topic
+     {:partitions (nilable)
+       The number of partition for this new topic
 
-        :replication-factor (nilable)
-         The replication factor for each partition
+      :replication-factor (nilable)
+       The replication factor for each partition
 
-        :assigments (nilable)
-         A map of partition number -> list of replica ids (i.e. broker ids).
+      :assigments (nilable)
+       A map of partition number -> list of replica ids (i.e. broker ids).
 
-         Although not enforced, it is generally a good idea for all partitions to have
-         the same number of replicas.
+       Although not enforced, it is generally a good idea for all partitions to have
+       the same number of replicas.
 
-        :config (nilable)
-         Kafka configuration
+      :config (nilable)
+       Kafka configuration
 
-         Cf. https://kafka.apache.org/documentation/#topicconfigs}
+       Cf. https://kafka.apache.org/documentation/#topicconfigs}
 
    => org.apache.kafka.clients.admin.NewTopic object
   
@@ -673,6 +676,61 @@
 
 
 
+(defn new-partitions
+
+  "For increasing the number of partitions.
+
+   @ arg
+     {:n
+       New number of partitions.
+
+      :assignments
+       Matrix of 'number of new partitions' x 'replication factor' where each entry is a broker number and the first one
+       is the prefered leader.
+
+       Ex. For 3 new partitions and a replication factor of 2 :
+           
+             [[1 2]    
+              [2 3]
+              [3 1]]
+      }
+       
+   => org.apache.kafka.clients.admin.NewPartitions"
+
+  ^NewPartitions
+
+  [{:as   arg
+    :keys [n
+           assignments]}]
+
+  (NewPartitions/increaseTo n
+                            assignments))
+
+
+
+
+(defn topics-to-new-partitions
+
+  "@ hmap
+     Map of topic name to new partitions.
+     Cf. `new-partitions`
+
+   => Map of topic name to org.apache.kafka.clients.admin.NewPartitions"
+
+  ^Map
+
+  [hmap]
+
+  (reduce-kv (fn reduce-hmap [hmap topic partitions]
+               (assoc hmap
+                      topic
+                      (new-partitions partitions)))
+             {}
+             hmap))
+
+
+
+
 (defn create-topics-options
 
   "Options for `milena.admin/topics-create`.
@@ -687,16 +745,19 @@
   
    => org.apache.kafka.clients.admin.CreateTopicsOptions"
 
-  ^CreateTopicsOptions
 
-  ([{:as   args
+  (^CreateTopicsOptions
+
+   [{:as   args
      :keys [timeout-ms
             fake?]}]
 
    (create-topics-options timeout-ms
                           fake?))
 
-  ([timeout-ms fake?]
+  (^CreateTopicsOptions
+
+   [timeout-ms fake?]
 
    (doto (CreateTopicsOptions.)
      (.timeoutMs    (at-least-0 timeout-ms))
@@ -723,6 +784,34 @@
 
   (doto (DeleteTopicsOptions.)
     (.timeoutMs (at-least-0 timeout-ms))))
+
+
+
+
+(defn create-partitions-options
+
+  "Options for `milena.admin/partitions-create`.
+
+   @ args (nilable)
+     {:fake (nilable)
+       Validate request without actually creating the topic for real ?}
+
+   => org.apache.kafka.clients.admin.CreatePartitionsOptions"
+
+  (^CreatePartitionsOptions
+
+   []
+
+   (CreatePartitionsOptions.))
+
+
+  (^CreatePartitionsOptions
+
+   [{:as   args
+     :keys [fake?]}]
+
+   (doto (create-partitions-options)
+     (.validateOnly fake?))))
 
 
 
