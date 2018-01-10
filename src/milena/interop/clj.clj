@@ -4,7 +4,7 @@
 
   {:author "Adam Helinski"}
 
-  (:require [milena.interop :as $.interop])
+  (:require [milena.interop :as M.interop])
   (:import (org.apache.kafka.common Node
                                     Metric
                                     MetricName
@@ -41,12 +41,23 @@
            org.apache.kafka.clients.producer.RecordMetadata
            (org.apache.kafka.clients.consumer OffsetAndTimestamp
                                               ConsumerRecord
-                                              ConsumerRecords)))
+                                              ConsumerRecords)
+           (org.apache.kafka.streams KafkaStreams$State
+                                     TopologyDescription
+                                     TopologyDescription$GlobalStore
+                                     TopologyDescription$Processor
+                                     TopologyDescription$Source
+                                     TopologyDescription$Subtopology
+                                     TopologyDescription$Node
+                                     KeyValue)
+           (org.apache.kafka.streams.kstream Window
+                                             Windowed)
+           org.apache.kafka.streams.state.KeyValueIterator))
 
 
 
 
-;;;;;;;;;; org.apache.kafka.common
+;;;;;;;;;; org.apache.kafka.common.*
 
 
 (defn node
@@ -98,7 +109,7 @@
   {:group       (.group       m-n)
    :name        (.name        m-n)
    :description (.description m-n)
-   :tags        ($.interop/keywordize-keys (.tags m-n))})
+   :tags        (M.interop/keywordize-keys (.tags m-n))})
 
 
 
@@ -129,7 +140,7 @@
                    (keyword (.group metric-name)
                             (.name  metric-name))
                    {:description (.description metric-name)
-                    :tags        ($.interop/keywordize-keys (.tags metric-name))
+                    :tags        (M.interop/keywordize-keys (.tags metric-name))
                     :value       (.value metric)}))
           {}
           metrics))
@@ -247,7 +258,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.config
+;;;;;;;;;; org.apache.kafka.common.config.*
 
 
 (defn config-resource$type
@@ -322,7 +333,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.resource
+;;;;;;;;;; org.apache.kafka.common.resource.*
 
 
 (defn resource-type
@@ -391,7 +402,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.acl
+;;;;;;;;;; org.apache.kafka.common.acl.*
 
 
 (defn acl-operation
@@ -546,7 +557,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.admin
+;;;;;;;;;; org.apache.kafka.clients.admin.*
 
 
 (defn describe-cluster-result
@@ -568,11 +579,11 @@
   [^DescribeClusterResult dcr]
 
   {:id         (.clusterId dcr)
-   :nodes      ($.interop/future-proxy (.nodes dcr)
+   :nodes      (M.interop/future-proxy (.nodes dcr)
                                        (fn proxy-nodes [nodes]
                                          (map node
                                               nodes)))
-   :controller ($.interop/future-proxy (.controller dcr)
+   :controller (M.interop/future-proxy (.controller dcr)
                                        node)})
 
 
@@ -637,7 +648,7 @@
   (reduce (fn reduce-tds [topics [topic-name f*topic-description]]
             (assoc topics
                    topic-name
-                   ($.interop/future-proxy f*topic-description
+                   (M.interop/future-proxy f*topic-description
                                            topic-description)))
           {}
           tds))
@@ -738,7 +749,7 @@
   [^DescribeConfigsResult dcr]
 
   (-configs-result (fn future-config [f*config]
-                     ($.interop/future-proxy f*config
+                     (M.interop/future-proxy f*config
                                              config))
                    (.values dcr)))
 
@@ -772,7 +783,7 @@
 
   [^DescribeAclsResult dar]
 
-  ($.interop/future-proxy (.values dar)
+  (M.interop/future-proxy (.values dar)
                           (fn map-acl-bindings [acl-bindings]
                             (map acl-binding
                                  acl-bindings))))
@@ -848,7 +859,7 @@
   (reduce (fn reduce-filters [filters [abf f*results]]
             (assoc filters
                    (acl-binding-filter abf)
-                   ($.interop/future-proxy f*results
+                   (M.interop/future-proxy f*results
                                            delete-acls-result$filter-results)))
           {}
           (.values dar)))
@@ -856,7 +867,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.producer
+;;;;;;;;;; org.apache.kafka.clients.producer.*
 
 
 (defn record-metadata
@@ -889,7 +900,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.consumer
+;;;;;;;;;; org.apache.kafka.clients.consumer.*
 
 
 (defn offset-and-timestamp
@@ -965,3 +976,212 @@
                                   tp))))
           {}
           (.partitions crs)))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.*
+
+
+;; TODO docstrings
+
+
+(defn kafka-streams$state
+
+  ""
+
+  [^KafkaStreams$State ks$s]
+
+  (condp identical?
+         ks$s
+    KafkaStreams$State/CREATED          :created
+    KafkaStreams$State/ERROR            :error
+    KafkaStreams$State/NOT_RUNNING      :not-running
+    KafkaStreams$State/PENDING_SHUTDOWN :pending-shutdown
+    KafkaStreams$State/REBALANCING      :rebalancing
+    KafkaStreams$State/RUNNING          :running))
+
+
+
+
+(defn topology-description$processor
+
+  ""
+
+  [^TopologyDescription$Processor td$p]
+
+  (into #{}
+        (.stores td$p)))
+
+
+
+
+(defn topology-description$source
+
+  ""
+
+  [^TopologyDescription$Source td$s]
+
+  (.topics td$s))
+
+
+
+
+(defn topology-description$global-store
+
+  ""
+
+  [^TopologyDescription$GlobalStore td$gs]
+
+  {:processor (topology-description$processor (.processor td$gs))
+   :source    (topology-description$source    (.source    td$gs))})
+
+
+
+
+(defn- -topology-description$node--name
+
+  ""
+
+  [^TopologyDescription$Node n]
+
+  (.name n))
+
+
+
+
+(defn -topology-description$node--names
+
+  ""
+
+  [nodes]
+
+  (into #{}
+        (map -topology-description$node--name
+             nodes)))
+
+
+
+
+(defn topology-description$node
+
+  ""
+
+  [^TopologyDescription$Node n]
+
+  {:name         (.name n)
+   :predecessors (-topology-description$node--names (.predecessors n))
+   :successors   (-topology-description$node--names (.successors   n))})
+
+
+
+
+(defn topology-description$subtopology
+
+  ""
+
+  [^TopologyDescription$Subtopology td$s]
+
+  {:id    (.id td$s)
+   :nodes (into #{}
+                (map topology-description$node
+                     (.nodes td$s)))})
+
+
+
+
+(defn topology-description
+
+  ""
+
+  [^TopologyDescription tp]
+
+  {:stores        (into #{}
+                        (map topology-description$global-store
+                             (.globalStores tp)))
+   :subtopologies (into #{}
+                        (map topology-description$subtopology
+                             (.subtopologies tp)))})
+
+
+
+
+(defn key-value
+
+  ""
+
+  [^KeyValue kv]
+
+  {:key   (.-key   kv)
+   :value (.-value kv)})
+
+
+
+
+(declare windowed)
+
+
+
+
+(defn key-value--windowed
+
+  ""
+
+  [^KeyValue kv]
+
+  (assoc (windowed (.-key kv))
+         :value
+         (.-value kv)))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.state.*
+
+
+(defn key-value-iterator
+
+  ""
+
+  ([kvi]
+
+   (key-value-iterator kvi
+                       identity))
+
+
+  ([^KeyValueIterator kvi f]
+
+   (lazy-seq
+     (if (.hasNext kvi)
+       (cons (f (.next kvi))
+             (key-value-iterator kvi
+                                 f))
+       (.close kvi)))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.kstream.*
+
+
+(defn window
+
+  ""
+
+  [^Window w]
+
+  {:start (.start w)
+   :end   (.end   w)})
+
+
+
+
+(defn windowed
+
+  ""
+
+  [^Windowed w]
+
+  (assoc (window (.window w))
+         :key
+         (.key w)))

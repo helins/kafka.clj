@@ -6,7 +6,9 @@
 
   (:require [clojure.string :as string])
   (:import java.util.Map
-           java.util.concurrent.Future))
+           java.util.concurrent.Future
+           clojure.lang.Named
+           org.apache.kafka.streams.StreamsConfig))
 
 
 
@@ -14,13 +16,25 @@
 ;;;;;;;;;;
 
 
+(defn named?
+
+  "Is `x` an instance of Named ?"
+
+  [x]
+
+  (instance? Named
+             x))
+
+
+
+
 (defn nodes-string
 
-  "Produces a string of Kafka nodes for admins, producers, and consumers.
+  "Produces a string of Kafka nodes for various configurations.
 
    @ nodes
      List of [host port] representing Kafka nodes.
-  
+
   
    Ex. (nodes-string [[\"localhost\"    9092]
                       [\"another_host\" 9092]])"
@@ -37,17 +51,80 @@
 
 
 
+(defn config-key
+
+  ""
+
+  ;; TODO docstring
+
+  [k]
+
+  (cond
+    (string? k) k
+    (named? k)  (name k)
+    :else       (str  k)))
+
+
+
+
+(defn config-prefixed-key
+
+  ""
+
+  [k]
+
+  ;; TODO docstring
+
+  (cond
+    (string? k)      k
+    (instance? Named
+               k)    (let [namesp (namespace k)
+                           nm     (name      k)]
+                       (case namesp
+                         nil        nm
+                         "producer" (StreamsConfig/producerPrefix nm)
+                         "consumer" (StreamsConfig/consumerPrefix nm)
+                         "topic"    (StreamsConfig/topicPrefix    nm)))
+    :else            (str k)))
+
+
+
+
 (defn stringify-keys
 
-  "Stringifies nameable keys (symbols or keywords) in a map."
+  "Stringifies keys in a map.
+
+   In case of a named key, takes into account only the name and not the namespace."
+
+  ^Map
 
   [hmap]
 
   (reduce-kv (fn stringify-key [hmap' k v]
                (assoc hmap'
-                      (if (string? k)
-                        k
-                        (name k))
+                      (config-key k)
+                      v))
+             {}
+             hmap))
+
+
+
+
+(defn stringify-prefixed-keys
+
+  "Stringifies keys in a map.
+
+   In case of a named key, takes into account the namespace for prefixing the name as needed.
+
+   Cf. `config-prefixed-key`"
+
+  ^Map
+
+  [hmap]
+
+  (reduce-kv (fn stringify-key [hmap' k v]
+               (assoc hmap'
+                      (config-prefixed-key k)
                       v))
              {}
              hmap))
@@ -58,6 +135,8 @@
 (defn keywordize-keys
 
   "Stringifies string keys in a map."
+
+  ^Map
 
   [hmap]
 

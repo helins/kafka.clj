@@ -4,8 +4,8 @@
 
   {:author "Adam Helinski"}
 
-  (:require [milena.interop     :as $.interop]
-            [milena.interop.clj :as $.interop.clj])
+  (:require [milena.interop     :as M.interop]
+            [milena.interop.clj :as M.interop.clj])
   (:import java.util.Map
            org.apache.kafka.common.TopicPartition
            (org.apache.kafka.common.config ConfigResource
@@ -19,6 +19,8 @@
                                         AccessControlEntryFilter
                                         AclOperation
                                         AclPermissionType)
+           (org.apache.kafka.common.serialization Serde
+                                                  Serdes)
            (org.apache.kafka.clients.admin DescribeClusterOptions
                                            ListTopicsOptions
                                            DescribeTopicsOptions
@@ -38,7 +40,55 @@
                                               Callback)
            (org.apache.kafka.clients.consumer ConsumerRebalanceListener
                                               OffsetAndMetadata
-                                              OffsetCommitCallback)))
+                                              OffsetCommitCallback)
+           (org.apache.kafka.streams KafkaStreams$StateListener
+                                     StreamsConfig
+                                     Topology$AutoOffsetReset
+                                     Consumed
+                                     KeyValue)
+           (org.apache.kafka.streams.processor TimestampExtractor
+                                               StreamPartitioner)
+           org.apache.kafka.streams.state.Stores
+           (org.apache.kafka.streams.kstream Serialized
+                                             Produced
+                                             Materialized
+                                             Predicate
+                                             KeyValueMapper
+                                             ValueMapper
+                                             ValueJoiner
+                                             JoinWindows
+                                             Joined
+                                             Initializer
+                                             Aggregator
+                                             Reducer
+                                             ForeachAction
+                                             TimeWindows
+                                             SessionWindows)))
+
+
+
+
+;;;;;;;;;; Private
+
+
+(def -*store-number
+
+  ""
+
+  (atom -1))
+
+
+
+
+(defn -store-name
+
+  ""
+
+  []
+
+  (format "milena-store-%08d"
+          (swap! -*store-number
+                 inc)))
 
 
 
@@ -59,7 +109,31 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common
+;;;;;;;;;; java std
+
+
+(defn thread$uncaught-exception-handler
+
+  ""
+
+  ;; TODO docstring
+
+  ^Thread$UncaughtExceptionHandler
+
+  [f]
+
+  (reify
+
+    Thread$UncaughtExceptionHandler
+
+      (uncaughtException [_ t e]
+        (f e
+           t))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.common.*
 
 
 (defn topic-partition
@@ -94,7 +168,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.config
+;;;;;;;;;; org.apache.kafka.common.config.*
 
 
 (defn config-resource$type
@@ -185,7 +259,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.resource
+;;;;;;;;;; org.apache.kafka.common.resource.*
 
 
 (defn resource-type
@@ -295,7 +369,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.acl
+;;;;;;;;;; org.apache.kafka.common.acl.*
 
 
 (defn acl-operation
@@ -535,7 +609,69 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.admin
+;;;;;;;;;; org.apache.kafka.common.serialization.*
+
+
+;; TODO docstrings
+
+
+(defn serde
+
+  ""
+
+  ^Serde
+
+  [serializer deserializer]
+
+  (when (and serializer
+             deserializer)
+    (Serdes/serdeFrom serializer
+                      deserializer)))
+
+
+
+
+(defn serde-key
+
+  ""
+
+  ^Serde
+
+  [{:as   opts
+    :keys [serializer
+           serializer-key
+           deserializer
+           deserializer-key]}]
+
+  (serde (or serializer-key
+             serializer)
+         (or deserializer-key
+             deserializer)))
+
+
+
+
+(defn serde-value
+
+  ""
+
+  ^Serde
+
+  [{:as   opts
+    :keys [serializer
+           serializer-value
+           deserializer
+           deserializer-value]}]
+
+  (serde (or serializer-value
+             serializer)
+         (or deserializer-value
+             deserializer)))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.clients.admin.*
 
 
 (defn describe-cluster-options
@@ -670,7 +806,7 @@
                                replication-factor))]
     (when config
       (.configs new-topic
-                ($.interop/stringify-keys config)))
+                (M.interop/stringify-keys config)))
     new-topic))
 
 
@@ -1003,7 +1139,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.producer
+;;;;;;;;;; org.apache.kafka.clients.producer.*
 
 
 (defn producer-record
@@ -1076,12 +1212,12 @@
       (onCompletion [_ r-m exception]
         (f exception
            (some-> r-m
-                   ($.interop.clj/record-metadata))))))
+                   (M.interop.clj/record-metadata))))))
 
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.consumer
+;;;;;;;;;; org.apache.kafka.clients.consumer.*
 
 
 (defn consumer-rebalance-listener
@@ -1107,13 +1243,13 @@
 
       (onPartitionsAssigned [_ tps]
         (f true
-           (map $.interop.clj/topic-partition
+           (map M.interop.clj/topic-partition
                 tps)))
 
 
       (onPartitionsRevoked [_ tps]
         (f false
-           (map $.interop.clj/topic-partition
+           (map M.interop.clj/topic-partition
                 tps)))))
 
 
@@ -1160,7 +1296,546 @@
         (f exception
            (reduce (fn [offsets' [tp ^OffsetAndMetadata om]]
                      (assoc offsets'
-                            ($.interop.clj/topic-partition tp)
+                            (M.interop.clj/topic-partition tp)
                             (.offset om)))
                    {}
                    offsets)))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.*
+
+
+(defn kafka-streams$state-listener
+
+  ""
+
+  ^KafkaStreams$StateListener
+
+  [f]
+
+  (reify
+
+    KafkaStreams$StateListener
+
+      (onChange [_ state-new state-old]
+        (f (M.interop.clj/kafka-streams$state state-new)
+           (M.interop.clj/kafka-streams$state state-old)))))
+
+
+
+
+(defn streams-config
+
+  ""
+
+  ;; TODO docstring
+
+  ^StreamsConfig
+
+  [application-name {:as   opts
+                     :keys [nodes
+                            config]
+                     :or   {nodes [["localhost" 9092]]}}]
+
+  (StreamsConfig. (merge (M.interop/stringify-prefixed-keys config)
+                         {"bootstrap.servers" (M.interop/nodes-string nodes)
+                          "application.id"    application-name})))
+
+
+
+
+(declare timestamp-extractor)
+
+
+
+
+(defn consumed
+
+  ""
+
+  ^Consumed
+
+  [{:as   opts
+    :keys [extract-timestamp
+           offset-reset]}]
+
+  (Consumed/with (serde-key opts)
+                 (serde-value opts)
+                 (some-> extract-timestamp
+                         timestamp-extractor)
+                 (case offset-reset
+                   nil       nil
+                   :earliest Topology$AutoOffsetReset/EARLIEST
+                   :latest   Topology$AutoOffsetReset/LATEST)))
+
+
+
+
+(defn key-value
+
+  ""
+
+  (^KeyValue
+
+   [[k v]]
+
+   (KeyValue. k
+              v))
+
+
+  (^KeyValue
+
+   [k v]
+
+   (KeyValue. k
+              v)))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.processor.*
+
+
+(defn timestamp-extractor
+
+  ""
+
+  ^TimestampExtractor
+
+  [f]
+
+  (reify
+
+    TimestampExtractor
+
+      (extract [_ record previous-ts]
+        (f previous-ts
+           (M.interop.clj/consumer-record record)))))
+
+
+
+
+(defn stream-partitioner
+
+  ""
+
+  ^StreamPartitioner
+
+  [f]
+
+  (reify
+
+    StreamPartitioner
+
+      (partition [_ k v n-partitions]
+        (f k
+           v
+           n-partitions))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.kstream.*
+
+
+(defn serialized
+
+  ""
+
+  ^Serialized
+
+  [opts]
+
+  (Serialized/with (serde-key opts)
+                   (serde-value opts)))
+
+
+
+
+(defn produced
+
+  ""
+
+  ^Produced
+
+  [{:as   opts
+    :keys [partition]}]
+
+  (Produced/with (serde-key opts)
+                 (serde-value opts)
+                 (some-> partition
+                         stream-partitioner)))
+
+
+
+
+(defn- -materialized--configure
+
+  ""
+
+  ^Materialized
+
+  [^Materialized materialized {:as   opts
+                               :keys [cache?
+                                      changelog?
+                                      changelog-config]}]
+
+  (doto materialized
+    (.withKeySerde   (serde-key   opts))
+    (.withValueSerde (serde-value opts)))
+  (if (or cache?
+          (not (contains? opts
+                          :cache?)))
+    (.withCachingEnabled materialized)
+    (.withCachingDisabled materialized))
+  (if (or changelog?
+          (not (contains? opts
+                          :changelog?)))
+    (when changelog-config
+      (.withLoggingEnabled materialized
+                           (M.interop/stringify-keys changelog-config)))
+    (.withLoggingDisabled materialized))
+  materialized)
+
+
+
+
+(defn materialized--by-name
+
+  ""
+
+  ^Materialized
+
+  [{:as   opts
+    :keys [name]}]
+
+  (let [^String name' (or name
+                          (-store-name))]
+    (-materialized--configure (Materialized/as name')
+                              opts)))
+
+
+
+
+(defn materialized--kv
+
+  ""
+
+  ^Materialized
+
+  [{:as   opts
+    :keys [name
+           type]}]
+
+  (let [name' (or name
+                  (-store-name))]
+    (-materialized--configure (Materialized/as (case (or type
+                                                         :persistent)
+                                                 :persistent (Stores/persistentKeyValueStore name')
+                                                 :in-memory  (Stores/inMemoryKeyValueStore   name')))
+                              opts)))
+
+
+
+
+(defn predicate
+
+  ""
+
+  ^Predicate
+
+  [pred?]
+
+  (reify
+
+    Predicate
+
+      (test [_ k v]
+        (pred? k
+               v))))
+
+
+
+
+(defn value-mapper
+
+  ""
+
+  ^ValueMapper
+
+  [f]
+
+  (reify
+
+    ValueMapper
+
+      (apply [_ v]
+        (f v))))
+
+
+
+
+(defn key-value-mapper
+
+  ""
+
+  ^KeyValueMapper
+
+  [f]
+
+  (reify
+
+    KeyValueMapper
+
+      (apply [_ k v]
+        (key-value (f k
+                      v)))))
+
+
+
+
+(defn key-value-mapper--raw
+
+  ""
+
+  ^KeyValueMapper
+
+  [f]
+
+  (reify
+
+    KeyValueMapper
+
+      (apply [_ k v]
+        (f k
+           v))))
+
+
+
+
+(defn key-value-mapper--key
+
+  ""
+
+  ^KeyValueMapper
+
+  [f]
+
+  (reify
+
+    KeyValueMapper
+
+      (apply [_ k v]
+        (f k))))
+
+
+
+
+(defn key-value-mapper--flat
+
+  ""
+
+  [f]
+
+  (reify
+
+    KeyValueMapper
+
+      (apply [_ k v]
+        (map key-value
+             (f k
+                v)))))
+
+
+
+
+(defn value-joiner
+
+  ""
+
+  ^ValueJoiner
+
+  [f]
+
+  (reify
+
+    ValueJoiner
+
+      (apply [_ v1 v2]
+        (f v1
+           v2))))
+
+
+
+
+(defn join-windows
+
+  ""
+
+  ^JoinWindows
+
+  [interval-ms]
+
+  (JoinWindows/of interval-ms))
+
+
+
+
+(defn joined
+
+  ""
+
+  ^Joined
+
+  [{:as   opts
+    :keys [serializer
+           serializer-key
+           serializer-value
+           serializer-value-left
+           serializer-value-right
+           deserializer
+           deserializer-key
+           deserializer-value
+           deserializer-value-left
+           deserializer-value-right]}]
+
+  (Joined/with (serde (or serializer-key
+                          serializer)
+                      (or deserializer-key
+                          deserializer))
+               (serde (or serializer-value-left
+                          serializer-value
+                          serializer)
+                      (or deserializer-value-left
+                          deserializer-value
+                          deserializer))
+               (serde (or serializer-value-right
+                          serializer-value
+                          serializer)
+                      (or deserializer-value-right
+                          deserializer-value
+                          deserializer))))
+
+
+
+
+(defn initializer
+
+  ""
+
+  ^Initializer
+
+  [seed]
+
+  (if (fn? seed)
+    (reify
+
+      Initializer
+
+        (apply [_]
+          (seed)))
+    (reify
+
+      Initializer
+
+        (apply [_]
+          seed))))
+
+
+
+
+(defn aggregator
+
+  ""
+
+  ^Aggregator
+
+  [f]
+
+  (reify
+
+    Aggregator
+
+      (apply [_ k v agg]
+        (f agg
+           k
+           v))))
+
+
+
+
+(defn reducer
+
+  ""
+
+  ^Reducer
+
+  [f]
+
+  (reify
+ 
+    Reducer
+
+      (apply [_ acc v]
+        (f acc
+           v))))
+
+
+
+
+(defn foreach-action
+
+  ""
+
+  ^ForeachAction
+
+  [f]
+
+  (reify
+
+    ForeachAction
+
+      (apply [_ k v]
+        (f k
+           v))))
+
+
+
+
+(defn time-windows
+
+  ""
+
+  ^TimeWindows
+
+  [{:as   opts
+    :keys [interval
+           hop
+           ^long retention]}]
+
+  (let [window (TimeWindows/of interval)]
+    (some->> hop
+            (.advanceBy window))
+    (some->> retention
+             (.until window))
+    window))
+
+
+
+
+(defn session-windows
+
+  ""
+
+  ^SessionWindows
+
+  [{:as   opts
+    :keys [interval
+           retention]}]
+
+  (let [window (SessionWindows/with interval)]
+    (some->> retention
+             (.until window))
+    window))

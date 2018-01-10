@@ -4,9 +4,9 @@
 
   {:author "Adam Helinski"}
 
-  (:require [milena.interop      :as $.interop]
-            [milena.interop.clj  :as $.interop.clj]
-            [milena.interop.java :as $.interop.java])
+  (:require [milena.interop      :as M.interop]
+            [milena.interop.clj  :as M.interop.clj]
+            [milena.interop.java :as M.interop.java])
   (:import java.util.concurrent.TimeUnit
            org.apache.kafka.common.TopicPartitionInfo
            org.apache.kafka.clients.admin.AdminClient))
@@ -37,9 +37,9 @@
 
   ([^AdminClient client opts]
 
-   ($.interop.clj/describe-cluster-result (if opts
+   (M.interop.clj/describe-cluster-result (if opts
                                             (.describeCluster client
-                                                              ($.interop.java/describe-cluster-options opts))
+                                                              (M.interop.java/describe-cluster-options opts))
                                             (.describeCluster client)))))
 
 
@@ -69,11 +69,11 @@
 
   ([^AdminClient client opts]
 
-   ($.interop/future-proxy (.listings (if opts
+   (M.interop/future-proxy (.listings (if opts
                                         (.listTopics client
-                                                     ($.interop.java/list-topics-options opts))
+                                                     (M.interop.java/list-topics-options opts))
                                         (.listTopics client)))
-                           $.interop.clj/topic-listings)))
+                           M.interop.clj/topic-listings)))
 
 
 
@@ -105,10 +105,10 @@
 
   ([^AdminClient client topics opts]
 
-   ($.interop.clj/describe-topics-result (if opts
+   (M.interop.clj/describe-topics-result (if opts
                                            (.describeTopics client
                                                             topics
-                                                            ($.interop.java/describe-topics-options opts))
+                                                            (M.interop.java/describe-topics-options opts))
                                            (.describeTopics client
                                                             topics)))))
 
@@ -150,13 +150,13 @@
   ([^AdminClient client new-topics opts]
 
    (let [topics' (map (fn map-topics [[topic topic-opts]]
-                        ($.interop.java/new-topic topic
+                        (M.interop.java/new-topic topic
                                                   topic-opts))
                       new-topics)]
-     ($.interop.clj/create-topics-result (if opts
+     (M.interop.clj/create-topics-result (if opts
                                            (.createTopics client
                                                           topics'
-                                                          ($.interop.java/create-topics-options opts))
+                                                          (M.interop.java/create-topics-options opts))
                                            (.createTopics client
                                                           topics'))))))
 
@@ -193,10 +193,10 @@
 
   ([^AdminClient client topics opts]
 
-   ($.interop.clj/delete-topics-result (if opts
+   (M.interop.clj/delete-topics-result (if opts
                                          (.deleteTopics client
                                                         topics
-                                                        ($.interop.java/delete-topics-options opts))
+                                                        (M.interop.java/delete-topics-options opts))
                                          (.deleteTopics client
                                                         topics)))))
 
@@ -237,14 +237,14 @@
 
   ([^AdminClient client topics-to-new-partitions opts]
 
-   (let [new-partitions ($.interop.java/topics-to-new-partitions topics-to-new-partitions)
+   (let [new-partitions (M.interop.java/topics-to-new-partitions topics-to-new-partitions)
          result         (if opts
                           (.createPartitions client
                                              new-partitions
-                                             ($.interop.java/create-partitions-options opts))
+                                             (M.interop.java/create-partitions-options opts))
                           (.createPartitions client
                                              new-partitions))]
-     ($.interop.clj/create-partitions-result result))))
+     (M.interop.clj/create-partitions-result result))))
 
 
 
@@ -283,11 +283,11 @@
 
 
   ([^AdminClient client resources opts]
-   (let [resources' ($.interop.java/config-resources resources)]
-     ($.interop.clj/describe-configs-result (if opts
+   (let [resources' (M.interop.java/config-resources resources)]
+     (M.interop.clj/describe-configs-result (if opts
                                               (.describeConfigs client
                                                                 resources'
-                                                                ($.interop.java/describe-configs-options opts))
+                                                                (M.interop.java/describe-configs-options opts))
                                               (.describeConfigs client
                                                                 resources'))))))
 
@@ -325,11 +325,11 @@
 
   ([^AdminClient client configs opts]
 
-   (let [configs' ($.interop.java/alter-configs configs)]
-     ($.interop.clj/alter-configs-result (if opts
+   (let [configs' (M.interop.java/alter-configs configs)]
+     (M.interop.clj/alter-configs-result (if opts
                                            (.alterConfigs client
                                                           configs'
-                                                          ($.interop.java/alter-configs-options opts))
+                                                          (M.interop.java/alter-configs-options opts))
                                            (.alterConfigs client
                                                           configs'))))))
 
@@ -352,7 +352,7 @@
      Cf. `milena.interop.java/acl-binding-filter`
 
    @ opts (nilable)
-     Cf. `$.interop.java/describe-acls-options`
+     Cf. `M.interop.java/describe-acls-options`
 
    => Cf. `milena.interop.clj/describe-acls-result`
 
@@ -381,11 +381,11 @@
 
   ([^AdminClient client acl-filter opts]
 
-   (let [acl-filter' ($.interop.java/acl-binding-filter acl-filter)]
-     ($.interop.clj/describe-acls-result (if opts
+   (let [acl-filter' (M.interop.java/acl-binding-filter acl-filter)]
+     (M.interop.clj/describe-acls-result (if opts
                                            (.describeAcls client
                                                           acl-filter'
-                                                          ($.interop.java/describe-acls-options opts))
+                                                          (M.interop.java/describe-acls-options opts))
                                            (.describeAcls client
                                                           acl-filter'))))))
 
@@ -417,12 +417,12 @@
 
   ([^AdminClient client acls opts]
 
-   (let [acls' (map $.interop.java/acl-binding
+   (let [acls' (map M.interop.java/acl-binding
                     acls)]
-     ($.interop.clj/create-acls-result (if opts
+     (M.interop.clj/create-acls-result (if opts
                                          (.createAcls client
                                                       acls'
-                                                      ($.interop.java/create-acls-options opts))
+                                                      (M.interop.java/create-acls-options opts))
                                          (.createAcls client
                                                       acls'))))))
 
@@ -459,12 +459,12 @@
 
   ([^AdminClient client acl-filters opts]
 
-   (let [acl-filters' (map $.interop.java/acl-binding-filter
+   (let [acl-filters' (map M.interop.java/acl-binding-filter
                            acl-filters)]
-     ($.interop.clj/delete-acls-result (if opts
+     (M.interop.clj/delete-acls-result (if opts
                                          (.deleteAcls client
                                                       acl-filters'
-                                                      ($.interop.java/delete-acls-options opts))
+                                                      (M.interop.java/delete-acls-options opts))
                                          (.deleteAcls client
                                                       acl-filters'))))))
 
@@ -532,5 +532,5 @@
             config]
      :or   {nodes [["localhost" 9092]]}}]
 
-   (AdminClient/create ($.interop/config config
+   (AdminClient/create (M.interop/config config
                                          nodes))))

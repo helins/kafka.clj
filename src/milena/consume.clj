@@ -4,10 +4,10 @@
 
   {:author "Adam Helinski"}
 
-  (:require [milena.interop      :as $.interop]
-            [milena.interop.clj  :as $.interop.clj]
-            [milena.interop.java :as $.interop.java]
-            [milena.deserialize  :as $.deserialize])
+  (:require [milena.interop      :as M.interop]
+            [milena.interop.clj  :as M.interop.clj]
+            [milena.interop.java :as M.interop.java]
+            [milena.deserialize  :as M.deserialize])
   (:import java.util.Collection
            java.util.regex.Pattern
            java.util.concurrent.TimeUnit
@@ -45,7 +45,7 @@
      Kafka consumer.
 
    => Map of topic names to partition infos.
-      Cf. `$.interop.clj/partition-info`
+      Cf. `M.interop.clj/partition-info`
 
 
    Throws
@@ -69,7 +69,7 @@
   (reduce (fn reduce-topics [ktopics [ktopic partition-info]]
             (assoc ktopics
                    ktopic
-                   (map $.interop.clj/partition-info
+                   (map M.interop.clj/partition-info
                         partition-info)))
           {}
           (.listTopics consumer)))
@@ -113,7 +113,7 @@
 
   [^KafkaConsumer consumer topic]
 
-  (map $.interop.clj/partition-info
+  (map M.interop.clj/partition-info
        (.partitionsFor consumer
                        topic)))
 
@@ -172,13 +172,13 @@
      (if (sequential? source)
        (if (sequential? (first source))
          (.assign consumer
-                  (map $.interop.java/topic-partition
+                  (map M.interop.java/topic-partition
                        source))
          (.subscribe consumer
                      ^Collection source))
        (.subscribe consumer
                    ^Pattern source
-                   ($.interop.java/consumer-rebalance-listener (fn no-op-rebalance [_ _]
+                   (M.interop.java/consumer-rebalance-listener (fn no-op-rebalance [_ _]
                                                                  nil))))
      (.unsubscribe consumer))
    consumer)
@@ -186,11 +186,11 @@
 
   ([^KafkaConsumer consumer source f-rebalance]
 
-   (let [f-rebalance' ($.interop.java/consumer-rebalance-listener f-rebalance)]
+   (let [f-rebalance' (M.interop.java/consumer-rebalance-listener f-rebalance)]
      (if (sequential? source)
        (if (sequential? (first source))
          (.assign consumer
-                  (map $.interop.java/topic-partition
+                  (map M.interop.java/topic-partition
                        source))
          (.subscribe consumer
                      ^Collection source
@@ -224,7 +224,7 @@
   [^KafkaConsumer consumer]
 
   {:partitions    (into #{}
-                        (map $.interop.clj/topic-partition
+                        (map M.interop.clj/topic-partition
                              (.assignment consumer)))
    :subscriptions (into #{}
                         (.subscription consumer))})
@@ -287,7 +287,7 @@
   ([^KafkaConsumer consumer topic-partitions]
 
    (.pause consumer
-           (map $.interop.java/topic-partition
+           (map M.interop.java/topic-partition
                 topic-partitions))
    consumer)
 
@@ -312,7 +312,7 @@
   [^KafkaConsumer consumer]
 
   (into #{}
-        (map $.interop.clj/topic-partition
+        (map M.interop.clj/topic-partition
              (.paused consumer))))
 
 
@@ -392,7 +392,7 @@
   ([^KafkaConsumer consumer topic-partitions]
 
    (.resume consumer
-            (map $.interop.java/topic-partition
+            (map M.interop.java/topic-partition
                  topic-partitions))
    consumer)
 
@@ -448,14 +448,14 @@
 
   ([^KafkaConsumer consumer topic-partitions]
 
-   ($.interop.clj/topic-partition-to-offset (.beginningOffsets consumer
-                                                               (map $.interop.java/topic-partition
+   (M.interop.clj/topic-partition-to-offset (.beginningOffsets consumer
+                                                               (map M.interop.java/topic-partition
                                                                     topic-partitions))))
 
 
   ([^KafkaConsumer consumer topic partition]
 
-   (let [topic-partition ($.interop.java/topic-partition topic
+   (let [topic-partition (M.interop.java/topic-partition topic
                                                          partition)]
      (get (.beginningOffsets consumer
                              [topic-partition])
@@ -494,14 +494,14 @@
 
   ([^KafkaConsumer consumer topic-partitions]
 
-   ($.interop.clj/topic-partition-to-offset (.endOffsets consumer
-                                                         (map $.interop.java/topic-partition
+   (M.interop.clj/topic-partition-to-offset (.endOffsets consumer
+                                                         (map M.interop.java/topic-partition
                                                               topic-partitions))))
 
 
   ([^KafkaConsumer consumer topic partition]
 
-   (let [topic-partition ($.interop.java/topic-partition topic
+   (let [topic-partition (M.interop.java/topic-partition topic
                                                          partition)]
      (get (.endOffsets consumer
                        [topic-partition])
@@ -565,13 +565,13 @@
    
    (reduce (fn reduce-offsets [offsets [topic-partition oat]]
              (assoc offsets
-                    ($.interop.clj/topic-partition topic-partition)
-                    ($.interop.clj/offset-and-timestamp oat)))
+                    (M.interop.clj/topic-partition topic-partition)
+                    (M.interop.clj/offset-and-timestamp oat)))
            {}
            (.offsetsForTimes consumer
                              (reduce-kv (fn reduce-timestamps [hmap topic-partition ts]
                                           (assoc hmap
-                                                 ($.interop.java/topic-partition topic-partition)
+                                                 (M.interop.java/topic-partition topic-partition)
                                                  (max ts
                                                       0)))
                                          {}
@@ -580,12 +580,12 @@
 
   ([^KafkaConsumer consumer topic partition ts]
 
-   (let [topic-partition ($.interop.java/topic-partition topic
+   (let [topic-partition (M.interop.java/topic-partition topic
                                                          partition)]
      (some-> (get (.offsetsForTimes consumer
                                     {topic-partition ts})
                   topic-partition)
-             $.interop.clj/offset-and-timestamp))))
+             M.interop.clj/offset-and-timestamp))))
 
 
 
@@ -663,7 +663,7 @@
   ([^KafkaConsumer consumer topic partition]
 
    (.position consumer
-              ($.interop.java/topic-partition topic 
+              (M.interop.java/topic-partition topic 
                                               partition))))
 
 
@@ -728,7 +728,7 @@
   ([^KafkaConsumer consumer topic partition offset]
 
    (.seek consumer
-          ($.interop.java/topic-partition topic
+          (M.interop.java/topic-partition topic
                                           partition)
           (max offset 
                0))
@@ -787,7 +787,7 @@
   ([^KafkaConsumer consumer topic-partitions]
 
    (.seekToBeginning consumer
-                     (map $.interop.java/topic-partition
+                     (map M.interop.java/topic-partition
                           topic-partitions))
    consumer)
 
@@ -845,7 +845,7 @@
   ([^KafkaConsumer consumer topic-partitions]
 
    (.seekToEnd consumer
-               (map $.interop.java/topic-partition
+               (map M.interop.java/topic-partition
                     topic-partitions))
    consumer)
 
@@ -1070,7 +1070,7 @@
 
    (some->> (-poll-raw consumer
                     timeout-ms)
-            (map $.interop.clj/consumer-record))))
+            (map M.interop.clj/consumer-record))))
 
 
 
@@ -1096,7 +1096,7 @@
 
    (some-> (-poll-raw consumer
                       timeout-ms)
-           $.interop.clj/consumer-records-by-partitions )))
+           M.interop.clj/consumer-records-by-partitions )))
 
 
 
@@ -1204,7 +1204,7 @@
   ([^KafkaConsumer consumer offsets]
 
    (.commitSync consumer
-                ($.interop.java/topic-partition-to-offset offsets))
+                (M.interop.java/topic-partition-to-offset offsets))
    consumer))
 
 
@@ -1227,7 +1227,7 @@
    @ consumer
      Kafka consumer.
 
-   @ callback / ?callback
+   @ callback (nilable)
      Cf.
 
    => `consumer`
@@ -1265,16 +1265,16 @@
   ([^KafkaConsumer consumer callback]
 
    (.commitAsync consumer
-                 ($.interop.java/offset-commit-callback callback))
+                 (M.interop.java/offset-commit-callback callback))
    consumer)
 
 
-  ([^KafkaConsumer consumer ?callback offsets]
+  ([^KafkaConsumer consumer callback offsets]
 
    (.commitAsync consumer
-                 ($.interop.java/topic-partition-to-offset offsets)
-                 (some-> ?callback
-                         $.interop.java/offset-commit-callback))
+                 (M.interop.java/topic-partition-to-offset offsets)
+                 (some-> callback
+                         M.interop.java/offset-commit-callback))
    consumer))
 
 
@@ -1337,7 +1337,7 @@
   ([^KafkaConsumer consumer topic partition]
 
    (when-let [^OffsetAndMetadata om (.committed consumer
-                                                ($.interop.java/topic-partition topic
+                                                (M.interop.java/topic-partition topic
                                                                                 partition))]
        (.offset om))))
 
@@ -1355,7 +1355,7 @@
 
   [^KafkaConsumer consumer]
 
-  ($.interop.clj/metrics (.metrics consumer)))
+  (M.interop.clj/metrics (.metrics consumer)))
 
 
 
@@ -1413,11 +1413,11 @@
             deserializer-key
             deserializer-value]
      :or   {nodes              [["localhost" 9092]]
-            deserializer       $.deserialize/byte-array
+            deserializer       M.deserialize/byte-array
             deserializer-key   deserializer
             deserializer-value deserializer}}]
  
-   (KafkaConsumer. ($.interop/config config
+   (KafkaConsumer. (M.interop/config config
                                      nodes)
-                   ($.deserialize/make deserializer-key)
-                   ($.deserialize/make deserializer-value))))
+                   (M.deserialize/make deserializer-key)
+                   (M.deserialize/make deserializer-value))))

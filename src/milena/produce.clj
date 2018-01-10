@@ -5,10 +5,10 @@
   {:author "Adam Helinski"}
 
   (:refer-clojure :exclude [flush])
-  (:require [milena.interop      :as $.interop]
-            [milena.interop.clj  :as $.interop.clj]
-            [milena.interop.java :as $.interop.java]
-            [milena.serialize    :as $.serialize])
+  (:require [milena.interop      :as M.interop]
+            [milena.interop.clj  :as M.interop.clj]
+            [milena.interop.java :as M.interop.java]
+            [milena.serialize    :as M.serialize])
   (:import java.util.concurrent.TimeUnit
            org.apache.kafka.clients.producer.KafkaProducer))
 
@@ -59,7 +59,7 @@
 
   [^KafkaProducer producer topic]
 
-  (map $.interop.clj/partition-info
+  (map M.interop.clj/partition-info
        (.partitionsFor producer
                        topic)))
 
@@ -242,7 +242,7 @@
   [^KafkaProducer producer group-id offsets]
 
   (.sendOffsetsToTransaction producer
-                             ($.interop.java/topic-partition-to-offset offsets)
+                             (M.interop.java/topic-partition-to-offset offsets)
                              group-id)
   producer)
 
@@ -369,17 +369,17 @@
 
   ([^KafkaProducer producer record]
 
-   ($.interop/future-proxy (.send producer
-                                  ($.interop.java/producer-record record))
-                           $.interop.clj/record-metadata))
+   (M.interop/future-proxy (.send producer
+                                  (M.interop.java/producer-record record))
+                           M.interop.clj/record-metadata))
 
 
   ([^KafkaProducer producer record callback]
 
-   ($.interop/future-proxy (.send producer
-                                  ($.interop.java/producer-record record)
-                                  ($.interop.java/callback callback))
-                           $.interop.clj/record-metadata)))
+   (M.interop/future-proxy (.send producer
+                                  (M.interop.java/producer-record record)
+                                  (M.interop.java/callback callback))
+                           M.interop.clj/record-metadata)))
 
 
 
@@ -424,7 +424,7 @@
 
   [^KafkaProducer producer]
 
-  ($.interop.clj/metrics (.metrics producer)))
+  (M.interop.clj/metrics (.metrics producer)))
 
 
 
@@ -516,11 +516,11 @@
             serializer-key
             serializer-value]
      :or   {nodes            [["localhost" 9092]]
-            serializer       $.serialize/byte-array
+            serializer       M.serialize/byte-array
             serializer-key   serializer
             serializer-value serializer}}]
 
-   (KafkaProducer. ($.interop/config config
+   (KafkaProducer. (M.interop/config config
                                      nodes)
-                   ($.serialize/make serializer-key)
-                   ($.serialize/make serializer-value))))
+                   (M.serialize/make serializer-key)
+                   (M.serialize/make serializer-value))))
