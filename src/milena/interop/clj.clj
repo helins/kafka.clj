@@ -52,7 +52,8 @@
                                      KeyValue)
            (org.apache.kafka.streams.kstream Window
                                              Windowed)
-           org.apache.kafka.streams.state.KeyValueIterator))
+           (org.apache.kafka.streams.state KeyValueIterator
+                                           WindowStoreIterator)))
 
 
 
@@ -1083,9 +1084,14 @@
   [^TopologyDescription$Subtopology td$s]
 
   {:id    (.id td$s)
-   :nodes (into #{}
-                (map topology-description$node
-                     (.nodes td$s)))})
+   :nodes (reduce (fn to-map [hmap node]
+                    (assoc hmap
+                           (:name node)
+                           (dissoc node
+                                   :name)))
+                  {}
+                  (map topology-description$node
+                       (.nodes td$s)))})
 
 
 
@@ -1118,6 +1124,18 @@
 
 
 
+(defn key-value--ws
+
+  ""
+
+  [^KeyValue kv]
+
+  {:timestamp (.-key   kv)
+   :value     (.-value kv)})
+
+
+
+
 (declare windowed)
 
 
@@ -1146,7 +1164,7 @@
   ([kvi]
 
    (key-value-iterator kvi
-                       identity))
+                       key-value))
 
 
   ([^KeyValueIterator kvi f]
@@ -1157,6 +1175,30 @@
              (key-value-iterator kvi
                                  f))
        (.close kvi)))))
+
+
+
+
+(defn key-value-iterator--windowed
+
+  ""
+
+  [kvi]
+
+  (key-value-iterator kvi
+                      key-value--windowed))
+
+
+
+
+(defn window-store-iterator
+
+  ""
+
+  [wsi]
+
+  (key-value-iterator wsi
+                      key-value--ws))
 
 
 

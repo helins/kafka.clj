@@ -47,8 +47,14 @@
                                      Consumed
                                      KeyValue)
            (org.apache.kafka.streams.processor TimestampExtractor
-                                               StreamPartitioner)
-           org.apache.kafka.streams.state.Stores
+                                               StreamPartitioner
+                                               Processor
+                                               ProcessorSupplier
+                                               ProcessorContext
+                                               PunctuationType
+                                               Punctuator)
+           (org.apache.kafka.streams.state Stores
+                                           StoreBuilder)
            (org.apache.kafka.streams.kstream Serialized
                                              Produced
                                              Materialized
@@ -63,7 +69,9 @@
                                              Reducer
                                              ForeachAction
                                              TimeWindows
-                                             SessionWindows)))
+                                             SessionWindows
+                                             Window
+                                             Windowed)))
 
 
 
@@ -1346,6 +1354,22 @@
 
 
 
+(defn topology$auto-offset-reset
+
+  ""
+
+  ^Topology$AutoOffsetReset
+
+  [offset-reset]
+
+  (case offset-reset
+    nil       nil
+    :earliest Topology$AutoOffsetReset/EARLIEST
+    :latest   Topology$AutoOffsetReset/LATEST))
+
+
+
+
 (declare timestamp-extractor)
 
 
@@ -1365,10 +1389,7 @@
                  (serde-value opts)
                  (some-> extract-timestamp
                          timestamp-extractor)
-                 (case offset-reset
-                   nil       nil
-                   :earliest Topology$AutoOffsetReset/EARLIEST
-                   :latest   Topology$AutoOffsetReset/LATEST)))
+                 (topology$auto-offset-reset offset-reset)))
 
 
 
@@ -1437,6 +1458,226 @@
 
 
 
+(defn processor
+
+  ""
+
+  ^Processor
+
+  [{init'    :init
+    process' :process
+    close'   :close}]
+
+  (let [v*ctx (volatile! nil)]
+    (reify
+
+      Processor
+
+        (init [_ ctx]
+          (vreset! v*ctx
+                   ctx)
+          (init' ctx))
+
+
+        (process [_ k v]
+          (let [^ProcessorContext ctx @v*ctx]
+            (process' {:topic     (.topic     ctx)
+                       :partition (.partition ctx)
+                       :offset    (.offset    ctx)
+                       :timestamp (.timestamp ctx)
+                       :key       k
+                       :value     v})))
+
+
+        (close [_]
+          (close')))))
+
+
+
+
+(defn processor-supplier
+
+  ""
+
+  ^ProcessorSupplier
+
+  [x]
+
+  (if (fn? x)
+    (reify
+
+      ProcessorSupplier
+
+        (get [_]
+          (processor (x))))
+    (reify
+
+      ProcessorSupplier
+
+        (get [_]
+          (processor x)))))
+
+
+
+
+(defn punctuation-type
+
+  ""
+
+  ^PunctuationType
+
+  [time-type]
+
+  (case (or time-type
+            :stream-time)
+    :stream-time     PunctuationType/STREAM_TIME
+    :wall-clock-time PunctuationType/WALL_CLOCK_TIME))
+
+
+
+
+(defn punctuator
+
+  ""
+
+  ^Punctuator
+
+  [f]
+
+  (reify
+
+    Punctuator
+
+      (punctuate [_ timestamp]
+        (f timestamp))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.streams.state.*
+
+
+(defn- -store-builder--configure
+
+  ""
+
+  ^StoreBuilder
+
+  [^StoreBuilder builder {:as   opts
+                          :keys [cache?
+                                 changelog?
+                                 changelog-config]}]
+  (when (or cache?
+          (not (contains? opts
+                          :cache?)))
+    ;; TODO weird, no .withCachingDisabled ?
+    (.withCachingEnabled builder))
+  (if (or changelog?
+          (not (contains? opts
+                          :changelog?)))
+    (when changelog-config
+      (.withLoggingEnabled builder
+                           (M.interop/stringify-keys changelog-config)))
+    (.withLoggingDisabled builder))
+  builder)
+
+
+
+
+(defn store-builder--kv
+
+  ""
+
+  ^StoreBuilder
+
+  [{:as   opts
+    :keys [name
+           type]}]
+
+  (let [name' (or name
+                  (-store-name))]
+    (-store-builder--configure (Stores/keyValueStoreBuilder (case (or type
+                                                                      :persistent)
+                                                              :persistent (Stores/persistentKeyValueStore name')
+                                                              :in-memory  (Stores/inMemoryKeyValueStore   name'))
+                                                            (serde-key opts)
+                                                            (serde-value opts))
+                               opts)))
+
+
+
+
+(defn store-builder--ws
+
+  ""
+
+  ^StoreBuilder
+
+  [{:as   opts
+    :keys [name
+           retention
+           segments
+           size
+           duplicates?]}]
+
+  (let [name' (or name
+                  (-store-name))]
+    (-store-builder--configure (Stores/windowStoreBuilder (Stores/persistentWindowStore name'
+                                                                                        retention
+                                                                                        (int segments)
+                                                                                        size
+                                                                                        duplicates?)
+                                                          (serde-key opts)
+                                                          (serde-value opts))
+                               opts)))
+
+
+
+
+(defn store-builder--ss
+
+  ""
+
+  ^StoreBuilder
+
+  [{:as   opts
+    :keys [name
+           retention]}]
+
+  (let [name' (or name
+                  (-store-name))]
+    (-store-builder--configure (Stores/sessionStoreBuilder (Stores/persistentSessionStore name'
+                                                                                          retention)
+                                                           (serde-key opts)
+                                                           (serde-value opts))
+                               opts)))
+
+
+
+
+(defn store-builder
+
+  ""
+
+  ^StoreBuilder
+
+  [{:as   opts
+    :keys [type]}]
+
+  (case (or type
+            :kv/persistent)
+    :kv/persistent (store-builder--kv (assoc opts
+                                             :type
+                                             :persistent))
+    :kv/in-memory  (store-builder--kv (assoc opts
+                                             :type
+                                             :in-memory))
+    :windows       (store-builder--ws opts)
+    :sessions      (store-builder--ss opts)))
+
+
+
+
 ;;;;;;;;;; org.apache.kafka.streams.kstream.*
 
 
@@ -1461,11 +1702,11 @@
   ^Produced
 
   [{:as   opts
-    :keys [partition]}]
+    :keys [partition-stream]}]
 
   (Produced/with (serde-key opts)
                  (serde-value opts)
-                 (some-> partition
+                 (some-> partition-stream
                          stream-partitioner)))
 
 
@@ -1839,3 +2080,32 @@
     (some->> retention
              (.until window))
     window))
+
+
+
+
+(defn window
+
+  ""
+
+  ^Window
+
+  [start end]
+
+  (Window. start
+           end))
+
+
+
+
+(defn windowed
+
+  ""
+
+  ^Windowed
+
+  [k start end]
+
+  (Windowed. k
+             (window start
+                     end)))

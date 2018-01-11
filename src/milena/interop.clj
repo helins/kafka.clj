@@ -6,6 +6,7 @@
 
   (:require [clojure.string :as string])
   (:import java.util.Map
+           java.util.regex.Pattern
            java.util.concurrent.Future
            clojure.lang.Named
            org.apache.kafka.streams.StreamsConfig))
@@ -14,6 +15,18 @@
 
 
 ;;;;;;;;;;
+
+
+(defn regex?
+
+  "Is `x` a regular expression ?"
+
+  [x]
+
+  (instance? Pattern
+             x))
+
+
 
 
 (defn named?

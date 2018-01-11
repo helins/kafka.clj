@@ -146,24 +146,13 @@
 
   ""
 
+  ^ReadOnlyKeyValueStore
+
   [^KafkaStreams app store-name]
 
-  (let [^ReadOnlyKeyValueStore
-        store                  (.store app
-                                       store-name
-                                       (QueryableStoreTypes/keyValueStore))]
-    {:all         (fn all []
-                    (M.interop.clj/key-value-iterator (.all store)
-                                                      M.interop.clj/key-value))
-                                                                
-     :num-entries (fn num-entries []
-                    (.approximateNumEntries store))
-     :get         (fn get-val [k]
-                    (.get store
-                          k))
-     :range       (fn rng [from to]
-                    (M.interop.clj/key-value-iterator (.all store)
-                                                      M.interop.clj/key-value))}))
+  (.store app
+          store-name
+          (QueryableStoreTypes/keyValueStore)))
 
 
 
@@ -172,31 +161,13 @@
 
   ""
 
+  ^ReadOnlyWindowStore
+
   [^KafkaStreams app store-name]
 
-  (let [^ReadOnlyWindowStore
-        store                (.store app
-                                     store-name
-                                     (QueryableStoreTypes/windowStore))]
-    (fn fetch
-
-      ([ts-from ts-to k]
-
-       (M.interop.clj/key-value-iterator (.fetch store
-                                                 k
-                                                 ts-from
-                                                 ts-to)
-                                         M.interop.clj/key-value--windowed))
-
-
-      ([ts-from ts-to k-from k-to]
-
-       (M.interop.clj/key-value-iterator (.fetch store
-                                                 k-from
-                                                 k-to
-                                                 ts-from
-                                                 ts-to)
-                                         M.interop.clj/key-value--windowed)))))
+  (.store app
+          store-name
+          (QueryableStoreTypes/windowStore)))
 
 
 
@@ -205,27 +176,13 @@
 
   ""
 
+  ^ReadOnlySessionStore
+
   [^KafkaStreams app store-name]
 
-  (let [^ReadOnlySessionStore
-        store                 (.store app
-                                      store-name
-                                      (QueryableStoreTypes/sessionStore))]
-    (fn fetch
-
-      ([k]
-
-       (M.interop.clj/key-value-iterator (.fetch store
-                                                 k)
-                                         M.interop.clj/key-value))
-
-
-      ([k-from k-to]
-
-       (M.interop.clj/key-value-iterator (.fetch store
-                                                 k-from
-                                                 k-to)
-                                         M.interop.clj/key-value)))))
+  (.store app
+          store-name
+          (QueryableStoreTypes/sessionStore)))
 
 
 

@@ -350,6 +350,22 @@
 
 
 
+(defn process
+
+  ""
+
+  ^KStream
+
+  [^KStream stream store-names processor]
+
+  (.process stream
+            (M.interop.java/processor-supplier processor)
+            (into-array String
+                        store-names)))
+
+
+
+
 (defn side-effect
 
   ""
