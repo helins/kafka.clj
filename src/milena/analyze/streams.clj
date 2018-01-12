@@ -123,6 +123,38 @@
 
 
 
+(defn transform
+
+  ""
+
+  ^KStream
+
+  [^KStream stream store-names transformer]
+
+  (.transform stream
+              (M.interop.java/transformer-supplier transformer)
+              (into-array String
+                          store-names)))
+
+
+
+
+(defn transform-vals
+
+  ""
+
+  ^KStream
+
+  [^KStream stream store-names transformer-vals]
+
+  (.transform stream
+              (M.interop.java/value-transformer-supplier transformer-vals)
+              (into-array String
+                          store-names)))
+
+
+
+
 (defn group-by
 
   ""

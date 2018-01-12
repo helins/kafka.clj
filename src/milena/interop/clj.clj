@@ -1005,41 +1005,6 @@
 
 
 
-(defn topology-description$processor
-
-  ""
-
-  [^TopologyDescription$Processor td$p]
-
-  (into #{}
-        (.stores td$p)))
-
-
-
-
-(defn topology-description$source
-
-  ""
-
-  [^TopologyDescription$Source td$s]
-
-  (.topics td$s))
-
-
-
-
-(defn topology-description$global-store
-
-  ""
-
-  [^TopologyDescription$GlobalStore td$gs]
-
-  {:processor (topology-description$processor (.processor td$gs))
-   :source    (topology-description$source    (.source    td$gs))})
-
-
-
-
 (defn- -topology-description$node--name
 
   ""
@@ -1070,9 +1035,48 @@
 
   [^TopologyDescription$Node n]
 
-  {:name         (.name n)
-   :predecessors (-topology-description$node--names (.predecessors n))
-   :successors   (-topology-description$node--names (.successors   n))})
+  {:name     (.name n)
+   :parents  (-topology-description$node--names (.predecessors n))
+   :children (-topology-description$node--names (.successors   n))})
+
+
+
+
+(defn topology-description$processor
+
+  ""
+
+  [^TopologyDescription$Processor td$p]
+
+  (assoc (topology-description$node td$p)
+         :stores
+         (into #{}
+               (.stores td$p))))
+
+
+
+
+(defn topology-description$source
+
+  ""
+
+  [^TopologyDescription$Source td$s]
+
+  (assoc (topology-description$node td$s)
+         :topics
+         (.topics td$s)))
+
+
+
+
+(defn topology-description$global-store
+
+  ""
+
+  [^TopologyDescription$GlobalStore td$gs]
+
+  {:processor (topology-description$processor (.processor td$gs))
+   :source    (topology-description$source    (.source    td$gs))})
 
 
 
@@ -1102,7 +1106,7 @@
 
   [^TopologyDescription tp]
 
-  {:stores        (into #{}
+  {:global-stores (into #{}
                         (map topology-description$global-store
                              (.globalStores tp)))
    :subtopologies (into #{}

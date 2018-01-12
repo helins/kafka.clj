@@ -67,6 +67,10 @@
                                              Initializer
                                              Aggregator
                                              Reducer
+                                             Transformer
+                                             TransformerSupplier
+                                             ValueTransformer
+                                             ValueTransformerSupplier
                                              ForeachAction
                                              TimeWindows
                                              SessionWindows
@@ -79,6 +83,42 @@
 ;;;;;;;;;; Private
 
 
+(defn- -no-op
+
+  ""
+
+  ([]
+
+   nil)
+
+
+  ([_]
+
+   nil)
+
+
+  ([_ _]
+
+   nil)
+
+
+  ([_ _ _]
+
+   nil)
+
+
+  ([_ _ _ _]
+
+   nil)
+
+
+  ([_ _ _ _ & _]
+
+   nil))
+
+
+
+
 (def -*store-number
 
   ""
@@ -88,7 +128,7 @@
 
 
 
-(defn -store-name
+(defn- -store-name
 
   ""
 
@@ -97,6 +137,20 @@
   (format "milena-store-%08d"
           (swap! -*store-number
                  inc)))
+
+
+
+
+(defn- -record-from-ctx
+
+  ""
+
+  [^ProcessorContext ctx]
+
+  {:topic     (.topic     ctx)
+   :partition (.partition ctx)
+   :offset    (.offset    ctx)
+   :timestamp (.timestamp ctx)})
 
 
 
@@ -1468,7 +1522,13 @@
     process' :process
     close'   :close}]
 
-  (let [v*ctx (volatile! nil)]
+  (let [init'2    (or init'
+                      -no-op)
+        process'2 (or process'
+                      -no-op)
+        close'2   (or close'
+                      -no-op)
+        v*ctx     (volatile! nil)]
     (reify
 
       Processor
@@ -1476,21 +1536,17 @@
         (init [_ ctx]
           (vreset! v*ctx
                    ctx)
-          (init' ctx))
+          (init'2 ctx))
 
 
         (process [_ k v]
-          (let [^ProcessorContext ctx @v*ctx]
-            (process' {:topic     (.topic     ctx)
-                       :partition (.partition ctx)
-                       :offset    (.offset    ctx)
-                       :timestamp (.timestamp ctx)
-                       :key       k
-                       :value     v})))
+          (process'2 (merge (-record-from-ctx @v*ctx)
+                            {:key   k
+                             :value v})))
 
 
         (close [_]
-          (close')))))
+          (close'2)))))
 
 
 
@@ -2022,6 +2078,134 @@
       (apply [_ acc v]
         (f acc
            v))))
+
+
+
+
+(defn transformer
+
+  ""
+
+  ^Transformer
+
+  [{init'      :init
+    transform' :transform
+    close'     :close}]
+
+  (let [init'2      (or init'
+                        -no-op)
+        transform'2 (or transform'
+                        -no-op)
+        close'2     (or close'
+                        -no-op)
+        v*ctx       (volatile! nil)]
+    (reify
+
+      Transformer
+
+        (init [_ ctx]
+          (vreset! v*ctx
+                   ctx)
+          (init'2 ctx))
+
+
+        (transform [_ k v]
+          (key-value (transform'2 (merge (-record-from-ctx @v*ctx)
+                                         {:key   k
+                                          :value v}))))
+
+
+        (close [_]
+          (close'2)))))
+
+
+
+
+(defn transformer-supplier
+
+  ""
+
+  ^TransformerSupplier
+
+  [x]
+
+  (if (fn? x)
+    (reify
+
+      TransformerSupplier
+
+        (get [_]
+          (transformer (x))))
+    (reify
+
+      TransformerSupplier
+
+        (get [_]
+          (transformer x)))))
+
+
+
+
+(defn value-transformer
+
+  ""
+
+  ^ValueTransformer
+
+  [{init'      :init
+    transform' :transform
+    close'     :close}]
+
+  (let [init'2      (or init'
+                        -no-op)
+        transform'2 (or transform'
+                        -no-op)
+        close'2     (or close'
+                        -no-op)
+        v*ctx       (volatile! nil)]
+    (reify
+
+      ValueTransformer
+
+        (init [_ ctx]
+          (vreset! v*ctx
+                   ctx)
+          (init'2 ctx))
+
+
+        (transform [_ v]
+          (transform'2 (assoc (-record-from-ctx @v*ctx)
+                              :value
+                              v)))
+
+
+        (close [_]
+          (close'2)))))
+
+
+
+
+(defn value-transformer-supplier
+
+  ""
+
+  ^ValueTransformerSupplier
+
+  [x]
+
+  (if (fn? x)
+    (reify
+
+      TransformerSupplier
+
+        (get [_]
+          (transformer (x))))
+    (reify
+
+      TransformerSupplier
+
+        (get [_]
+          (transformer x)))))
 
 
 
