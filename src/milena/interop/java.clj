@@ -5,7 +5,9 @@
   {:author "Adam Helinski"}
 
   (:require [milena.interop     :as M.interop]
-            [milena.interop.clj :as M.interop.clj])
+            [milena.interop.clj :as M.interop.clj]
+            [milena.serialize   :as M.serialize]
+            [milena.deserialize :as M.deserialize])
   (:import java.util.Map
            org.apache.kafka.common.TopicPartition
            (org.apache.kafka.common.config ConfigResource
@@ -19,7 +21,9 @@
                                         AccessControlEntryFilter
                                         AclOperation
                                         AclPermissionType)
-           (org.apache.kafka.common.serialization Serde
+           (org.apache.kafka.common.serialization Serializer
+                                                  Deserializer
+                                                  Serde
                                                   Serdes)
            (org.apache.kafka.clients.admin DescribeClusterOptions
                                            ListTopicsOptions
@@ -677,6 +681,49 @@
 ;; TODO docstrings
 
 
+(defn serializer
+
+  ""
+
+  ^Serializer
+
+  [f]
+
+  (reify Serializer
+      
+    (serialize [_ topic data]
+      (f topic
+         data))
+
+    (close [_]
+      nil)
+
+    (configure [_ _ _]
+      nil)))
+
+
+
+(defn deserializer
+
+  ""
+
+  ^Deserializer
+
+  [f]
+
+  (reify Deserializer
+      
+    (deserialize [_ topic data]
+      (f topic
+         data))
+
+    (close [_] nil)
+
+    (configure [_ _ _] nil)))
+
+
+
+
 (defn serde
 
   ""
@@ -685,10 +732,12 @@
 
   [serializer deserializer]
 
+  ;; TODO <!> accepts plain fns ?
+
   (when (and serializer
              deserializer)
-    (Serdes/serdeFrom serializer
-                      deserializer)))
+    (Serdes/serdeFrom (M.serialize/make serializer)
+                      (M.deserialize/make deserializer))))
 
 
 

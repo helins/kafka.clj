@@ -77,6 +77,30 @@
 ;;;;;;;;;; Misc
 
 
+(defn- -serializer
+
+  "@ f
+     A function accepting a topic and data, and serializing the data.
+  
+   => org.apache.kafka.common.serialization.Serializer"
+
+  [f]
+
+  (reify Serializer
+    
+    (serialize [_ topic data]
+      (f topic
+         data))
+
+    (close [_]
+      nil)
+
+    (configure [_ _ _]
+      nil)))
+
+
+
+
 (defn make
   
   "Given a fn, creates a Kafka serializer.
@@ -89,17 +113,7 @@
   [f]
 
   (if (fn? f)
-    (reify Serializer
-      
-      (serialize [_ topic data]
-        (f topic
-           data))
-
-      (close [_]
-        nil)
-
-      (configure [_ _ _]
-        nil))
+    (-serializer f)
     f))
 
 

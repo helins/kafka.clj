@@ -77,6 +77,28 @@
 ;;;;;;;;;;
 
 
+(defn- -deserializer
+
+  "@ f
+     A function taking a topic and data, and deserializing the data.
+  
+   => org.apache.kafka.common.serialization.Deserializer"
+
+  [f]
+
+  (reify Deserializer
+    
+    (deserialize [_ topic data]
+      (f topic
+         data))
+
+    (close [_] nil)
+
+    (configure [_ _ _] nil)))
+
+
+
+
 (defn make
 
   "Given a fn, creates a Kafka deserializer.
@@ -89,15 +111,7 @@
   [f]
 
   (if (fn? f)
-    (reify Deserializer
-      
-      (deserialize [_ topic data]
-        (f topic
-           data))
-
-      (close [_] nil)
-
-      (configure [_ _ _] nil))
+    (-deserializer f)
     f))
 
 
