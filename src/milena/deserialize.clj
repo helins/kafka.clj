@@ -4,7 +4,8 @@
 
   {:author "Adam Helinski"}
 
-  (:refer-clojure :exclude [int
+  (:refer-clojure :exclude [boolean
+                            int
                             long
                             double
                             byte-array])
@@ -19,62 +20,7 @@
 
 
 
-;;;;;;;;;; Basic deserializer
-
-
-(def ^Deserializer int
-
-  "Deserializer for ints."
-
-  (IntegerDeserializer.))
-
-
-
-
-(def ^Deserializer long
-
-  "Deserializer for longs."
-
-  (LongDeserializer.))
-
-
-
-
-(def ^Deserializer double
-
-  "Deserializer for doubles."
-
-  (DoubleDeserializer.))
-
-
-
-
-(def ^Deserializer byte-array
-
-  "Deserializer for byte arrays."
-
-  (ByteArrayDeserializer.))
-
-
-
-
-(def ^Deserializer byte-buffers
-
-  "Deserializer for byte buffers."
-
-  (ByteBufferDeserializer.))
-
-
-(def ^Deserializer string
-
-  "Deserializer for strings."
-
-  (StringDeserializer.))
-
-
-
-
-;;;;;;;;;;
+;;;;;;;;;; Misc
 
 
 (defn- -deserializer
@@ -126,3 +72,71 @@
   (.deserialize deserializer
                 topic
                 data))
+
+
+
+
+;;;;;;;;;; Basic deserializer
+
+
+(def ^Deserializer boolean
+
+  "Deserializer for booleans."
+
+  (-deserializer (fn deserialize-bool [_ ^bytes ba]
+                   (if (nil? ba)
+                     nil
+                     (not (zero? (aget ba
+                                       0)))))))
+
+
+
+
+(def ^Deserializer int
+
+  "Deserializer for ints."
+
+  (IntegerDeserializer.))
+
+
+
+
+(def ^Deserializer long
+
+  "Deserializer for longs."
+
+  (LongDeserializer.))
+
+
+
+
+(def ^Deserializer double
+
+  "Deserializer for doubles."
+
+  (DoubleDeserializer.))
+
+
+
+
+(def ^Deserializer byte-array
+
+  "Deserializer for byte arrays."
+
+  (ByteArrayDeserializer.))
+
+
+
+
+(def ^Deserializer byte-buffers
+
+  "Deserializer for byte buffers."
+
+  (ByteBufferDeserializer.))
+
+
+(def ^Deserializer string
+
+  "Deserializer for strings."
+
+  (StringDeserializer.))

@@ -4,7 +4,8 @@
 
   {:author "Adam Helinski"}
 
-  (:refer-clojure :exclude [int
+  (:refer-clojure :exclude [boolean
+                            int
                             long
                             double
                             byte-array])
@@ -15,61 +16,6 @@
                                                   ByteArraySerializer
                                                   ByteBufferSerializer
                                                   StringSerializer)))
-
-
-
-
-;;;;;;;;;; Basic serializers
-
-
-(def ^Serializer int
-
-  "Serializer for ints."
-
-  (IntegerSerializer.))
-
-
-
-
-(def ^Serializer long
-
-  "Serializer for longs."
-
-  (LongSerializer.))
-
-
-
-
-(def ^Serializer double
-
-  "Serializer for doubles."
-
-  (DoubleSerializer.))
-
-
-
-
-(def ^Serializer byte-array
-
-  "Serializer for byte arrays."
-
-  (ByteArraySerializer.))
-
-
-
-
-(def ^Serializer byte-buffer
-
-  "Serializer for byte-buffers."
-
-  (ByteBufferSerializer.))
-
-
-(def ^Serializer string
-
-  "Serializer for strings."
-
-  (StringSerializer.))
 
 
 
@@ -130,3 +76,75 @@
   (.serialize serializer
               topic
               data))
+
+
+
+
+;;;;;;;;;; Basic serializers
+
+
+(def ^Serializer boolean
+
+  "Serializer for booleans."
+
+  (-serializer (fn serialize-bool [_ bool?]
+                 (if (nil? bool?)
+                   nil
+                   (let [ba (clojure.core/byte-array 1)]
+                    (when bool?
+                        (aset-byte ba
+                                  0
+                                  1))
+                     ba)))))
+
+
+
+
+(def ^Serializer int
+
+  "Serializer for ints."
+
+  (IntegerSerializer.))
+
+
+
+
+(def ^Serializer long
+
+  "Serializer for longs."
+
+  (LongSerializer.))
+
+
+
+
+(def ^Serializer double
+
+  "Serializer for doubles."
+
+  (DoubleSerializer.))
+
+
+
+
+(def ^Serializer byte-array
+
+  "Serializer for byte arrays."
+
+  (ByteArraySerializer.))
+
+
+
+
+(def ^Serializer byte-buffer
+
+  "Serializer for byte-buffers."
+
+  (ByteBufferSerializer.))
+
+
+(def ^Serializer string
+
+  "Serializer for strings."
+
+  (StringSerializer.))
