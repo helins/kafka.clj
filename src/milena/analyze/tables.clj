@@ -38,8 +38,8 @@
 
    (.filter table
             (M.interop.java/predicate pred?)
-            ^Materialized (M.interop.java/materialized--kv opts
-                                                           (:store opts)))))
+            (M.interop.java/materialized--kv (merge opts
+                                                    (:store opts))))))
 
 
 
@@ -62,8 +62,8 @@
 
    (.mapValues table
                (M.interop.java/value-mapper f)
-               (M.interop.java/materialized--kv opts
-                                                (:store opts)))))
+               (M.interop.java/materialized--kv (merge opts
+                                                       (:store opts))))))
 
 
 
@@ -112,8 +112,8 @@
    (.join table-left
           table-right
           (M.interop.java/value-joiner f)
-          ^Materialized (M.interop.java/materialized--kv opts
-                                                         (:store opts)))))
+          (M.interop.java/materialized--kv (merge opts
+                                                  (:store opts))))))
 
 
 
@@ -138,8 +138,8 @@
    (.leftJoin table-left
               table-right
               (M.interop.java/value-joiner f)
-              ^Materialized (M.interop.java/materialized--kv opts
-                                                             (:store opts)))))
+              (M.interop.java/materialized--kv (merge opts
+                                                      (:store opts))))))
 
 
 
@@ -164,8 +164,8 @@
    (.outerJoin table-left
                table-right
                (M.interop.java/value-joiner f)
-               ^Materialized (M.interop.java/materialized--kv opts
-                                                              (:store opts)))))
+               (M.interop.java/materialized--kv (merge opts
+                                                       (:store opts))))))
 
 
 
