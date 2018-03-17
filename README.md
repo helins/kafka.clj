@@ -3,8 +3,6 @@
 [![Clojars
 Project](https://img.shields.io/clojars/v/dvlopt/milena.svg)](https://clojars.org/dvlopt/milena)
 
-![alt text](https://s-media-cache-ak0.pinimg.com/600x315/a4/11/25/a411251488b63fb207751b1545aeb551.jpg "Milena")
-
 Franz Kafka and Milena Jesenska wrote passionate letters to each other.
 
 This Kafka client library allows the user to exchange records while speaking
@@ -18,6 +16,8 @@ The user should be using almost always these namespaces :
 
 - `milena.deserialize`, `milena.consume` for deserializing and consuming
 records.
+
+- `milena.analyze.*`, for using Kafka Streams.
 
 Although not strictly needed, it is best for the user to be familiar with the
 original [java library](https://kafka.apache.org/documentation/#api). The goal
@@ -37,11 +37,12 @@ understand what is going on.
 
 While being already used in production, this library is still alpha (soon to be
 beta). The main reason being that all the java admin stuff is itself brand new
-and might change in the future.
+and might change in the future. Another one is the namespaces relative to Kafka
+Streams might involve breaking changes.
 
 ## Usage
 
-Read the full [API](https://dvlopt.github.io/doc/milena/)
+Read the [API](https://dvlopt.github.io/doc/milena/).
 
 ### Basics
 
@@ -147,7 +148,7 @@ Read the full [API](https://dvlopt.github.io/doc/milena/)
 
 ## License
 
-Copyright © 2017 Adam Helinski
+Copyright © 2017-2018 Adam Helinski
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
