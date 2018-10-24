@@ -101,7 +101,7 @@
 
 (defn builder
 
-  "A builder is used for building a topology under the hood."
+  "A builder is used as a starting point for the functional API. It actually builds a topology under the hood."
 
   ^StreamsBuilder
 
@@ -114,7 +114,8 @@
 
 (defn topology
 
-  "Once ready, a builder can be transformed to a topology which analyzed and used for a Kafka Streams application.
+  "Once ready, a builder can be transformed to a topology in order to make a Kafka Stream application or to add some low-level
+   processing.
   
    Cf. `dvlopt.kstreams.low` namespace."
 
@@ -179,7 +180,17 @@
 
   "Adds a table which can be used with the `dvlopt.kstreams.high.tables` namespace.
 
-   A map of options may be given, exactly like in `streams` as well as these for configuring the underlying key-value store :
+   A map of options may be given :
+
+     :dvlopt.kafka/deserializer.key
+     :dvlopt.kafka/deserializer.value
+     :dvlopt.kafka/serializer.key
+     :dvlopt.kafka/serializer.value
+      Cf. `dvlopt.kafka` for description of serializers and deserializers.
+
+     :dvlopt.kstreams/extract-timestamp
+     :dvlopt.kstreams/offset-reset
+      Cf. `stream`
 
      :dvlopt.kstreams.stores/cache?
      :dvlopt.kstreams.stores/name

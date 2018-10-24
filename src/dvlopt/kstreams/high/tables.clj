@@ -50,10 +50,10 @@
    Standard options can be provided (cf. namespace description).
   
 
-   Ex. (filter-kv (fn [k v]
+   Ex. (filter-kv table
+                  (fn [k v]
                     (>= (:age v)
-                        18))
-                  table)"
+                        18)))"
 
   (^KTable
 
@@ -83,11 +83,11 @@
    Standard options can be provided (cf. namespace description).
   
 
-   Ex. (map-values (fn [k v]
+   Ex. (map-values table
+                   (fn [k v]
                      (assoc v
                             :country
-                            (country-from-ip (:ip v))))
-                   table)"
+                            (country-from-ip (:ip v)))))"
 
   (^KTable
 
@@ -152,11 +152,11 @@
    Standard options can be provided (cf. namespace description).
 
 
-   Ex. (join-with-table (fn [v-left v-right]
+   Ex. (join-with-table left-table
+                        right-table
+                        (fn [v-left v-right]
                           (merge v-left
-                                 v-right))
-                        left-table
-                        right-table)"
+                                 v-right)))"
 
   (^KTable
 
@@ -257,12 +257,12 @@
 
    Ex. ;; Re-groups a table on countries while remembering from which user are the values.
   
-       (regroup-by (fn [k v]
+       (regroup-by table
+                   (fn [k v]
                      [(:country v)
                       (assoc v
                              :user
-                             k)])
-                   table)"
+                             k)]))"
 
   (^KGroupedTable
 
@@ -295,7 +295,8 @@
    and the old value as stored in the table. The order of those 2 operations is undefined.
 
 
-   Ex. (reduce-values (fn reduce-add [sum k v]
+   Ex. (reduce-values grouped-table
+                      (fn reduce-add [sum k v]
                         (
   "
 
@@ -337,9 +338,9 @@
 
    Ex. ;; The new key is the length of the value.
   
-       (to-stream (fn [k v]
-                    (count v)
-                  table))"
+       (to-stream table
+                  (fn [k v]
+                    (count v)))"
 
   (^KStream
 

@@ -44,15 +44,15 @@
 
    Ex. ;; Divives a stream into 3 streams containing respectively :red values, :black ones, and any other ones.
   
-       (branch [(fn only-red [k v]
+       (branch stream
+               [(fn only-red [k v]
                   (= v
                      :red))
                 (fn only-black [k v]
                   (= v
                      :black))
                 (fn other [k v]
-                  true)]
-               stream)"
+                  true)])"
 
   [^KStream stream predicates]
 
@@ -72,10 +72,10 @@
 
    Ex. ;; Keeps values greater than or equal to 42.
   
-       (filter-kv (fn [k v]
+       (filter-kv stream
+                  (fn [k v]
                     (>= v
-                        42))
-                  stream)"
+                        42)))"
 
   ^KStream
 
@@ -98,10 +98,10 @@
    Ex. ;; The key is an ip address mapped to a country and the value is a collection mapped to its
           number of items.
   
-       (map-kv (fn [k v]
+       (map-kv stream
+               (fn [k v]
                  [(country-from-ip k)
-                  (count v)])
-               stream)"
+                  (count v)]))"
 
   ^KStream
 
@@ -123,9 +123,9 @@
    
    Ex. ;; The key is an ip address mapped to a country.
   
-       (map-keys (fn [k v]
-                   (country-from-ip k))
-                 stream)"
+       (map-keys stream
+                 (fn [k v]
+                   (country-from-ip k)))"
 
   ^KStream
 
@@ -146,9 +146,9 @@
    
    Ex. ;; The value is a collection mapped to its number of items.
   
-       (map-values (fn [k v]
-                     (count v))
-                   stream)"
+       (map-values stream
+                   (fn [k v]
+                     (count v)))"
 
   ^KStream
 
@@ -171,7 +171,8 @@
    Ex. ;; The value is a list of tokens and we want to count them individually so that we end up with
           a collection where the key is a unique token and the value is its count.
   
-       (fmap-kv (fn [k v]
+       (fmap-kv stream
+                (fn [k v]
                   (reduce (fn [hmap token]
                             (assoc hmap
                                    token
@@ -180,8 +181,7 @@
                                                inc)
                                        1)))
                           {}
-                          v))
-                stream)"
+                          v)))"
 
   ^KStream
 
@@ -248,7 +248,7 @@
 
   (^KStream
 
-   [^KStream stream options processor]
+   [^KStream stream processor options]
 
    (.transform stream
                (K.-interop.java/transformer-supplier processor)
@@ -326,17 +326,17 @@
         :dvlopt.kafka/deserializer.value
         :dvlopt.kafka/serializer.value
 
-     Cf. `dvlopt.kafka` for description of serializers and deserializers.
+      Cf. `dvlopt.kafka` for description of serializers and deserializers.
 
      :dvlopt.kstreams.stores/retention
       Cf. `dvlopt.kstreams.stores`
 
 
-   Ex. (join-with-stream (fn [v-left v-right]
+   Ex. (join-with-stream left-stream
+                         right-stream
+                         (fn [v-left v-right]
                            (str \"left = \" v-left \"and right = \" v-right))
-                         [2 :seconds]
-                         left-stream
-                         right-stream)"
+                         [2 :seconds])"
 
   (^KStream
 
@@ -435,12 +435,12 @@
    A map of options may be given, just like in `join-with-stream`. 
 
 
-   Ex. (join-with-table (fn [v-stream v-table]
+   Ex. (join-with-table stream
+                        table
+                        (fn [v-stream v-table]
                           (assoc v-stream
                                  :last-known-location
-                                 (:location v-table)))
-                        stream
-                        table)"
+                                 (:location v-table))))"
 
   (^KStream
 
@@ -511,14 +511,14 @@
 
    Ex. ;; Enrich a stream of users by adding the most popular song of the country they are from.
 
-       (join-with-global-table (fn map-k [k v]
+       (join-with-global-table stream
+                               global-table
+                               (fn map-k [k v]
                                  (:country v))
                                (fn join [v-stream v-global-table]
                                  (assoc v-stream
                                         :song
-                                        (first (:top-10 v-global-table))))
-                               left-stream
-                               right-global-table)"
+                                        (first (:top-10 v-global-table)))))"
 
   ^KStream
 
@@ -567,12 +567,12 @@
      :dvlopt.kafka/deserializer.value
      :dvlopt.kafka/serializer.key
      :dvlopt.kafka/serializer.value
-      Cf. `dvlopt.kafka` for description of serializers and deserializers
+      Cf. `dvlopt.kafka` for description of deserializers
 
 
-   Ex. (group-by (fn by-country [k v]
-                   (:country v))
-                 stream)"
+   Ex. (group-by stream
+                 (fn by-country [k v]
+                   (:country v)))"
 
   (^KGroupedStream
     
@@ -725,15 +725,16 @@
 
   "Returns a new table aggregating values for each key of the given grouped stream.
 
+   
+   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`).
 
-   Ex. (reduce-values (fn reduce [aggregated k v]
+
+   Ex. (reduce-values grouped-stream
+                      (fn reduce [aggregated k v]
                         (+ aggregated
                            v))
                       (fn seed []
-                        0)
-                      grouped-stream)"
-
-  ;; Should `seed` be a function returning a seed or an immutable seed right away ?
+                        0))"
 
   (^KTable
 
@@ -759,7 +760,10 @@
 
 (defn reduce-windows
 
-  "Returns a new table aggregating values for each time window of each key of the given time-windowed stream."
+  "Returns a new table aggregating values for each time window of each key of the given time-windowed stream.
+  
+
+   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`)."
 
   (^KTable
 
@@ -790,15 +794,18 @@
    Sessions might merge, hence the need for a function being able to do so.
 
 
-   Ex. (reduce-sessions (fn reduce [aggregated k v]
+   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`).
+
+
+   Ex. (reduce-sessions grouped-stream
+                        (fn reduce [aggregated k v]
                           (+ aggregated
                              v))
                         (fn merge [aggregated-session-1 aggregated-session-2 k]
                           (+ aggregated-session-1
                              aggregated-session-2))
                         (fn seed []
-                          0)
-                        grouped-stream)"
+                          0))"
 
   (^KTable
 
@@ -847,10 +854,11 @@
 
   (^KStream
 
-   [^KStream stream topic]
+   [stream topic]
 
-   (.through stream
-             topic))
+   (through-topic stream
+                  topic
+                  nil))
 
 
   (^KStream
@@ -871,9 +879,9 @@
    Side effects cannot be tracked by Kafka, hence they do not benefit from Kafka's processing garantees.
   
    
-   Ex. (do-kv (fn [k v]
-                (println :key k :value v))
-              stream)"
+   Ex. (do-kv stream
+              (fn [k v]
+                (println :key k :value v)))"
 
   ^KStream
 
@@ -960,7 +968,7 @@
 
 
 
-(defn sink
+(defn sink-do
 
   "Marks the end of the given stream by doing a side-effect for each key-value.
   
@@ -968,9 +976,9 @@
    Returns nil.
 
 
-   Ex. (do-kv (fn [k v]
-                (println :key k :value v))
-              stream)"
+   Ex. (sink-do stream
+                (fn [k v]
+                  (println :key k :value v)))"
 
   [^KStream stream f]
 
