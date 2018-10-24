@@ -57,16 +57,16 @@
 
   (^KTable
 
-   [predicate table]
+   [table predicate]
 
-   (filter-kv predicate
-              table
+   (filter-kv table
+              predicate
               nil))
 
 
   (^KTable
 
-   [predicate ^KTable table standard-options]
+   [^KTable table predicate standard-options]
 
    (.filter table
             (K.-interop.java/predicate predicate)
@@ -91,16 +91,16 @@
 
   (^KTable
 
-   [f table]
+   [table f]
 
-   (map-values f
-               table
+   (map-values table
+               f
                nil))
 
 
   (^KTable
 
-   [f ^KTable table standard-options]
+   [^KTable table f standard-options]
 
    (.mapValues table
                (K.-interop.java/value-mapper-with-key f)
@@ -118,16 +118,16 @@
 
   (^KTable
     
-   [processor table]
+   [table processor]
 
-   (process-values processor
-                   table
+   (process-values table
+                   processor
                    nil))
 
 
   (^KTable
 
-   [processor ^KTable table options]
+   [^KTable table processor options]
 
    (.transformValues table
                      (K.-interop.java/value-transformer-with-key-supplier processor)
@@ -160,17 +160,17 @@
 
   (^KTable
 
-   [f left-table right-table]
+   [left-table right-table f]
 
-   (join-with-table f
-                    left-table
+   (join-with-table left-table
                     right-table
+                    f
                     nil))
 
 
   (^KTable
 
-   [f ^KTable left-table ^KTable right-table standard-options]
+   [^KTable left-table ^KTable right-table f standard-options]
 
    (.join left-table
           right-table
@@ -187,17 +187,17 @@
 
   (^KTable
 
-   [f left-table right-table]
+   [left-table right-table f]
 
-   (left-join-with-table f
-                         left-table
+   (left-join-with-table left-table
                          right-table
+                         f
                          nil))
 
 
   (^KTable
 
-   [f ^KTable left-table ^KTable right-table options]
+   [^KTable left-table ^KTable right-table f options]
 
    (.leftJoin left-table
               right-table
@@ -214,17 +214,17 @@
 
   (^KTable
 
-   [f left-table right-table]
+   [left-table right-table f]
 
-   (outer-join-with-table f
-                          left-table
+   (outer-join-with-table left-table
                           right-table
+                          f
                           nil))
 
 
   (^KTable
 
-   [f ^KTable left-table ^KTable right-table options]
+   [^KTable left-table ^KTable right-table f options]
 
    (.outerJoin left-table
                right-table
@@ -266,16 +266,16 @@
 
   (^KGroupedTable
 
-   [f table]
+   [table f]
 
-   (map-and-group-by f
-                     table
+   (map-and-group-by table
+                     f
                      nil))
 
 
   (^KGroupedTable
 
-   [f ^KTable table f options]
+   [^KTable table f options]
 
    (.groupBy table
              (K.-interop.java/key-value-mapper f)
@@ -303,18 +303,18 @@
 
   (^KTable
 
-   [fn-reduce-add fn-reduce-sub fn-seed grouped-table]
+   [grouped-table fn-reduce-add fn-reduce-sub fn-seed]
 
-   (reduce-values fn-reduce-add
+   (reduce-values grouped-table
+                  fn-reduce-add
                   fn-reduce-sub
                   fn-seed
-                  grouped-table
                   nil))
 
 
   (^KTable
 
-   [f-add f-sub seed ^KGroupedTable grouped-table options]
+   [^KGroupedTable grouped-table f-add f-sub seed options]
 
    (.aggregate grouped-table
                (K.-interop.java/initializer seed)
@@ -350,7 +350,7 @@
 
   (^KStream
 
-   [f ^KTable table]
+   [^KTable table f]
 
    (.toStream table
               (K.-interop.java/key-value-mapper--raw f))))

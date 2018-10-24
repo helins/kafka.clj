@@ -138,9 +138,7 @@
 
      :dvlopt.kafka/deserializer.key
      :dvlopt.kafka/deserializer.value
-     :dvlopt.kafka/serializer.key
-     :dvlopt.kafka/serializer.value
-      Cf. `dvlopt.kafka` for description of serializers and deserializers.
+      Cf. `dvlopt.kafka` for description of deserializers.
 
      :dvlopt.kstreams/extract-timestamp
       Function accepting the previous timestamp of the last record and a record, and returning

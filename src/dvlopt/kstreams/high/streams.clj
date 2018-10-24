@@ -54,7 +54,7 @@
                   true)]
                stream)"
 
-  [predicates ^KStream stream]
+  [^KStream stream predicates]
 
   (into []
         (.branch stream
@@ -79,7 +79,7 @@
 
   ^KStream
 
-  [predicate ^KStream stream]
+  [^KStream stream predicate]
 
   (.filter stream
            (K.-interop.java/predicate predicate)))
@@ -105,7 +105,7 @@
 
   ^KStream
 
-  [f ^KStream stream]
+  [^KStream stream f]
 
   (.map stream
         (K.-interop.java/key-value-mapper f)))
@@ -129,7 +129,7 @@
 
   ^KStream
 
-  [f ^KStream stream]
+  [^KStream stream f]
 
   (.selectKey stream
               (K.-interop.java/key-value-mapper--raw f)))
@@ -152,7 +152,7 @@
 
   ^KStream
 
-  [f ^KStream kstream]
+  [^KStream kstream f]
 
   (.mapValues kstream
               (K.-interop.java/value-mapper-with-key f)))
@@ -161,8 +161,6 @@
 
 
 (defn fmap-kv
-
-  ;; TODO. Check that returning a map is fine, otherwise always coerce with `seq`.
 
   "Returns a new stream mapping key-values from the given one into a collection of [key value]'s (or nil).
   
@@ -187,7 +185,7 @@
 
   ^KStream
 
-  [f ^KStream kstream]
+  [^KStream kstream f]
 
   (.flatMap kstream
             (K.-interop.java/key-value-mapper--flat f)))
@@ -241,16 +239,16 @@
 
   (^KStream
 
-   [processor stream]
+   [stream processor]
 
-   (process processor
-            stream
+   (process stream
+            processor
             nil))
 
 
   (^KStream
 
-   [processor ^KStream stream options]
+   [^KStream stream options processor]
 
    (.transform stream
                (K.-interop.java/transformer-supplier processor)
@@ -276,15 +274,15 @@
 
   (^KStream
 
-   [processor stream]
+   [stream processor]
 
-   (process-values processor
-                   stream
+   (process-values stream
+                   processor
                    nil))
 
   (^KStream
 
-   [processor ^KStream stream options]
+   [^KStream stream options processor]
 
    (.transformValues stream
                      (K.-interop.java/value-transformer-with-key-supplier processor)
@@ -342,18 +340,18 @@
 
   (^KStream
 
-   [f interval ^KStream left-stream ^KStream right-stream]
+   [^KStream left-stream ^KStream right-stream f interval]
 
-   (join-with-stream f
-                     interval
-                     left-stream
+   (join-with-stream left-stream
                      right-stream
+                     f
+                     interval
                      nil))
 
 
   (^KStream
 
-   [f interval ^KStream left-stream ^KStream right-stream options]
+   [^KStream left-stream ^KStream right-stream f interval options]
 
    (.join left-stream
           right-stream
@@ -371,18 +369,18 @@
 
   (^KStream
 
-   [f interval ^KStream left-stream ^KStream right-stream]
+   [^KStream left-stream ^KStream right-stream f interval]
 
-   (left-join-with-stream f
-                          interval
-                          left-stream
+   (left-join-with-stream left-stream
                           right-stream
+                          f
+                          interval
                           nil))
 
 
    (^KStream
 
-    [f interval ^KStream left-stream ^KStream right-stream options]
+    [^KStream left-stream ^KStream right-stream f interval options]
 
     (.leftJoin left-stream
                right-stream
@@ -400,18 +398,18 @@
 
   (^KStream
 
-   [f interval ^KStream left-stream ^KStream right-stream]
+   [^KStream left-stream ^KStream right-stream f interval]
 
-   (outer-join-with-stream f
-                           interval
-                           left-stream
+   (outer-join-with-stream left-stream
                            right-stream
+                           f
+                           interval
                            nil))
 
 
   (^KStream
 
-   [f interval ^KStream left-stream ^KStream right-stream options]
+   [^KStream left-stream ^KStream right-stream f interval options]
 
    (.outerJoin left-stream
                right-stream
@@ -446,17 +444,17 @@
 
   (^KStream
 
-   [f ^KStream left-stream ^KTable right-table]
+   [^KStream left-stream ^KTable right-table f]
 
-   (join-with-table f
-                    left-stream
+   (join-with-table left-stream
                     right-table
+                    f
                     nil))
 
 
   (^KStream
 
-   [f ^KStream left-stream ^KTable right-table options]
+   [^KStream left-stream ^KTable right-table f options]
 
    (.join left-stream
           right-table
@@ -473,17 +471,17 @@
  
   (^KStream
 
-   [f ^KStream left-stream ^KTable right-table]
+   [^KStream left-stream ^KTable right-table f]
 
-   (left-join-with-table f
-                         left-stream
+   (left-join-with-table left-stream
                          right-table
+                         f
                          nil))
 
 
   (^KStream
 
-   [f ^KStream left-stream ^KTable right-table options]
+   [^KStream left-stream ^KTable right-table f options]
 
    (.leftJoin left-stream
               right-table
@@ -524,7 +522,7 @@
 
   ^KStream
 
-  [f-map-k f-join ^KStream left-stream ^GlobalKTable right-global-table]
+  [^KStream left-stream ^GlobalKTable right-global-table f-map-k f-join]
 
   (.join left-stream
          right-global-table
@@ -541,7 +539,7 @@
 
   ^KStream
 
-  [f-map-k f-join ^KStream left-stream ^GlobalKTable right-global-table]
+  [^KStream left-stream ^GlobalKTable right-global-table f-map-k f-join]
 
   (.leftJoin left-stream
              right-global-table
@@ -578,16 +576,16 @@
 
   (^KGroupedStream
     
-   [f stream]
+   [stream f]
 
-   (group-by f
-             stream
+   (group-by stream
+             f
              nil))
 
 
   (^KGroupedStream
     
-   [f ^KStream kstream options]
+   [^KStream kstream f options]
 
    (.groupBy kstream
              (K.-interop.java/key-value-mapper--raw f)
@@ -604,17 +602,17 @@
 
   (^KGroupedStream
 
-   [^KStream kstream]
+   [^KStream stream]
 
-   (group-by-key kstream
+   (group-by-key stream
                  nil))
 
 
   (^KGroupedStream
 
-   [^KStream kstream options]
+   [^KStream stream options]
 
-   (.groupByKey kstream
+   (.groupByKey stream
                 (K.-interop.java/serialized options))))
 
 
@@ -739,17 +737,17 @@
 
   (^KTable
 
-   [fn-reduce fn-seed grouped-stream]
+   [grouped-stream fn-reduce fn-seed]
 
-   (reduce-values fn-reduce
+   (reduce-values grouped-stream
+                  fn-reduce
                   fn-seed
-                  grouped-stream
                   nil))
 
 
   (^KTable
 
-   [fn-reduce fn-seed ^KGroupedStream grouped-stream options]
+   [^KGroupedStream grouped-stream fn-reduce fn-seed options]
 
    (.aggregate grouped-stream
                (K.-interop.java/initializer fn-seed)
@@ -765,17 +763,17 @@
 
   (^KTable
 
-   [fn-reduce fn-seed time-windowed-stream]
+   [time-windowed-stream fn-reduce fn-seed]
 
-   (reduce-windows fn-reduce
+   (reduce-windows time-windowed-stream
+                   fn-reduce
                    fn-seed
-                   time-windowed-stream
                    nil))
 
 
   (^KTable
 
-   [fn-reduce fn-seed ^TimeWindowedKStream time-windowed-stream options]
+   [^TimeWindowedKStream time-windowed-stream fn-reduce fn-seed options]
 
    (.aggregate time-windowed-stream
                (K.-interop.java/initializer fn-seed)
@@ -804,18 +802,18 @@
 
   (^KTable
 
-   [fn-reduce fn-merge fn-seed session-windowed-stream]
+   [session-windowed-stream fn-reduce fn-merge fn-seed]
 
-   (reduce-sessions fn-reduce
+   (reduce-sessions session-windowed-stream
+                    fn-reduce
                     fn-merge
                     fn-seed
-                    session-windowed-stream
                     nil))
 
 
   (^KTable
 
-   [fn-reduce fn-merge fn-seed ^SessionWindowedKStream session-windowed-stream options]
+   [^SessionWindowedKStream session-windowed-stream fn-reduce fn-merge fn-seed options]
 
    (.aggregate session-windowed-stream
                (K.-interop.java/initializer fn-seed)
@@ -879,7 +877,7 @@
 
   ^KStream
 
-  [f ^KStream stream]
+  [^KStream stream f]
 
   (.peek stream
          (K.-interop.java/foreach-action f)))
@@ -901,22 +899,21 @@
 
   (^KStream
 
-   [processor stream]
+   [stream processor]
 
-   (process processor
-            stream
+   (process stream
+            processor
             nil))
 
 
   (^KStream
 
-   [processor ^KStream stream options]
+   [^KStream stream processor options]
 
    (.process stream
              (K.-interop.java/processor-supplier processor)
              (into-array String
-                         (or (::KS.stores/names options)
-                             [])))))
+                         (::KS.stores/names options)))))
 
 
 
@@ -954,7 +951,7 @@
      (condp identical?
             type
        :always  (.to stream
-                     ^String topic
+                     ^String target
                      options')
        :select (.to stream
                     (K.-interop.java/topic-name-extractor target)
@@ -975,7 +972,7 @@
                 (println :key k :value v))
               stream)"
 
-  [f ^KStream stream]
+  [^KStream stream f]
 
   (.foreach stream
             (K.-interop.java/foreach-action f)))

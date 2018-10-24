@@ -41,13 +41,13 @@
 
    A serializer is a function mapping some data to a byte array or nil. It is needed for producing records. It receives
 
-   Ex. (fn [data metadata]
+   Ex. (fn serializer [data metadata]
          (some-> v
                  nippy/freeze))
 
    A deserializer does the opposite, it maps a byte array (or nil) to a value. It is needed for consuming records.
 
-   Ex. (fn [ba metadata]
+   Ex. (fn deserializer [ba metadata]
          (some-> ba
                  nippy/thaw))
 
