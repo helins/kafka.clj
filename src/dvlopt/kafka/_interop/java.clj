@@ -541,7 +541,7 @@
                                   ::K/headers (K.-interop.clj/headers headers)))))
     (condp identical?
            kw-or-f
-      :boolean     (extended-deserializer (fn deserialize-bool [_ ^bytes ba]
+      :boolean     (extended-deserializer (fn deserialize-bool [^bytes ba _metadata]
                                             (if (nil? ba)
                                               nil
                                               (not (zero? (aget ba
@@ -581,7 +581,7 @@
                                   ::K/headers (K.-interop.clj/headers headers)))))
     (condp identical?
            kw-or-f
-      :boolean 	   (extended-serializer (fn serialize-bool [_ bool?]
+      :boolean 	   (extended-serializer (fn serialize-bool [bool? _metadata]
             	      		              (if (nil? bool?)
             	      		                nil
             	      		                (let [ba (byte-array 1)]
