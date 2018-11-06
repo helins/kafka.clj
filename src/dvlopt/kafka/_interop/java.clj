@@ -585,8 +585,8 @@
             	      		              (if (nil? bool?)
             	      		                nil
             	      		                (let [ba (byte-array 1)]
-            	      		                 (when bool?
-            	      		                     (aset-byte ba
+            	      		                  (when bool?
+            	      		                    (aset-byte ba
             	      		                               0
             	      		                               1))
             	      		                  ba))))
@@ -1636,8 +1636,8 @@
     (-materialized--configure materialized
                               options)
     (doto materialized
-      (.withKeySerde (serde options))
-      (.withValueSerde (serde options)))))
+      (.withKeySerde (serde-key options))
+      (.withValueSerde (serde-value options)))))
 
 
 

@@ -5,6 +5,9 @@
    Streaming applications often need to store some kind of state. This is the purposes of state stores which are typically backed-up
    to compacted Kafka topics called changelogs in order to be fault-tolerant. Those changelogs topics are named '$APPLICATION_ID-$GENERATED_NAME-changelog`.
   
+   Stores
+   ======
+
    Three type of stores exist, typically persistent by using RocksDB under the hood :
   
 
@@ -90,12 +93,47 @@
 
       ::segments
        Number of database segments (must be >= 2).
-       Default is 2."
+       Default is 2.
+  
+  
+   Cursors
+   =======
+
+   Retrieving several values from a store always returns a stateful iterator implementing Closeable and acting as a database cursor. It must be
+   closed after usage otherwise resources will leak. For ease of use, the iterator can be transformed into a sequence by using clojure's `iterator-seq`.
+   However, the resulting sequence should be consumed eagerly right away.
+
+   Each item is a map containing :
+
+     :dvlopt.kafka/key
+      Deserialized key.
+
+     :dvlopt.kafka/value
+      Deserialized value.
+
+   Window stores and sessions stores items also have :
+
+     :dvlopt.kafka/timestamp.from
+      Window beginning.
+
+     :dvlopt.kafka/timestamp.to
+      Window end.
+   
+
+   Ex. ;; Eargerly sum all values.
+    
+       (with-open [kvs (dvlopt.kstreams.stores/kv-range my-store)]
+         (reduce (fn [sum kv]
+                   (+ sum
+                      (:dvlopt.kafka/value kv)))
+                 0
+                 (iterator-seq kvs)))"
 
   {:author "Adam Helinski"}
 
   (:refer-clojure :exclude [flush])
-  (:require [dvlopt.kafka.-interop.clj  :as K.-interop.clj]
+  (:require [dvlopt.kafka               :as K]
+            [dvlopt.kafka.-interop.clj  :as K.-interop.clj]
             [dvlopt.kafka.-interop.java :as K.-interop.java])
   (:import org.apache.kafka.streams.processor.StateStore
            (org.apache.kafka.streams.state KeyValueStore
@@ -103,13 +141,8 @@
                                            ReadOnlySessionStore
                                            ReadOnlyWindowStore
                                            SessionStore
-                                           WindowStore)))
-
-
-
-
-;; TODO. Somes functions returns sequences based on stateful iterators (bad).
-;; TODO. Docstrings
+                                           WindowStore)
+           java.lang.AutoCloseable))
 
 
 
@@ -117,15 +150,15 @@
 ;;;;;;;;;; Misc
 
 
-(defn close
+(defn close-cursor
 
   "Closes the storage engine.
 
    Typically, a store is closed automatically when the Kafka Streams application is shutdown."
 
-  [^StateStore store]
+  [^AutoCloseable cursor]
 
-  (.close store))
+  (.close cursor))
 
 
 
@@ -202,14 +235,20 @@
 
 (defn kv-range
 
-  ""
+  "Returns a cursor for a range of keys or all of them if no range is specified.
 
-  ([^ReadOnlyKeyValueStore kv-store]
+   Cf. Namespace description for a description of cursors."
+
+  (^AutoCloseable
+    
+   [^ReadOnlyKeyValueStore kv-store]
 
    (K.-interop.clj/key-value-iterator (.all kv-store)))
 
 
-  ([^ReadOnlyKeyValueStore kv-store from-key to-key]
+  (^AutoCloseable
+    
+   [^ReadOnlyKeyValueStore kv-store from-key to-key]
 
    (K.-interop.clj/key-value-iterator (.range kv-store
                                               from-key
@@ -248,7 +287,9 @@
 
 (defn kv-offer
 
-  "Adds the key-value to the key-value store only if the key does not exist yet."
+  "Adds the key-value to the key-value store only if the key does not exist yet.
+  
+   Returns the already existing value or nil."
 
   [^KeyValueStore kv-store k v]
 
@@ -260,7 +301,9 @@
 
 (defn kv-remove
 
-  "Removes the key from the key-value store."
+  "Removes the key from the key-value store.
+  
+   Returns the existing value for that key or nil."
 
   [^KeyValueStore store k]
 
@@ -275,7 +318,7 @@
 
 (defn ws-get
 
-  ""
+  "Returns the value mapped to the given key at the given timestamp in the window store."
 
   [^ReadOnlyWindowStore window-store k timestamp]
 
@@ -286,24 +329,40 @@
 
 
 
-(defn ws-range
+(defn ws-multi-get
 
-  ""
-
-  ([window-store k]
-
-   (ws-range window-store
-             k
-             nil))
+  "Returns a cursor for with several windows for the given key in the window store.
 
 
-  ([^ReadOnlyWindowStore window-store k options]
+   A map of options may be given :
+
+     :dvlopt.kafka/timestamp.from
+       Earliest timestamp, defaults to 0.
+       
+     :dvlopt.kafka/timestamp.to
+       Latest timestamp, defaults to current system time.
+
+
+   Cf. Namespace description for a description of cursors."
+
+  (^AutoCloseable
+
+   [window-store k]
+
+   (ws-multi-get window-store
+                 k
+                 nil))
+
+
+  (^AutoCloseable
+    
+   [^ReadOnlyWindowStore window-store k options]
 
    (K.-interop.clj/window-store-iterator (.fetch window-store
                                                  k
-                                                 (or (::timestamp.from options)
+                                                 (or (::K/timestamp.from options)
                                                      0)
-                                                 (or (::timestamp.to options)
+                                                 (or (::K/timestamp.to options)
                                                      (System/currentTimeMillis))))))
 
 
@@ -311,7 +370,7 @@
 
 (defn ws-multi-range
 
-  ""
+  "Like `ws-multi-get` but for a range of keys (or all of them if no range is provided."
 
   ([window-store]
 
@@ -322,9 +381,9 @@
   ([^ReadOnlyWindowStore window-store options]
 
    (K.-interop.clj/key-value-iterator--windowed (.fetchAll window-store
-                                                           (or (::timestamp.from options)
+                                                           (or (::K/timestamp.from options)
                                                                0)
-                                                           (or (::timestamp.to options)
+                                                           (or (::K/timestamp.to options)
                                                                (System/currentTimeMillis)))))
 
 
@@ -340,9 +399,9 @@
    (K.-interop.clj/key-value-iterator--windowed (.fetch window-store
                                                         from-key
                                                         to-key
-                                                        (or (::timestamp.from options)
+                                                        (or (::K/timestamp.from options)
                                                             0)
-                                                        (or (::timestamp.to options)
+                                                        (or (::K/timestamp.to options)
                                                             (System/currentTimeMillis))))))
 
 
@@ -380,68 +439,62 @@
 ;;;;;;;;;; Session stores
 
 
-(defn ss-get
+(defn ss-multi-get
 
-  ""
-
-  ([^ReadOnlySessionStore session-store k]
-
-   (K.-interop.clj/key-value-iterator--windowed (.fetch session-store
-                                                        k)))
-
-
-  ([^ReadOnlySessionStore session-store from-key to-key]
-
-   (K.-interop.clj/key-value-iterator--windowed (.fetch session-store
-                                                        from-key
-                                                        to-key))))
-
-
-
-
-(defn ss-sessions
-
-  ""
+  "Like `ws-multi-get` but for session stores.
+  
+   For internal reasons, only writable session stores can work with options."
 
   ([session-store k]
 
-   (ss-sessions session-store
-                k
-                nil))
-
-  ([^SessionStore session-store k options]
-
-   (K.-interop.clj/key-value-iterator--windowed (.findSessions session-store
-                                                               k
-                                                               (or (::timestamp.from options)
-                                                                   0)
-                                                               (or (::timestamp.to options)
-                                                                   (System/currentTimeMillis))))))
+   (ss-multi-get session-store
+                 k
+                 nil))
 
 
+  ([session-store k options]
+
+   (if options
+     (K.-interop.clj/key-value-iterator--windowed (.findSessions ^SessionStore session-store
+                                                                 k
+                                                                 (or (::K/timestamp.from options)
+                                                                     0)
+                                                                 (or (::K/timestamp.to options)
+                                                                     (System/currentTimeMillis))))
+     (K.-interop.clj/key-value-iterator--windowed (.fetch ^ReadOnlySessionStore
+                                                          session-store
+                                                          k)))))
 
 
-(defn ss-multi-sessions
 
-  ""
+
+(defn ss-multi-range
+
+  "Like `ws-multi-range` but for session stores and the range must always be specified.
+  
+   For internal reasons, only writable session stores can work with options."
 
   ([session-store from-key to-key]
 
-   (ss-multi-sessions session-store
-                      from-key
-                      to-key
-                      nil))
+   (ss-multi-range session-store
+                   from-key
+                   to-key
+                   nil))
 
 
-  ([^SessionStore session-store from-key to-key options]
+  ([session-store from-key to-key options]
 
-   (K.-interop.clj/key-value-iterator--windowed (.findSessions session-store
-                                                               from-key
-                                                               to-key
-                                                               (or (::timestamp.from options)
-                                                                   0)
-                                                               (or (::timestamp.to options)
-                                                                   (System/currentTimeMillis))))))
+   (if options
+     (K.-interop.clj/key-value-iterator--windowed (.findSessions ^SessionStore session-store
+                                                                 from-key
+                                                                 to-key
+                                                                 (or (::K/timestamp.from options)
+                                                                     0)
+                                                                 (or (::K/timestamp.to options)
+                                                                     (System/currentTimeMillis))))
+     (K.-interop.clj/key-value-iterator--windowed (.fetch ^ReadOnlySessionStore session-store
+                                                          from-key
+                                                          to-key)))))
 
 
 

@@ -642,7 +642,7 @@
         :tumbling (default)
          Tumbling windows are simply non-overlapping hopping windows (ie. I = J).
 
-         Ex. [0;5), [5;10), [10;15), ...
+           Ex. [0;5), [5;10), [10;15), ...
 
         :sliding
          Sliding windows are aligned to the timestamps of the records and not the epoch. Two records are said to

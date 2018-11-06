@@ -71,7 +71,9 @@
            (org.apache.kafka.streams.processor Cancellable
                                                RecordContext)
            (org.apache.kafka.streams.state KeyValueIterator
-                                           WindowStoreIterator)))
+                                           WindowStoreIterator)
+           java.lang.AutoCloseable
+           java.util.Iterator))
 
 
 
@@ -1067,25 +1069,40 @@
 
   ;; Cf. `dvlopt.kstreams.stores/kv-get` and variations
 
-  ([kvi]
+  (^AutoCloseable
+
+   [kvi]
 
    (key-value-iterator kvi
                        key-value))
 
 
-  ([^KeyValueIterator kvi f]
+  (^AutoCloseable
 
-   (lazy-seq
-     (if (.hasNext kvi)
-       (cons (f (.next kvi))
-             (key-value-iterator kvi
-                                 f))
-       (.close kvi)))))
+   [^KeyValueIterator kvi f]
+
+   (reify
+     
+     AutoCloseable
+
+       (close [_]
+         (.close kvi))
+
+
+     Iterator
+
+       (hasNext [_]
+         (.hasNext kvi))
+
+       (next [_]
+         (f (.next kvi))))))
 
 
 
 
 (defn key-value-iterator--windowed
+
+  ^AutoCloseable
 
   [kvi]
 
@@ -1096,6 +1113,8 @@
 
 
 (defn window-store-iterator
+
+  ^AutoCloseable
 
   [wsi]
 
@@ -1110,7 +1129,7 @@
 
 (defn window
 
-  ""
+  ;; Cf. `key-value-iterator--windowed`
 
   [^Window w]
 
@@ -1122,7 +1141,7 @@
 
 (defn windowed
 
-  ""
+  ;; Cf. `key-value-iterator--windowed`
 
   [^Windowed w]
 

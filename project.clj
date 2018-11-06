@@ -12,6 +12,7 @@
                        :main         user
                        :dependencies [[com.taoensso/nippy     "2.13.0"]
                                       [criterium              "0.4.4"]
+                                      ;[org.clojure/clojure    "1.10.0-beta4"]
                                       [org.clojure/clojure    "1.9.0"]
                                       [org.clojure/test.check "0.10.0-alpha2"]]
                        :plugins      [[lein-codox      "0.10.3"]

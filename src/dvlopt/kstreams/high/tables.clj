@@ -17,6 +17,12 @@
    A table is backed-up by a state store. As such, these options, called the standard options in this namespace, can very often
    be supplied :
 
+     :dvlopt.kafka/deserializer.key
+     :dvlopt.kafka/deserializer.value
+     :dvlopt.kafka/serializer.key
+     :dvlopt.kafka/serializer.value
+      Cf. `dvlopt.kafka` for description of serializers and deserializers
+
      :dvlopt.kstreams.stores/cache?
      :dvlopt.kstreams.stores/changelog?
      :dvlopt.kstreams.stores/configuration.changelog
