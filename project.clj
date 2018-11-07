@@ -5,7 +5,7 @@
   :url          "https://github.com/dvlopt/milena"
   :license      {:name "Eclipse Public License"
                  :url  "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[dvlopt/void                    "0.0.0"]
+  :dependencies [[dvlopt/void                    "0.0.1"]
                  [org.apache.kafka/kafka-clients "2.0.0"]
                  [org.apache.kafka/kafka-streams "2.0.0"]]
   :profiles     {:dev {:source-paths ["dev"]

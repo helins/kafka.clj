@@ -1342,12 +1342,7 @@
 
   [options]
 
-  (let [init'     (or (:dvlopt.kstreams/processor.init options)
-                      void/no-op)
-        on-record (or (:dvlopt.kstreams/processor.on-record options)
-                      void/no-op)
-        close'    (or (:dvlopt.kstreams/processor.close options)
-                      void/no-op)
+  (let [on-record (:dvlopt.kstreams/processor.on-record options)
         v*ctx     (volatile! nil)
         v*state   (volatile! nil)]
     (reify
@@ -1355,23 +1350,24 @@
       Processor
 
         (init [_ ctx]
-          (vreset! v*ctx
-                   ctx)
-          (vreset! v*state
-                   (init' ctx)))
-
+          (when on-record
+            (vreset! v*ctx
+                     ctx)
+            (when-let [init (:dvlopt.kstreams/processor.init options)]
+              (vreset! v*state
+                       (init ctx)))))
 
 
         (process [_ k v]
-          (on-record @v*ctx
-                     @v*state
-                     (void/assoc-some (-record-from-ctx @v*ctx)
-                                      ::K/key   k
-                                      ::K/value v)))
+          (void/call on-record @v*ctx
+                               @v*state
+                               (void/assoc-some (-record-from-ctx @v*ctx)
+                                                ::K/key   k
+                                                ::K/value v)))
 
 
         (close [_]
-          (close')))))
+          (void/call (:dvlopt.kstreams/processor.close options))))))
 
 
 
@@ -1919,12 +1915,7 @@
 
   [options]
 
-  (let [init'     (or (:dvlopt.kstreams/processor.init options)
-                      void/no-op)
-        on-record (or (:dvlopt.kstreams/processor.on-record options)
-                      void/no-op)
-        close'    (or (:dvlopt.kstreams/processor.close options)
-                      void/no-op)
+  (let [on-record (:dvlopt.kstreams/processor.on-record options)
         v*ctx     (volatile! nil)
         v*state   (volatile! nil)]
     (reify
@@ -1932,14 +1923,17 @@
       Transformer
 
         (init [_ ctx]
-          (vreset! v*ctx
-                   ctx)
-          (vreset! v*state
-                   (init' ctx)))
+          (when on-record
+            (vreset! v*ctx
+                     ctx)
+            (when-some [init (:dvlopt.kstreams/processor.init options)]
+              (vreset! v*state
+                       (init ctx)))))
 
 
         (transform [_ k v]
-          (on-record @v*ctx
+          (void/call on-record
+                     @v*ctx
                      @v*state
                      (void/assoc-some (-record-from-ctx @v*ctx)
                                       ::K/key   k
@@ -1948,7 +1942,7 @@
 
 
         (close [_]
-          (close')))))
+          (void/call (:dvlopt.kstreams/processor.close options))))))
 
 
 
