@@ -1238,6 +1238,7 @@
 
   [options]
 
+  (println :consumed :oofset-reset (:dvlopt.kstreams/offset-reset options))
   (Consumed/with (serde-key options)
                  (serde-value options)
                  (some-> (:dvlopt.kstreams/extract-timestamp options)
@@ -1359,11 +1360,12 @@
 
 
         (process [_ k v]
-          (void/call on-record @v*ctx
-                               @v*state
-                               (void/assoc-some (-record-from-ctx @v*ctx)
-                                                ::K/key   k
-                                                ::K/value v)))
+          (void/call on-record
+                     @v*ctx
+                     @v*state
+                     (void/assoc-some (-record-from-ctx @v*ctx)
+                                      ::K/key   k
+                                      ::K/value v)))
 
 
         (close [_]

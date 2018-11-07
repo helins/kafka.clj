@@ -36,10 +36,10 @@
 
   "Given a low-level topology or a high-level builder, creates a Kafka Streams application.
   
-   In order to release the ressource associated with an application, always call `release`, even if the
+   In order to release the ressource associated with an application, always call `disband`, even if the
    application has not been started.
 
-   Works with clojure's `with-open` which behaves like calling `release` without options.
+   Works with clojure's `with-open` which behaves like calling `disband` without options.
 
 
    A map of options may be given :
@@ -110,7 +110,7 @@
 
 
 
-(defn release
+(defn disband
 
   "Releases resources acquired for a Kafka Streams application (after stopping it if it was running).
 

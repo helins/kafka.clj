@@ -283,13 +283,12 @@
       Function accepting the previous timestamp of the last record and a record, and returning
       the timestamp chosen for the current record."
 
-  ;; TODO Test.
-
   (^Topology
 
    [^Topology topology source-name source-topic processor-name processor options]
 
    (.addGlobalStore topology
+                    (K.-interop.java/store-builder options)
                     source-name
                     (some-> (::KS/extract-timestamp options)
                             K.-interop.java/timestamp-extractor)

@@ -282,8 +282,6 @@
 
   "Adds a global state store just like `dvlopt.kstreams.low/add-global-store`."
 
-  ;; TODO. Test.
-
   ^StreamsBuilder
 
   [^StreamsBuilder builder source-topic processor options]
@@ -292,4 +290,4 @@
                    (K.-interop.java/store-builder options)
                    source-topic
                    (K.-interop.java/consumed options)
-                   (K.-interop.java/processor-supplier options)))
+                   (K.-interop.java/processor-supplier processor)))
