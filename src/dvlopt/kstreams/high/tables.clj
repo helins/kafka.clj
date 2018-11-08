@@ -267,7 +267,7 @@
                    (fn [k v]
                      [(:country v)
                       (assoc v
-                             :user
+                             :user-id
                              k)]))"
 
   (^KGroupedTable
@@ -294,19 +294,23 @@
 
   "Returns a new table aggregating the values for each key of the given grouped table.
 
-   Records with nil keys are ignored.
+   Let us take the example provided in `map-and-group-by` where users were re-grouped by country. Let us say each user has an :income and
+   we want to sum all incomes for each country.
 
-   When the first non-nil value is received for a key, it is aggregated using the `fn-reduce-add` aggregating function.
-   When subsequent non-nil values are received for a key, `fn-reduce-sub` is also called with the current aggregated value
-   and the old value as stored in the table. The order of those 2 operations is undefined.
+   A seed (sum of incomes) is created for each grouped key (country). Each new value (a user with an income) is aggregated using (reduce-add [agg k v])
+   in order to increase the country sum. If the user is removed, then its income is removed from the country sum using (reduce-sub [agg k v]). If the
+   value for an existing user is replaced, then both functions are called in undefined order for updating the country sum with the possibly new income.
 
 
    Ex. (reduce-values grouped-table
-                      (fn reduce-add [sum k v]
-                        (
-  "
-
-  ;; TODO. Docstring.
+                      (fn reduce-add [country-income country user]
+                        (+ country-income
+                           (:income user)))
+                      (fn reduce-sub [country-income country user]
+                        (- country-income
+                           (:income user)))
+                      (fn seed []
+                        0))"
 
   (^KTable
 
