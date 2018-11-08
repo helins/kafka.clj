@@ -525,33 +525,26 @@
   [kw-or-f]
 
   (if (fn? kw-or-f)
-    (reify ExtendedDeserializer
-        
-      (close [_] nil)
+    (or (::K/original-deserializer (meta kw-or-f))
+        (reify ExtendedDeserializer
+            
+          (close [_] nil)
 
-      (configure [_ _ _] nil)
+          (configure [_ _ _] nil)
 
-      (deserialize [_ topic data]
-        (kw-or-f data
-                 {::K/topic topic}))
+          (deserialize [_ topic data]
+            (kw-or-f data
+                     {::K/topic topic}))
 
-      (deserialize [_ topic headers data]
-        (kw-or-f data
-                 (void/assoc-some {::K/topic topic}
-                                  ::K/headers (K.-interop.clj/headers headers)))))
-    (condp identical?
-           kw-or-f
-      :boolean     (extended-deserializer (fn deserialize-bool [^bytes ba _metadata]
-                                            (if (nil? ba)
-                                              nil
-                                              (not (zero? (aget ba
-                                                                0))))))
-      :byte-array  (ByteArrayDeserializer.)
-      :byte-buffer (ByteBufferDeserializer.)
-      :double      (DoubleDeserializer.)
-      :integer     (IntegerDeserializer.)
-      :long        (LongDeserializer.)
-      :string      (StringDeserializer.))))
+          (deserialize [_ topic headers data]
+            (kw-or-f data
+                     (void/assoc-some {::K/topic topic}
+                                      ::K/headers (K.-interop.clj/headers headers))))))
+    (if-some [deserializer (get K/deserializers
+                                kw-or-f)]
+      (::K/original-deserializer (meta deserializer))
+      (throw (IllegalArgumentException. (format "Unknown built-in deserializer requested : %s"
+                                                kw-or-f))))))
 
 
 
@@ -563,39 +556,28 @@
   [kw-or-f]
 
   (if (fn? kw-or-f)
-    (reify ExtendedSerializer
+    (or (::K/original-serializer (meta kw-or-f))
+        (reify ExtendedSerializer
 
-      (close [_]
-        nil)
+          (close [_]
+            nil)
 
-      (configure [_ _ _]
-        nil)
+          (configure [_ _ _]
+            nil)
 
-      (serialize [_ topic data]
-        (kw-or-f data
-                 {::K/topic topic}))
+          (serialize [_ topic data]
+            (kw-or-f data
+                     {::K/topic topic}))
 
-      (serialize [_ topic headers data]
-        (kw-or-f data
-                 (void/assoc-some {::K/topic topic}
-                                  ::K/headers (K.-interop.clj/headers headers)))))
-    (condp identical?
-           kw-or-f
-      :boolean 	   (extended-serializer (fn serialize-bool [bool? _metadata]
-            	      		              (if (nil? bool?)
-            	      		                nil
-            	      		                (let [ba (byte-array 1)]
-            	      		                  (when bool?
-            	      		                    (aset-byte ba
-            	      		                               0
-            	      		                               1))
-            	      		                  ba))))
-      :byte-array  (ByteArraySerializer.)
-      :byte-buffer (ByteBufferSerializer.)
-      :double      (DoubleSerializer.)
-      :integer     (IntegerSerializer.)
-      :long        (LongSerializer.)
-      :string      (StringSerializer.))))
+          (serialize [_ topic headers data]
+            (kw-or-f data
+                     (void/assoc-some {::K/topic topic}
+                                      ::K/headers (K.-interop.clj/headers headers))))))
+    (if-some [serializer (get K/serializers
+                              kw-or-f)]
+      (::K/original-serializer (meta serializer))
+      (throw (IllegalArgumentException. (format "Unknown built-in serializer requested : %s"
+                                                kw-or-f))))))
 
 
 
@@ -1238,7 +1220,6 @@
 
   [options]
 
-  (println :consumed :oofset-reset (:dvlopt.kstreams/offset-reset options))
   (Consumed/with (serde-key options)
                  (serde-value options)
                  (some-> (:dvlopt.kstreams/extract-timestamp options)

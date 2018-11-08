@@ -55,7 +55,8 @@
    Both type of functions are often used throughout the library. The provided metadata might help the user to decide on
    how to ser/de the data. It is a map containing the ::topic involved as well as ::headers when there are some.
   
-   Instead of providing a function, the user can rely on built-in ser/de functions by providing one of those keywords :
+   Built-in deserializers and serializers are available at `deserializers` and  `serializers` respectively. Because ser/de
+   is so common, a key word specifying one the the built-in functions can be provided :
 
      :boolean
      :byte-array
@@ -84,7 +85,109 @@
 
    Ex. [5 :seconds]"
 
-  {:author "Adam Helinski"})
+  {:author "Adam Helinski"}
+
+  (:import (org.apache.kafka.common.serialization ByteArrayDeserializer
+                                                  ByteArraySerializer
+                                                  ByteBufferDeserializer
+                                                  ByteBufferSerializer
+                                                  Deserializer
+                                                  DoubleDeserializer
+                                                  DoubleSerializer
+                                                  IntegerDeserializer
+                                                  IntegerSerializer
+                                                  LongDeserializer
+                                                  LongSerializer
+                                                  Serializer
+                                                  StringDeserializer
+                                                  StringSerializer)))
+
+
+
+
+;;;;;;;;;; Serde
+
+
+(def deserializers
+
+  "Built-in deserializers."
+
+  (reduce-kv (fn prepare-deserializer [deserializers' kw-type ^Deserializer original-deserializer]
+               (assoc deserializers'
+                      kw-type
+                      (with-meta (fn deserialize
+                                   ([x]
+                                    (deserialize x
+                                                 nil))
+                                   ([x metadata]
+                                    (.deserialize original-deserializer
+                                                  nil
+                                                  x)))
+                                 {::original-deserializer original-deserializer})))
+             {}
+             {:boolean     (reify Deserializer
+
+                             (close [_]
+                               nil)
+
+                             (configure [_ _ _]
+                               nil)
+
+                             (deserialize [_ _topic ba]
+                               (if (nil? ba)
+                                 nil
+                                 (not (zero? (aget ba
+                                                   0))))))
+              :byte-array  (ByteArrayDeserializer.)
+              :byte-buffer (ByteBufferDeserializer.)
+              :double      (DoubleDeserializer.)
+              :integer     (IntegerDeserializer.)
+              :long        (LongDeserializer.)
+              :string      (StringDeserializer.)}))
+
+
+
+
+(def serializers
+
+  "Built-in serializers."
+
+  (reduce-kv (fn prepare-serializer [serializers' kw-type ^Serializer original-serializer]
+               (assoc serializers'
+                      kw-type
+                      (with-meta (fn serialize
+                                   ([x]
+                                    (serialize x
+                                               nil))
+                                   ([x metadata]
+                                    (.serialize original-serializer
+                                                nil
+                                                x)))
+                                 {::original-serializer original-serializer})))
+             {}
+             {:boolean     (reify Serializer
+
+                             (close [_]
+                               nil)
+
+                             (configure [_ _ _]
+                               nil)
+
+                             (serialize [_ _topic bool]
+                               (if (nil? bool)
+            	      		     nil
+            	      		     (let [ba (byte-array 1)]
+            	      		       (when bool
+            	      		         (aset-byte ba
+            	      		                    0
+            	      		                    1))
+            	      		       ba))))
+              :byte-array  (ByteArraySerializer.)
+              :byte-buffer (ByteBufferSerializer.)
+              :double      (DoubleSerializer.)
+              :integer     (IntegerSerializer.)
+              :long        (LongSerializer.)
+              :string      (StringSerializer.)}))
 
 
 
