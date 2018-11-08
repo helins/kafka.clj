@@ -24,11 +24,6 @@
 
 
 
-;; TODO. Metadata functions, specially .allMetadata for being able to contact other instances
-
-
-
-
 ;;;;;;;;;; Create and handle a Kafka Streams application
 
 
@@ -227,3 +222,30 @@
   [^KafkaStreams app]
 
   (K.-interop.clj/metrics (.metrics app)))
+
+
+
+
+(defn remote-instances
+
+  "Returns a vector of maps about instances of this application running on other hosts.
+  
+   Each map represents a point in time and contains :
+
+     :dvlopt.kafka/host
+      Host of the remote instance.
+
+     :dvlopt.kafka/port
+      Port associated with the remote instance.
+
+     :dvlopt.kafka/topic-partitions
+      List of [topic partition]'s the remote instance is handling.
+
+     :dvlopt.kstreams.stores/names
+      List of the store names the instance is handling."
+
+  [^KafkaStreams app]
+
+  (into []
+        (map K.-interop.clj/streams-metadata)
+        (.allMetadata app)))

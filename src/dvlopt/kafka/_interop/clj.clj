@@ -71,6 +71,7 @@
            (org.apache.kafka.streams.processor Cancellable
                                                RecordContext)
            (org.apache.kafka.streams.state KeyValueIterator
+                                           StreamsMetadata
                                            WindowStoreIterator)
            java.lang.AutoCloseable
            java.util.Iterator))
@@ -1128,6 +1129,23 @@
 
   (key-value-iterator wsi
                       key-value--ws))
+
+
+
+
+(defn streams-metadata
+
+  ;; Cf. `dvlopt.kstreams/instances`
+
+  [^StreamsMetadata sm]
+
+  {::K/host                      (.host sm)
+   ::K/port                      (.port sm)
+   ::K/topic-partitions          (into #{}
+                                       (map topic-partition)
+                                       (.topicPartitions sm))
+   :dvlopt.kstreams.stores/names (into #{}
+                                       (.stateStoreNames sm))})
 
 
 

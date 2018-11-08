@@ -56,7 +56,7 @@
    how to ser/de the data. It is a map containing the ::topic involved as well as ::headers when there are some.
   
    Built-in deserializers and serializers are available at `deserializers` and  `serializers` respectively. Because ser/de
-   is so common, a key word specifying one the the built-in functions can be provided :
+   is so common, a key word specifying one of the built-in functions can be provided :
 
      :boolean
      :byte-array
