@@ -68,9 +68,37 @@
 
 (defn describe
 
-  "Describes the given topology."
+  "Describes the given topology.
+  
+   Returns a map of internal id -> subgraph, a map containing :
 
-  ;; TODO. Docstring + use namespaced keywords.
+     :dvlopt.kstreams/subgraph-type
+      Either :global-store or :subtopology.
+
+     Subgraphs of type :global-store contains :
+
+       :dvlopt.kafka/topic
+        Where records are sourced from for populating the global store.
+  
+       :dvlopt.kstreams/processor.name
+        Name of the processor node updating the global store.
+
+       :dvlopt.kstreams/source.name
+        Name of the source node fetching records from the topic.
+
+       :dvlopt.kstreams.stores/name
+        Name of the global store.
+
+     Subgraphs of type :subtopology contains
+
+       :dvlopt.kstreams/nodes
+        Map of node name -> map possibly containing :
+
+          :dvlopt.kstreams/children
+           Set of children nodes.
+
+          :dvlopt.kstreams/parents
+           Set of parent nodes."
 
   [^Topology topology]
 

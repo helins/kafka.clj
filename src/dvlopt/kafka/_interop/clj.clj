@@ -902,9 +902,9 @@
 
   [^TopologyDescription$Node n]
 
-  {:children (-topology-description$node--names (.successors   n))
-   :name     (.name n)
-   :parents  (-topology-description$node--names (.predecessors n))})
+  (void/assoc-some {}
+                   :dvlopt.kstreams/children (not-empty (-topology-description$node--names (.successors n)))
+                   :dvlopt.kstreams/parents  (not-empty (-topology-description$node--names (.predecessors n)))))
 
 
 
@@ -915,10 +915,9 @@
 
   [^TopologyDescription$Processor td$p]
 
-  (assoc (topology-description$node td$p)
-         :stores
-         (into #{}
-               (.stores td$p))))
+  {:dvlopt.kstreams/name        (.name td$p)
+   :dvlopt.kstreams.stores/name (into #{}
+                                      (.stores td$p))})
 
 
 
@@ -930,7 +929,7 @@
   [^TopologyDescription$Source td$s]
 
   (assoc (topology-description$node td$s)
-         :topics
+         ::K/topic
          (.topics td$s)))
 
 
@@ -942,8 +941,13 @@
 
   [^TopologyDescription$GlobalStore td$gs]
 
-  {:processor (topology-description$processor (.processor td$gs))
-   :source    (topology-description$source    (.source    td$gs))})
+  (let [^TopologyDescription$Processor td$p (.processor td$gs)
+        ^TopologyDescription$Source    td$s (.source td$gs)]
+    {::K/topic                       (.topics td$s)
+     :dvlopt.kstreams/processor.name (.name td$p)
+     :dvlopt.kstreams/source.name    (.name td$s)
+     :dvlopt.kstreams.stores/name    (first (.stores td$p))
+     :dvlopt.kstreams/subgraph-type :global-store}))
 
 
 
@@ -954,15 +958,13 @@
 
   [^TopologyDescription$Subtopology td$s]
 
-  {:id    (.id td$s)
-   :nodes (reduce (fn to-map [hmap node]
-                    (assoc hmap
-                           (:name node)
-                           (dissoc node
-                                   :name)))
-                  {}
-                  (map topology-description$node
-                       (.nodes td$s)))})
+  {:dvlopt.kstreams/nodes         (reduce (fn to-map [nodes ^TopologyDescription$Node n]
+                                            (assoc nodes
+                                                   (.name n)
+                                                   (topology-description$node n)))
+                                          {}
+                                          (.nodes td$s))
+   :dvlopt.kstreams/subgraph-type :subtopology})
 
 
 
@@ -973,12 +975,18 @@
 
   [^TopologyDescription tp]
 
-  {:global-stores (into #{}
-                        (map topology-description$global-store
-                             (.globalStores tp)))
-   :subtopologies (into #{}
-                        (map topology-description$subtopology
-                             (.subtopologies tp)))})
+  (let [description (reduce (fn ??? [description' ^TopologyDescription$GlobalStore td$gs]
+                              (assoc description'
+                                     (.id td$gs)
+                                     (topology-description$global-store td$gs)))
+                            {}
+                            (.globalStores tp))]
+    (reduce (fn ??? [description' ^TopologyDescription$Subtopology td$s]
+              (assoc description'
+                     (.id td$s)
+                     (topology-description$subtopology td$s)))
+            description
+            (.subtopologies tp))))
 
 
 

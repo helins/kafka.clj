@@ -23,9 +23,10 @@
 
 (defn commit
 
-  "Commits the current state."
+  "Manually requests a commit of the current state.
 
-  ;; TODO. Linked to https://cwiki.apache.org/confluence/display/KAFKA/KIP-129%3A+Streams+Exactly-Once+Semantics ?
+   Commits are handle automatically by the library. This function request the next commit to happen as soon
+   as possible."
 
   ^ProcessorContext
 
