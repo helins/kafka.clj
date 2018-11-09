@@ -3,7 +3,7 @@
   "This library aims to be clojure idiomatic while not being too smart about wrapping the java libraries, so that upgrading
    will not be too laborious in the future.
 
-   It is organized by specific namespaces. Producers (dvlopt.kafka.produce) produce records, consumers (dvlopt.kafka.consume)
+   It is organized by specific namespaces. Producers (dvlopt.kafka.out) produce records, consumers (dvlopt.kafka.in)
    consume records, and administrators can alter Kafka (dvlopt.kafka.admin). For anything related to Kafka Streams, see the
    `dvlopt.kstreams` namespace.
 

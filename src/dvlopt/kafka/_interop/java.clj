@@ -112,7 +112,7 @@
 
 
 
-;; For sorting vars in alpĥabetic order
+;; For sorting vars in alpĥabetic order.
 
 
 (declare access-control-entry
@@ -696,7 +696,7 @@
 
 (defn callback
 
-  ;; Cf. `dvlopt.kafka.produce/send`
+  ;; Cf. `dvlopt.kafka.out/send`
 
   ^Callback
 
@@ -716,7 +716,7 @@
 
 (defn producer-record
 
-  ;; Cf. `dvlopt.kafka.produce/send`
+  ;; Cf. `dvlopt.kafka.out/send`
 
   ^ProducerRecord
 
@@ -1228,7 +1228,7 @@
                     (StreamsConfig/consumerPrefix k)
                     v))
     (doseq [[k
-             v] (:dvlopt.kafka.produce/configuration options)]
+             v] (:dvlopt.kafka.out/configuration options)]
       (.setProperty properties
                     (StreamsConfig/producerPrefix k)
                     v))

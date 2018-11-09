@@ -154,7 +154,7 @@
   
   "Requests a list of partitions for a given topic.
 
-   For the returned value, cf. `dvlopt.kafka.produce/partitions`.
+   For the returned value, cf. `dvlopt.kafka.out/partitions`.
   
    A map of options may be given :
 
@@ -935,7 +935,7 @@
 
 (defn metrics
 
-  "Requests metrics about this consumer, exactly like `dvlopt.kafka.produce/metrics`."
+  "Requests metrics about this consumer, exactly like `dvlopt.kafka.out/metrics`."
 
   [^KafkaConsumer consumer]
 

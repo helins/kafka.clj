@@ -46,11 +46,11 @@
       Map of topic properties applying to any topic created by the application.
       Cf. https://kafka.apache.org/documentation/#topicconfigs
 
-     :dvlopt.kafka.consume/configuration
+     :dvlopt.kafka.in/configuration
       Map of consumer properties applying to any consumer needed by the app.
       Cf. https://kafka.apache.org/documentation/#newconsumerconfigs
 
-     :dvlopt.kafka.produce/configuration
+     :dvlopt.kafka.out/configuration
       Map of producer properties applying to any producer needed by the app.
       Cf. https://kafka.apache.org/documentation/#producerconfigs
 
@@ -217,7 +217,7 @@
 
   "Requests metrics about this application.
   
-   Returned valued presented in the same form as `dvlopt.kafka.produce/metrics`."
+   Returned valued presented in the same form as `dvlopt.kafka.out/metrics`."
 
   [^KafkaStreams app]
 

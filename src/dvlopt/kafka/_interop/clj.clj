@@ -7,7 +7,9 @@
   (:require [dvlopt.kafka          :as K]
             [dvlopt.kafka.-interop :as K.-interop]
             [dvlopt.void           :as void])
-  (:import (org.apache.kafka.clients.admin AlterConfigsResult
+  (:import java.lang.AutoCloseable
+           java.util.Iterator
+           (org.apache.kafka.clients.admin AlterConfigsResult
                                            Config
                                            ConfigEntry
                                            ConsumerGroupDescription
@@ -72,9 +74,438 @@
                                                RecordContext)
            (org.apache.kafka.streams.state KeyValueIterator
                                            StreamsMetadata
-                                           WindowStoreIterator)
-           java.lang.AutoCloseable
-           java.util.Iterator))
+                                           WindowStoreIterator)))
+
+
+
+
+;; For sorting vars in alpĥabetic order.
+
+
+(declare acl-binding
+         acl-binding-filter
+         acl-operation
+         acl-permission-type
+         config
+         config-entry
+         config-resource$type
+         consumer-group-state
+         headers
+         member-description
+         node
+         resource-pattern
+         resource-pattern-filter
+         resource-type
+         topic-description
+         topic-partition
+         topic-partition-info
+         windowed)
+
+
+
+;;;;;;;;;; org.apache.kafka.clients.admin.*
+
+
+(defn- -configs-result
+
+  ;; Helper for `describe-configs-result`
+  ;;            `alter-configs-result`
+
+  [f results]
+
+  (reduce (fn by-type [configs [^ConfigResource cr v]]
+            (let [type (config-resource$type (.type cr))]
+              (update configs
+                      type
+                      (fn add-resource [resources]
+                        (assoc resources
+                               (.name cr)
+                               (f v))))))
+          {}
+          results))
+
+
+
+
+(defn alter-configs-result
+
+  ;; Cf. `dvlopt.kafka.admin/alter-configuration`
+
+  [^AlterConfigsResult acr]
+
+  (-configs-result identity
+                   (.values acr)))
+
+
+
+
+(defn consumer-group-description
+
+  ;; Cf. `describe-consumer-groups-result`
+
+  [^ConsumerGroupDescription cgd]
+
+  (void/assoc-some {::K/coordinator-node                       (node (.coordinator cgd))
+                    ::K/group-id                               (.groupId cgd)
+                    :dvlopt.kafka.admin/consumer-group.simple? (.isSimpleConsumerGroup cgd)
+                    :dvlopt.kafka.admin/consumer-group.state   (consumer-group-state (.state cgd))}
+                    :dvlopt.kafka.admin/consumer-group.members (not-empty (map member-description
+                                                                               (.members cgd)))
+                    :dvlopt.kafak.admin/partition-assignor     (not-empty (.partitionAssignor cgd))))
+
+
+
+
+(defn consumer-group-listing
+
+  [^ConsumerGroupListing cgl]
+
+  {:dvlopt.kafka.admin/consumer-group.simple? (.isSimpleConsumerGroup cgl)})
+
+
+
+
+(defn create-acls-result
+
+  ;; Cf. `dvlopt.kafka.admin/create-acls`
+
+  [^CreateAclsResult car]
+
+  (reduce (fn reduce-acl-bindings [acl-bindings acl-binding' f*]
+            (assoc acl-bindings
+                   (acl-binding acl-binding')
+                   f*))
+          {}
+          (.values car)))
+
+
+
+
+(defn create-partitions-result
+
+  ;; Cf. `dvlopt.kafka.admin/increase-partitions`
+
+  [^CreatePartitionsResult cpr]
+
+  (into {}
+        (.values cpr)))
+
+
+
+
+(defn create-topics-result
+
+  ;; Cf. `dvlopt.kafka.admin/create-topics`
+
+  [^CreateTopicsResult ctr]
+
+  (into {}
+        (.values ctr)))
+
+
+
+
+(defn delete-acls-result$filter-result
+
+  ;; Cf. `delete-acls-result$filter-results`
+
+  [^DeleteAclsResult$FilterResult dar$fr]
+
+  (if-let [acl-binding' (.binding dar$fr)]
+    [:acl       (acl-binding acl-binding')]
+    [:exception (.exception dar$fr)]))
+
+
+
+
+(defn delete-acls-result$filter-results
+
+  ;; Cf. `delete-acls-result`
+
+  [^DeleteAclsResult$FilterResults dar$frs]
+
+  (map delete-acls-result$filter-result
+       (.values dar$frs)))
+
+
+
+
+(defn delete-acls-result
+
+  ;; Cf. `dvlopt.kafka.admin/delete-acls`
+
+  [^DeleteAclsResult dar]
+
+  (reduce (fn reduce-filters [filters [abf f*results]]
+            (assoc filters
+                   (acl-binding-filter abf)
+                   (K.-interop/future-proxy f*results
+                                            delete-acls-result$filter-results)))
+          {}
+          (.values dar)))
+
+
+
+
+(defn deleted-records
+
+  [^DeletedRecords dr]
+
+  {::K/lowest-offset (.lowWatermark dr)})
+
+
+
+
+(defn delete-records-result
+
+  ;; Cf. `dvlopt.kafka.admin/delete-records`
+
+  [^DeleteRecordsResult drr]
+
+  (reduce (fn convert-water-marks [hmap [tp f*dr]]
+            (assoc hmap
+                   (topic-partition tp)
+                   (K.-interop/future-proxy f*dr
+                                            deleted-records)))
+          {}
+          (.lowWatermarks drr)))
+
+
+
+
+(defn delete-topics-result
+
+  ;; Cf. `dvlopt.kafka.admin/delete-topics`
+
+  [^DeleteTopicsResult dtr]
+
+  (into {}
+        (.values dtr)))
+
+
+
+
+(defn describe-acls-result
+
+  ;; Cf. `dvlopt.kafka.admin/acls`
+
+  [^DescribeAclsResult dar]
+
+  (K.-interop/future-proxy (.values dar)
+                           (fn map-acl-bindings [acl-bindings]
+                             (map acl-binding
+                                  acl-bindings))))
+
+
+
+
+(defn describe-consumer-groups-result
+
+  ;; Cf. `dvlopt.kafka.admin/describe-consumer-groups`
+
+  [^DescribeConsumerGroupsResult dcgr]
+
+  (reduce (fn to-map [hmap [consumer-group future-cgd]]
+            (assoc hmap
+                   consumer-group
+                   (K.-interop/future-proxy future-cgd
+                                            consumer-group-description)))
+          {}
+          (.describedGroups dcgr)))
+
+
+
+
+(defn describe-cluster-result
+
+  ;; Cf. `dvlopt.kafka.admin/cluster`
+
+  [^DescribeClusterResult dcr]
+
+  {::K/f*controller-node (K.-interop/future-proxy (.controller dcr)
+                                                  node)
+   ::K/f*id-string       (.clusterId dcr)
+   ::K/f*nodes           (K.-interop/future-proxy (.nodes dcr)
+                                                  (fn proxy-nodes [nodes]
+                                                    (map node
+                                                         nodes)))})
+
+
+
+(defn describe-configs-result
+
+  ;; Cf. `dvlopt.kafka.admin/configuration`
+
+  [^DescribeConfigsResult dcr]
+
+  (-configs-result (fn future-config [f*config]
+                     (K.-interop/future-proxy f*config
+                                              config))
+                   (.values dcr)))
+
+
+
+
+(defn describe-topics-result
+  
+  ;; Cf. `dvlopt.kafka.admin/describe-topics`
+
+  [^DescribeTopicsResult dtr]
+
+  (reduce (fn reduce-tds [topics [topic-name f*topic-description]]
+            (assoc topics
+                   topic-name
+                   (K.-interop/future-proxy f*topic-description
+                                            topic-description)))
+          {}
+          (.values dtr)))
+
+
+
+
+(defn list-consumer-group-offsets-result
+
+  ;; Cf. `dvlopt.kafka.admin/consumer-group-offsets`
+
+  [^ListConsumerGroupOffsetsResult lcgor]
+
+  (K.-interop/future-proxy (.partitionsToOffsetAndMetadata lcgor)
+                           (fn to-clj [partitions->offsets+metadata]
+                             (reduce (fn offsets [hmap [tp ^OffsetAndMetadata offset+metadata]]
+                                       (assoc hmap
+                                              (topic-partition tp)
+                                              (void/assoc-some {::K/offset (.offset offset+metadata)}
+                                                               ::K/meta (not-empty (.metadata offset+metadata)))))
+                                     {}
+                                     partitions->offsets+metadata))))
+
+
+
+
+(defn list-consumer-groups-result
+
+  ;; Cf. `dvlopt.kafka.admin/consumer-groups`
+
+  [^ListConsumerGroupsResult lcgr]
+
+  (K.-interop/future-proxy (.all lcgr)
+                           (fn convert-consumer-groups [consumer-groups]
+                             (reduce (fn convert-consumer-group [consumer-groups' ^ConsumerGroupListing cgl]
+                                       (assoc consumer-groups'
+                                              (.groupId cgl)
+                                              (consumer-group-listing cgl)))
+                                     {}
+                                     consumer-groups))))
+
+
+
+
+(defn member-assignment
+
+  ;; Cf. `member-description`
+
+  [^MemberAssignment ma]
+
+  {::K/topic-partitions (into #{}
+                              (map topic-partition
+                                   (.topicPartitions ma)))})
+
+
+
+
+(defn member-description
+
+  ;; Cf. `consumer-group-description`
+
+  [^MemberDescription md]
+
+  {::K/client-id                                  (.clientId md)
+   ::K/consumer-id                                (.consumerId md)
+   ::K/host                                       (.host md)
+   :dvlopt.kafka.admin/consumer-group.assignments (member-assignment (.assignment md))})
+
+
+
+
+(defn topic-description
+
+  ;; Cf. `describe-topics-result`
+
+  [^TopicDescription td]
+
+  {::K/internal?                              (.isInternal td)
+   :dvlopt.kafka.admin/partition-descriptions (map topic-partition-info
+                                                   (.partitions td))})
+
+
+
+
+(defn topic-listings
+
+  ;; Cf. `dvlopt.kafka.admin/topics`
+  
+  [^TopicListing tls]
+
+  (reduce (fn reduce-tls [topics ^TopicListing tl]
+            (assoc topics
+                   (.name tl)
+                   {::K/internal? (.isInternal tl)}))
+          {}
+          tls))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.clients.consumer.*
+
+
+(defn consumer-record
+
+  ;; Cf. `dvlopt.kafka.in/poll`
+
+  [^ConsumerRecord cr]
+
+  (void/assoc-some {::K/offset    (.offset    cr)
+                    ::K/partition (.partition cr)
+                    ::K/timestamp (.timestamp cr)
+                    ::K/topic     (.topic     cr)}
+                   ::K/headers (headers (.headers cr))
+                   ::K/key     (.key cr)
+                   ::K/value   (.value cr)))
+
+
+
+
+(defn offset-and-timestamp
+
+  ;; Cf. `dvlopt.kafka.in/offsets-for-timestamps`
+
+  [^OffsetAndTimestamp oat]
+
+  {::K/offset    (.offset    oat)
+   ::K/timestamp (.timestamp oat)})
+
+
+
+
+;;;;;;;;;; org.apache.kafka.clients.producer.*
+
+
+(defn record-metadata
+
+  ;; Cf. `dvlopt.kafka.out/send`
+
+  [^RecordMetadata rm]
+
+  (void/assoc-some {::K/topic (.topic rm)}
+                   ::K/offset    (when (.hasOffset rm)
+                                   (.offset rm))
+                   ::K/partition (let [partition (.partition rm)]
+                                   (when (not= partition
+                                               RecordMetadata/UNKNOWN_PARTITION)
+                                     partition))
+                   ::K/timestamp (when (.hasTimestamp rm)
+                                   (.timestamp rm))))
 
 
 
@@ -90,7 +521,7 @@
 
   (condp identical?
          cgs
-    ConsumerGroupState/COMPLETING_REBALANCE :complete-rebalance
+    ConsumerGroupState/COMPLETING_REBALANCE :completing-rebalance
     ConsumerGroupState/DEAD                 :dead
     ConsumerGroupState/EMPTY                :empty
     ConsumerGroupState/PREPARING_REBALANCE  :preparing-rebalance
@@ -100,23 +531,9 @@
 
 
 
-(defn node
-
-  ;; Used quite a few times.
-
-  [^Node n]
-
-  (void/assoc-some {::K/host (.host n)
-                    ::K/id   (.id   n)
-                    ::K/port (.port n)}
-                   ::K/rack (.rack n)))
-
-
-
-
 (defn metrics
 
-  ;; Cf. `dvlopt.kafka.produce/metrics` 
+  ;; Cf. `dvlopt.kafka.out/metrics`
 
   [metrics]
 
@@ -137,36 +554,23 @@
 
 
 
-(defn topic-partition
+(defn node
 
-  ;; Used very often, about everywhere.
+  ;; Used quite a few times.
 
-  [^TopicPartition tp]
+  [^Node n]
 
-  [(.topic tp) (.partition tp)])
-
-
-
-
-(defn topic-partition->offset
-
-  ;; Cf. `dvlopt.kafka.consume/beginning-offsets`
-
-  [tp->o]
-
-  (reduce (fn [offsets [tp offset]]
-            (assoc offsets
-                   (topic-partition tp)
-                   offset))
-          {}
-          tp->o))
+  (void/assoc-some {::K/host (.host n)
+                    ::K/id   (.id   n)
+                    ::K/port (.port n)}
+                   ::K/rack (.rack n)))
 
 
 
 
 (defn partition-info 
 
-  ;; Cf. `dvlopt.kafka.produce/partitions`
+  ;; Cf. `dvlopt.kafka.out/partitions`
 
   [^PartitionInfo pi]
   
@@ -182,6 +586,33 @@
                                              (.replicas pi)))
                     ::K/topic         (.topic pi)}
                    ::K/leader-node (node (.leader pi))))
+
+
+
+
+(defn topic-partition
+
+  ;; Used very often, about everywhere.
+
+  [^TopicPartition tp]
+
+  [(.topic tp) (.partition tp)])
+
+
+
+
+(defn topic-partition->offset
+
+  ;; Cf. `dvlopt.kafka.in/beginning-offsets`
+
+  [tp->o]
+
+  (reduce (fn [offsets [tp offset]]
+            (assoc offsets
+                   (topic-partition tp)
+                   offset))
+          {}
+          tp->o))
 
 
 
@@ -207,187 +638,7 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.common.config.*
-
-
-(defn config-resource$type
-
-  ;; Cf. `-configs-result`
-
-  [^ConfigResource$Type cr$t]
-
-  (condp identical?
-         cr$t
-    ConfigResource$Type/BROKER  ::K/brokers
-    ConfigResource$Type/TOPIC   ::K/topics
-    ConfigResource$Type/UNKNOWN ::K/unknown))
-
-
-
-
-(defn config-entry
-
-  ;; Cf. `config`
-
-  [^ConfigEntry ce]
-
-  {::K/default?                   (.isDefault   ce)
-   ::K/name                       (.name        ce)
-   ::K/read-only?                 (.isReadOnly  ce)
-   ::K/string-value               (.value       ce)
-   :dvlopt.kafka.admin/sensitive? (.isSensitive ce)})
-
-
-
-
-(defn config
-
-  ;; Cf. `describe-configs-result`
-
-  [^Config c]
-
-  (reduce (fn clojurify-entry [config entry]
-            (let [entry' (config-entry entry)]
-              (assoc config
-                     (::K/name entry')
-                     entry')))
-          {}
-          (.entries c)))
-
-
-
-
-;;;;;;;;;; org.apache.kafka.common.header.*
-
-
-(defn header
-
-  ;; Used for consuming records.
-
-  [^Header h]
-
-  (if-some [v (.value h)]
-    [(.key h)
-     v]
-    [(.key h)]))
-
-
-
-
-(defn headers
-
-  ;; Used for consuming records.
-
-  [^Headers hs]
-
-  (not-empty (map header
-                  (.toArray hs))))
-
-
-
-
-;;;;;;;;;; org.apache.kafka.common.resource.*
-
-
-(defn pattern-type
-
-  [^PatternType pt]
-
-  (condp identical?
-         pt
-    nil
-    PatternType/ANY      :any
-    PatternType/LITERAL  :exactly
-    PatternType/MATCH    :match
-    PatternType/PREFIXED :prefixed
-    PatternType/UNKNOWN  :unknown))
-
-
-
-
-(defn resource-type
-
-  ;; Cf. `resource-pattern`
-  ;;     `resource-filter`
-
-  [^ResourceType rt]
-
-  (condp identical?
-         rt
-    ResourceType/ANY              :any
-    ResourceType/CLUSTER          :cluster
-    ResourceType/GROUP            :group
-    ResourceType/TOPIC            :topic
-    ResourceType/TRANSACTIONAL_ID :transactional-id
-    ResourceType/UNKNOWN          :unknown))
-
-
-
-
-(defn resource-pattern
-
-  ;; Cf. `acl-binding`
-
-  [^ResourcePattern rp]
-
-  {:dvlopt.kafka.admin/name-pattern  [(pattern-type (.patternType rp))
-                                      (.name rp)]
-   :dvlopt.kafka.admin/resource-type (resource-type (.resourceType rp))})
-
-
-
-
-(defn resource-pattern-filter
-
-  ;; Cf. `acl-binding-filter`
-
-  [^ResourcePatternFilter rpf]
-
-  {:dvlopt.kafka.admin/name-pattern  [(pattern-type (.patternType rpf))
-                                      (.name rpf)]
-   :dvlopt.kafka.admin/resource-type (resource-type (.resourceType rpf))})
-
-
-
-
 ;;;;;;;;;; org.apache.kafka.common.acl.*
-
-
-(defn acl-operation
-
-  [^AclOperation ao]
-
-  (condp identical?
-         ao
-    AclOperation/ALL              :all
-    AclOperation/ALTER            :alter
-    AclOperation/ALTER_CONFIGS    :alter-configuration
-    AclOperation/ANY              :any
-    AclOperation/CLUSTER_ACTION   :cluster-action
-    AclOperation/CREATE           :create
-    AclOperation/DELETE           :delete
-    AclOperation/DESCRIBE         :describe
-    AclOperation/DESCRIBE_CONFIGS :describe-configuration
-    AclOperation/IDEMPOTENT_WRITE :idempotent-write
-    AclOperation/READ             :read
-    AclOperation/UNKNOWN          :unknown
-    AclOperation/WRITE            :write))
-
-
-
-
-(defn acl-permission-type
-
-  [^AclPermissionType apt]
-
-  (condp identical?
-         apt
-    AclPermissionType/ALLOW   :allow
-    AclPermissionType/ANY     :any
-    AclPermissionType/DENY    :deny
-    AclPermissionType/UNKNOWN :unknown))
-
-
 
 
 (defn access-control-entry
@@ -443,416 +694,201 @@
 
 
 
-;;;;;;;;;; org.apache.kafka.clients.admin.*
+(defn acl-operation
+
+  [^AclOperation ao]
+
+  (condp identical?
+         ao
+    AclOperation/ALL              :all
+    AclOperation/ALTER            :alter
+    AclOperation/ALTER_CONFIGS    :alter-configuration
+    AclOperation/ANY              :any
+    AclOperation/CLUSTER_ACTION   :cluster-action
+    AclOperation/CREATE           :create
+    AclOperation/DELETE           :delete
+    AclOperation/DESCRIBE         :describe
+    AclOperation/DESCRIBE_CONFIGS :describe-configuration
+    AclOperation/IDEMPOTENT_WRITE :idempotent-write
+    AclOperation/READ             :read
+    AclOperation/UNKNOWN          :unknown
+    AclOperation/WRITE            :write))
 
 
-(defn describe-cluster-result
 
-  ;; Cf. `dvlopt.kafka.admin/cluster`
 
-  [^DescribeClusterResult dcr]
+(defn acl-permission-type
 
-  {::K/f*controller-node (K.-interop/future-proxy (.controller dcr)
-                                                  node)
-   ::K/f*id-string       (.clusterId dcr)
-   ::K/f*nodes           (K.-interop/future-proxy (.nodes dcr)
-                                                  (fn proxy-nodes [nodes]
-                                                    (map node
-                                                        nodes)))})
+  [^AclPermissionType apt]
 
+  (condp identical?
+         apt
+    AclPermissionType/ALLOW   :allow
+    AclPermissionType/ANY     :any
+    AclPermissionType/DENY    :deny
+    AclPermissionType/UNKNOWN :unknown))
 
 
 
-(defn topic-listings
 
-  ;; Cf. `dvlopt.kafka.admin/topics`
-  
-  [^TopicListing tls]
+;;;;;;;;;; org.apache.kafka.common.config.*
 
-  (reduce (fn reduce-tls [topics ^TopicListing tl]
-            (assoc topics
-                   (.name tl)
-                   {::K/internal? (.isInternal tl)}))
+
+(defn config
+
+  ;; Cf. `describe-configs-result`
+
+  [^Config c]
+
+  (reduce (fn clojurify-entry [config entry]
+            (let [entry' (config-entry entry)]
+              (assoc config
+                     (::K/name entry')
+                     entry')))
           {}
-          tls))
+          (.entries c)))
 
 
 
 
-(defn topic-description
+(defn config-entry
 
-  ;; Cf. `describe-topics-result`
+  ;; Cf. `config`
 
-  [^TopicDescription td]
+  [^ConfigEntry ce]
 
-  {::K/internal?                              (.isInternal td)
-   :dvlopt.kafka.admin/partition-descriptions (map topic-partition-info
-                                                   (.partitions td))})
+  {::K/default?                   (.isDefault   ce)
+   ::K/name                       (.name        ce)
+   ::K/read-only?                 (.isReadOnly  ce)
+   ::K/string-value               (.value       ce)
+   :dvlopt.kafka.admin/sensitive? (.isSensitive ce)})
 
 
 
 
+(defn config-resource$type
 
-(defn describe-topics-result
-  
-  ;; Cf. `dvlopt.kafka.admin/describe-topics`
+  ;; Cf. `-configs-result`
 
-  [^DescribeTopicsResult dtr]
+  [^ConfigResource$Type cr$t]
 
-  (reduce (fn reduce-tds [topics [topic-name f*topic-description]]
-            (assoc topics
-                   topic-name
-                   (K.-interop/future-proxy f*topic-description
-                                            topic-description)))
-          {}
-          (.values dtr)))
+  (condp identical?
+         cr$t
+    ConfigResource$Type/BROKER  ::K/brokers
+    ConfigResource$Type/TOPIC   ::K/topics
+    ConfigResource$Type/UNKNOWN ::K/unknown))
 
 
 
 
-(defn create-topics-result
+;;;;;;;;;; org.apache.kafka.common.header.*
 
-  ;; Cf. `dvlopt.kafka.admin/create-topics`
 
-  [^CreateTopicsResult ctr]
+(defn header
 
-  (into {}
-        (.values ctr)))
+  ;; Used for consuming records.
 
+  [^Header h]
 
+  (if-some [v (.value h)]
+    [(.key h)
+     v]
+    [(.key h)]))
 
 
-(defn delete-topics-result
 
-  ;; Cf. `dvlopt.kafka.admin/delete-topics`
 
-  [^DeleteTopicsResult dtr]
+(defn headers
 
-  (into {}
-        (.values dtr)))
+  ;; Used for consuming records.
 
+  [^Headers hs]
 
+  (not-empty (map header
+                  (.toArray hs))))
 
 
-(defn create-partitions-result
 
-  ;; Cf. `dvlopt.kafka.admin/increase-partitions`
 
-  [^CreatePartitionsResult cpr]
+;;;;;;;;;; org.apache.kafka.common.resource.*
 
-  (into {}
-        (.values cpr)))
 
+(defn pattern-type
 
+  [^PatternType pt]
 
+  (condp identical?
+         pt
+    nil
+    PatternType/ANY      :any
+    PatternType/LITERAL  :exactly
+    PatternType/MATCH    :match
+    PatternType/PREFIXED :prefixed
+    PatternType/UNKNOWN  :unknown))
 
-(defn deleted-records
 
-  [^DeletedRecords dr]
 
-  {::K/lowest-offset (.lowWatermark dr)})
 
+(defn resource-pattern
 
+  ;; Cf. `acl-binding`
 
+  [^ResourcePattern rp]
 
-(defn delete-records-result
+  {:dvlopt.kafka.admin/name-pattern  [(pattern-type (.patternType rp))
+                                      (.name rp)]
+   :dvlopt.kafka.admin/resource-type (resource-type (.resourceType rp))})
 
-  ;; Cf. `dvlopt.kafka.admin/delete-records`
 
-  [^DeleteRecordsResult drr]
 
-  (reduce (fn convert-water-marks [hmap [tp f*dr]]
-            (assoc hmap
-                   (topic-partition tp)
-                   (K.-interop/future-proxy f*dr
-                                            deleted-records)))
-          {}
-          (.lowWatermarks drr)))
 
+(defn resource-pattern-filter
 
+  ;; Cf. `acl-binding-filter`
 
+  [^ResourcePatternFilter rpf]
 
-(defn- -configs-result
+  {:dvlopt.kafka.admin/name-pattern  [(pattern-type (.patternType rpf))
+                                      (.name rpf)]
+   :dvlopt.kafka.admin/resource-type (resource-type (.resourceType rpf))})
 
-  ;; Helper for `describe-configs-result`
-  ;;            `alter-configs-result`
 
-  [f results]
 
-  (reduce (fn by-type [configs [^ConfigResource cr v]]
-            (let [type (config-resource$type (.type cr))]
-              (update configs
-                      type
-                      (fn add-resource [resources]
-                        (assoc resources
-                               (.name cr)
-                               (f v))))))
-          {}
-          results))
 
+(defn resource-type
 
+  ;; Cf. `resource-pattern`
+  ;;     `resource-filter`
 
+  [^ResourceType rt]
 
-(defn describe-configs-result
-
-  ;; Cf. `dvlopt.kafka.admin/configuration`
-
-  [^DescribeConfigsResult dcr]
-
-  (-configs-result (fn future-config [f*config]
-                     (K.-interop/future-proxy f*config
-                                              config))
-                   (.values dcr)))
-
-
-
-
-(defn alter-configs-result
-
-  ;; Cf. `dvlopt.kafka.admin/alter-configuration`
-
-  [^AlterConfigsResult acr]
-
-  (-configs-result identity
-                   (.values acr)))
-
-
-
-
-(defn consumer-group-listing
-
-  [^ConsumerGroupListing cgl]
-
-  {:dvlopt.kafka.admin/consumer-group.simple? (.isSimpleConsumerGroup cgl)})
-
-
-
-
-(defn list-consumer-groups-result
-
-  ;; Cf. `dvlopt.kafka.admin/consumer-groups`
-
-  [^ListConsumerGroupsResult lcgr]
-
-  (K.-interop/future-proxy (.all lcgr)
-                           (fn convert-consumer-groups [consumer-groups]
-                             (reduce (fn convert-consumer-group [consumer-groups' ^ConsumerGroupListing cgl]
-                                       (assoc consumer-groups'
-                                              (.groupId cgl)
-                                              (consumer-group-listing cgl)))
-                                     {}
-                                     consumer-groups))))
-
-
-
-
-(defn member-assignment
-
-  ;; Cf. `member-description`
-
-  [^MemberAssignment ma]
-
-  {::K/topic-partitions (into #{}
-                              (map topic-partition
-                                   (.topicPartitions ma)))})
-
-
-
-
-(defn member-description
-
-  ;; Cf. `consumer-group-description`
-
-  [^MemberDescription md]
-
-  {::K/client-id                                  (.clientId md)
-   ::K/consumer-id                                (.consumerId md)
-   ::K/host                                       (.host md)
-   :dvlopt.kafka.admin/consumer-group.assignments (member-assignment (.assignment md))})
-
-
-
-
-(defn consumer-group-description
-
-  ;; Cf. `describe-consumer-groups-result`
-
-  [^ConsumerGroupDescription cgd]
-
-  (void/assoc-some {::K/coordinator-node                       (node (.coordinator cgd))
-                    ::K/group-id                               (.groupId cgd)
-                    :dvlopt.kafka.admin/consumer-group.simple? (.isSimpleConsumerGroup cgd)
-                    :dvlopt.kafka.admin/consumer-group.state   (consumer-group-state (.state cgd))}
-                    :dvlopt.kafka.admin/consumer-group.members (not-empty (map member-description
-                                                                               (.members cgd)))
-                    :dvlopt.kafak.admin/partition-assignor     (not-empty (.partitionAssignor cgd))))
-
-
-
-
-(defn describe-consumer-groups-result
-
-  ;; Cf. `dvlopt.kafka.admin/describe-consumer-groups`
-
-  [^DescribeConsumerGroupsResult dcgr]
-
-  (reduce (fn to-map [hmap [consumer-group future-cgd]]
-            (assoc hmap
-                   consumer-group
-                   (K.-interop/future-proxy future-cgd
-                                            consumer-group-description)))
-          {}
-          (.describedGroups dcgr)))
-
-
-
-
-(defn list-consumer-group-offsets-result
-
-  ;; Cf. `dvlopt.kafka.admin/consumer-group-offsets`
-
-  [^ListConsumerGroupOffsetsResult lcgor]
-
-  (K.-interop/future-proxy (.partitionsToOffsetAndMetadata lcgor)
-                           (fn to-clj [partitions->offsets+metadata]
-                             (reduce (fn offsets [hmap [tp ^OffsetAndMetadata offset+metadata]]
-                                       (assoc hmap
-                                              (topic-partition tp)
-                                              (void/assoc-some {::K/offset (.offset offset+metadata)}
-                                                               ::K/meta (not-empty (.metadata offset+metadata)))))
-                                     {}
-                                     partitions->offsets+metadata))))
-
-
-
-
-(defn describe-acls-result
-
-  ;; Cf. `dvlopt.kafka.admin/acls`
-
-  [^DescribeAclsResult dar]
-
-  (K.-interop/future-proxy (.values dar)
-                           (fn map-acl-bindings [acl-bindings]
-                             (map acl-binding
-                                  acl-bindings))))
-
-
-
-
-(defn create-acls-result
-
-  ;; Cf. `dvlopt.kafka.admin/create-acls`
-
-  [^CreateAclsResult car]
-
-  (reduce (fn reduce-acl-bindings [acl-bindings acl-binding' f*]
-            (assoc acl-bindings
-                   (acl-binding acl-binding')
-                   f*))
-          {}
-          (.values car)))
-
-
-
-
-(defn delete-acls-result$filter-result
-
-  ;; Cf. `delete-acls-result$filter-results`
-
-  [^DeleteAclsResult$FilterResult dar$fr]
-
-  (if-let [acl-binding' (.binding dar$fr)]
-    [:acl       (acl-binding acl-binding')]
-    [:exception (.exception dar$fr)]))
-
-
-
-
-(defn delete-acls-result$filter-results
-
-  ;; Cf. `delete-acls-result`
-
-  [^DeleteAclsResult$FilterResults dar$frs]
-
-  (map delete-acls-result$filter-result
-       (.values dar$frs)))
-
-
-
-
-(defn delete-acls-result
-
-  ;; Cf. `dvlopt.kafka.admin/delete-acls`
-
-  [^DeleteAclsResult dar]
-
-  (reduce (fn reduce-filters [filters [abf f*results]]
-            (assoc filters
-                   (acl-binding-filter abf)
-                   (K.-interop/future-proxy f*results
-                                            delete-acls-result$filter-results)))
-          {}
-          (.values dar)))
-
-
-
-
-;;;;;;;;;; org.apache.kafka.clients.producer.*
-
-
-(defn record-metadata
-
-  ;; Cf. `dvlopt.kafka.produce/send`
-
-  [^RecordMetadata rm]
-
-  (void/assoc-some {::K/topic (.topic rm)}
-                   ::K/offset    (when (.hasOffset rm)
-                                   (.offset rm))
-                   ::K/partition (let [partition (.partition rm)]
-                                   (when (not= partition
-                                               RecordMetadata/UNKNOWN_PARTITION)
-                                     partition))
-                   ::K/timestamp (when (.hasTimestamp rm)
-                                   (.timestamp rm))))
-
-
-
-
-;;;;;;;;;; org.apache.kafka.clients.consumer.*
-
-
-(defn offset-and-timestamp
-
-  ;; Cf. `dvlopt.kafka.consume/offsets-for-timestamps`
-
-  [^OffsetAndTimestamp oat]
-
-  {::K/offset    (.offset    oat)
-   ::K/timestamp (.timestamp oat)})
-
-
-
-
-(defn consumer-record
-
-  ;; Cf. `dvlopt.kafka.consume/poll`
-
-  [^ConsumerRecord cr]
-
-  (void/assoc-some {::K/offset    (.offset    cr)
-                    ::K/partition (.partition cr)
-                    ::K/timestamp (.timestamp cr)
-                    ::K/topic     (.topic     cr)}
-                   ::K/headers (headers (.headers cr))
-                   ::K/key     (.key cr)
-                   ::K/value   (.value cr)))
+  (condp identical?
+         rt
+    ResourceType/ANY              :any
+    ResourceType/CLUSTER          :cluster
+    ResourceType/GROUP            :group
+    ResourceType/TOPIC            :topic
+    ResourceType/TRANSACTIONAL_ID :transactional-id
+    ResourceType/UNKNOWN          :unknown))
 
 
 
 
 ;;;;;;;;;; org.apache.kafka.streams.*
+
+
+(defn- -topology-description$node--names
+
+  ;; Cf. `topology-description`
+
+  [nodes]
+
+  (into #{}
+        (map (fn node-name [^TopologyDescription$Node td$n]
+               (.name td$n))
+             nodes)))
+
+
 
 
 (defn kafka-streams$state
@@ -873,26 +909,56 @@
 
 
 
-(defn- -topology-description$node--name
+(defn key-value
+
+  ;; Cf. `key-value-iterator`
+
+  [^KeyValue kv]
+
+  {::K/key   (.-key   kv)
+   ::K/value (.-value kv)})
+
+
+
+
+(defn key-value--ws
+
+  ;; Cf. `window-store-iterator`
+
+  [^KeyValue kv]
+
+  {::K/timestamp (.-key   kv)
+   ::K/value     (.-value kv)})
+
+
+
+
+(defn key-value--windowed
+
+  ;; Cf. `key-value-iterator--windowed`
+
+  [^KeyValue kv]
+
+  (assoc (windowed (.-key kv))
+         ::K/value
+         (.-value kv)))
+
+
+
+
+(defn topology-description$global-store
 
   ;; Cf. `topology-description`
 
-  [^TopologyDescription$Node n]
+  [^TopologyDescription$GlobalStore td$gs]
 
-  (.name n))
-
-
-
-
-(defn -topology-description$node--names
-
-  ;; Cf. `topology-description`
-
-  [nodes]
-
-  (into #{}
-        (map -topology-description$node--name
-             nodes)))
+  (let [^TopologyDescription$Processor td$p (.processor td$gs)
+        ^TopologyDescription$Source    td$s (.source td$gs)]
+    {::K/topic                       (.topics td$s)
+     :dvlopt.kstreams/processor.name (.name td$p)
+     :dvlopt.kstreams/source.name    (.name td$s)
+     :dvlopt.kstreams.store/name     (first (.stores td$p))
+     :dvlopt.kstreams/subgraph-type :global-store}))
 
 
 
@@ -936,23 +1002,6 @@
 
 
 
-(defn topology-description$global-store
-
-  ;; Cf. `topology-description`
-
-  [^TopologyDescription$GlobalStore td$gs]
-
-  (let [^TopologyDescription$Processor td$p (.processor td$gs)
-        ^TopologyDescription$Source    td$s (.source td$gs)]
-    {::K/topic                       (.topics td$s)
-     :dvlopt.kstreams/processor.name (.name td$p)
-     :dvlopt.kstreams/source.name    (.name td$s)
-     :dvlopt.kstreams.store/name     (first (.stores td$p))
-     :dvlopt.kstreams/subgraph-type :global-store}))
-
-
-
-
 (defn topology-description$subtopology
 
   ;; Cf. `topology-description`
@@ -992,44 +1041,30 @@
 
 
 
-(defn key-value
-
-  ;; Cf. `key-value-iterator`
-
-  [^KeyValue kv]
-
-  {::K/key   (.-key   kv)
-   ::K/value (.-value kv)})
+;;;;;;;;;; org.apache.kafka.streams.kstream.*
 
 
-
-
-(defn key-value--ws
-
-  ;; Cf. `window-store-iterator`
-
-  [^KeyValue kv]
-
-  {::K/timestamp (.-key   kv)
-   ::K/value     (.-value kv)})
-
-
-
-
-(declare windowed)
-
-
-
-
-(defn key-value--windowed
+(defn window
 
   ;; Cf. `key-value-iterator--windowed`
 
-  [^KeyValue kv]
+  [^Window w]
 
-  (assoc (windowed (.-key kv))
-         ::K/value
-         (.-value kv)))
+  {::K/timestamp.from (.start w)
+   ::K/timestamp.to   (.end   w)})
+
+
+
+
+(defn windowed
+
+  ;; Cf. `key-value-iterator--windowed`
+
+  [^Windowed w]
+
+  (assoc (window (.window w))
+         ::K/key
+         (.key w)))
 
 
 
@@ -1109,6 +1144,23 @@
 
 
 
+(defn streams-metadata
+
+  ;; Cf. `dvlopt.kstreams/instances`
+
+  [^StreamsMetadata sm]
+
+  {::K/host                     (.host sm)
+   ::K/port                     (.port sm)
+   ::K/topic-partitions         (into #{}
+                                      (map topic-partition)
+                                      (.topicPartitions sm))
+   :dvlopt.kstreams.store/names (into #{}
+                                       (.stateStoreNames sm))})
+
+
+
+
 (defn key-value-iterator--windowed
 
   ^AutoCloseable
@@ -1129,48 +1181,3 @@
 
   (key-value-iterator wsi
                       key-value--ws))
-
-
-
-
-(defn streams-metadata
-
-  ;; Cf. `dvlopt.kstreams/instances`
-
-  [^StreamsMetadata sm]
-
-  {::K/host                     (.host sm)
-   ::K/port                     (.port sm)
-   ::K/topic-partitions         (into #{}
-                                      (map topic-partition)
-                                      (.topicPartitions sm))
-   :dvlopt.kstreams.store/names (into #{}
-                                       (.stateStoreNames sm))})
-
-
-
-
-;;;;;;;;;; org.apache.kafka.streams.kstream.*
-
-
-(defn window
-
-  ;; Cf. `key-value-iterator--windowed`
-
-  [^Window w]
-
-  {::K/timestamp.from (.start w)
-   ::K/timestamp.to   (.end   w)})
-
-
-
-
-(defn windowed
-
-  ;; Cf. `key-value-iterator--windowed`
-
-  [^Windowed w]
-
-  (assoc (window (.window w))
-         ::K/key
-         (.key w)))
