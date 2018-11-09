@@ -1,8 +1,8 @@
 (ns dvlopt.kafka.-interop
 
-  "Miscellaneous interop utilities.
-  
-   Not meant to be directly used by the user."
+  ;; Miscellaneous interop utilities.
+  ;;
+  ;; Not meant to be directly used by the user.
 
   {:author "Adam Helinski"}
 
@@ -17,63 +17,6 @@
 
 
 ;;;;;;;;;;
-
-
-(defn regex?
-
-  ;; Is this a regular expression pattern ?
-
-  [x]
-
-  (instance? Pattern
-             x))
-
-
-
-
-(defn named?
-
-  ;; Is this an Named thing ?
-
-  [x]
-
-  (instance? Named
-             x))
-
-
-
-
-(defn nodes-string
-
-  ;; Produces a string of Kafka nodes for various configurations from a list of [host port].
-
-  [nodes]
-
-  (if (string? nodes)
-    nodes
-    (string/join ","
-                 (map (fn host-port [[host port]]
-                        (str host ":" port))
-                      nodes))))
-
-
-
-
-(defn resource-configuration
-
-  ;; Prepares a configuration map for resources such as a consumer or a producer.
-  ;;
-  ;;  Cf. https://kafka.apache.org/documentation/#configuration
-
-  ^Map
-
-  [configuration nodes]
-
-  (assoc configuration
-         "bootstrap.servers"
-         (nodes-string nodes)))
-
-
 
 
 (defn future-proxy
@@ -109,3 +52,60 @@
         (transform (.get f*
                          timeout
                          unit)))))
+
+
+
+
+(defn named?
+
+  ;; Is this an Named thing ?
+
+  [x]
+
+  (instance? Named
+             x))
+
+
+
+
+(defn nodes-string
+
+  ;; Produces a string of Kafka nodes for various configurations from a list of [host port].
+
+  [nodes]
+
+  (if (string? nodes)
+    nodes
+    (string/join ","
+                 (map (fn host-port [[host port]]
+                        (str host ":" port))
+                      nodes))))
+
+
+
+
+(defn regex?
+
+  ;; Is this a regular expression pattern ?
+
+  [x]
+
+  (instance? Pattern
+             x))
+
+
+
+
+(defn resource-configuration
+
+  ;; Prepares a configuration map for resources such as a consumer or a producer.
+  ;;
+  ;;  Cf. https://kafka.apache.org/documentation/#configuration
+
+  ^Map
+
+  [configuration nodes]
+
+  (assoc configuration
+         "bootstrap.servers"
+         (nodes-string nodes)))
