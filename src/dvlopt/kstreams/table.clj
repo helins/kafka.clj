@@ -1,4 +1,4 @@
-(ns dvlopt.kstreams.high.tables
+(ns dvlopt.kstreams.table
 
   "Handling of tables.
   
@@ -23,17 +23,17 @@
      :dvlopt.kafka/serializer.value
       Cf. `dvlopt.kafka` for description of serializers and deserializers
 
-     :dvlopt.kstreams.stores/cache?
-     :dvlopt.kstreams.stores/changelog?
-     :dvlopt.kstreams.stores/configuration.changelog
-     :dvlopt.kstreams.stores/name
-     :dvlopt.kstreams.stores/type
-      Exactly as described in `dvlopt.kstreams.stores` but the type is restricted to #{:kv.in-memory :kv.regular}."
+     :dvlopt.kstreams.store/cache?
+     :dvlopt.kstreams.store/changelog?
+     :dvlopt.kstreams.store/configuration.changelog
+     :dvlopt.kstreams.store/name
+     :dvlopt.kstreams.store/type
+      Exactly as described in `dvlopt.kstreams.store` but the type is restricted to #{:kv.in-memory :kv.regular}."
 
   {:author "Adam Helinsi"}
 
   (:require [dvlopt.kafka.-interop.java :as K.-interop.java]
-            [dvlopt.kstreams.stores     :as KS.stores])
+            [dvlopt.kstreams.store      :as KS.store])
   (:import org.apache.kafka.streams.StreamsBuilder
            (org.apache.kafka.streams.kstream KStream
                                              KTable
@@ -117,7 +117,7 @@
 
 (defn process-values
 
-  "Just like ´dvlopt.kstreams.high.streams/process-value` but with a table.
+  "Just like ´dvlopt.kstreams.stream/process-value` but with a table.
   
    
    Standard options can be provided (cf. namespace description)."
@@ -139,7 +139,7 @@
                      (K.-interop.java/value-transformer-with-key-supplier processor)
                      (K.-interop.java/materialized--kv options)
                      (into String
-                           (::KS.stores/names options)))))
+                           (::KS.store/names options)))))
 
 
 

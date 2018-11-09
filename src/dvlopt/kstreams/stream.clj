@@ -1,4 +1,4 @@
-(ns dvlopt.kstreams.high.streams
+(ns dvlopt.kstreams.stream
 
   "Handling of streams.
 
@@ -18,7 +18,7 @@
 
   (:refer-clojure :exclude [group-by])
   (:require [dvlopt.kafka.-interop.java :as K.-interop.java]
-            [dvlopt.kstreams.stores     :as KS.stores])
+            [dvlopt.kstreams.store      :as KS.store])
   (:import (org.apache.kafka.streams.kstream GlobalKTable
                                              KeyValueMapper
                                              KGroupedStream
@@ -224,7 +224,7 @@
    For when the high-level API is not enough. It is typically used for an `fmap-kv` like behavior involving some state.
 
 
-   Cf. `dvlopt.kstreams.low/add-processor`
+   Cf. `dvlopt.kstreams.topology/add-processor`
        :dvlopt.kstreams/processor.on-record may be used to explicitly forward records using the associated context.
 
    Marks the topic for repartioning.
@@ -233,7 +233,7 @@
 
    A map of options may be given :
 
-     :dvlopt.kstreams.stores/names
+     :dvlopt.kstreams.store/names
       List of state store names previously added to the underlying builder this processor need to access.
       Cf. `dvlopt.kstreams.high/add-store`"
 
@@ -253,7 +253,7 @@
    (.transform stream
                (K.-interop.java/transformer-supplier processor)
                (into-array String
-                           (::KS.stores/names options)))))
+                           (::KS.store/names options)))))
 
 
 
@@ -287,7 +287,7 @@
    (.transformValues stream
                      (K.-interop.java/value-transformer-with-key-supplier processor)
                      ^"[Ljava.lang.String;" (into-array String
-                                                        (::KS.stores/names options)))))
+                                                        (::KS.store/names options)))))
 
 
 
@@ -328,8 +328,8 @@
 
       Cf. `dvlopt.kafka` for description of serializers and deserializers.
 
-     :dvlopt.kstreams.stores/retention
-      Cf. `dvlopt.kstreams.stores`
+     :dvlopt.kstreams.store/retention
+      Cf. `dvlopt.kstreams.store`
 
 
    Ex. (join-with-stream left-stream
@@ -625,8 +625,8 @@
 
    A map of options may be given :
 
-     :dvlopt.kstreams.stores/retention
-      Cf. `dvlopt.kstreams.stores`
+     :dvlopt.kstreams.store/retention
+      Cf. `dvlopt.kstreams.store`
 
      ::interval.type
       Fixed time windows can behave in 3 fashions :
@@ -656,7 +656,7 @@
 
 
    Cf. `dvlopt.kafka` for description of time intervals.
-       `dvlopt.kstreams.stores` for description of time windows.
+       `dvlopt.kstreams.store` for description of time windows.
 
 
    Ex. ;; Windows of 5 seconds advancing by 3 seconds (thus overlapping 2 seconds).
@@ -693,13 +693,13 @@
    Sessions are non-fixed intervals of activity between fixed intervals of inactivity.
 
    Cf. `dvlopt.kafka` for description of time intervals
-   Cf. `dvlopt.kstreams.stores` for description of sessions
+   Cf. `dvlopt.kstreams.store` for description of sessions
   
 
    A map of options may be given :
 
-     :dvlopt.kstreams.stores/retention
-      Cf. `dvlopt.kstreams.stores`"
+     :dvlopt.kstreams.store/retention
+      Cf. `dvlopt.kstreams.store`"
 
   (^SessionWindowedKStream
 
@@ -726,7 +726,7 @@
   "Returns a new table aggregating values for each key of the given grouped stream.
 
    
-   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`).
+   A map of standard table options may be given (cf. `dvlopt.kstreams.table`).
 
 
    Ex. (reduce-values grouped-stream
@@ -763,7 +763,7 @@
   "Returns a new table aggregating values for each time window of each key of the given time-windowed stream.
   
 
-   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`)."
+   A map of standard table options may be given (cf. `dvlopt.kstreams.table`)."
 
   (^KTable
 
@@ -794,7 +794,7 @@
    Sessions might merge, hence the need for a function being able to do so.
 
 
-   A map of standard table options may be given (cf. `dvlopt.kstreams.high.tables`).
+   A map of standard table options may be given (cf. `dvlopt.kstreams.table`).
 
 
    Ex. (reduce-sessions grouped-stream
@@ -921,7 +921,7 @@
    (.process stream
              (K.-interop.java/processor-supplier processor)
              (into-array String
-                         (::KS.stores/names options)))))
+                         (::KS.store/names options)))))
 
 
 

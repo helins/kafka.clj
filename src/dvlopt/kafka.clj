@@ -212,10 +212,10 @@
    :dvlopt.kafka.admin/replication-factor   1
    :dvlopt.kafka.admin/resource-type        :any
    :dvlopt.kstreams/offset-reset            :earliest
-   :dvlopt.kstreams.stores/cache?           true
-   :dvlopt.kstreams.stores/changelog?       true
-   :dvlopt.kstreams.stores/duplicate-keys?  false
-   :dvlopt.kstreams.stores/lru-size         0
-   :dvlopt.kstreams.stores/retention        [1 :days]
-   :dvlopt.kstreams.stores/segments         2
-   :dvlopt.kstreams.stores/type             :kv.regular})
+   :dvlopt.kstreams.store/cache?            true
+   :dvlopt.kstreams.store/changelog?        true
+   :dvlopt.kstreams.store/duplicate-keys?   false
+   :dvlopt.kstreams.store/lru-size          0
+   :dvlopt.kstreams.store/retention         [1 :days]
+   :dvlopt.kstreams.store/segments          2
+   :dvlopt.kstreams.store/type              :kv.regular})

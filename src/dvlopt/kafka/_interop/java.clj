@@ -1194,7 +1194,7 @@
 
 (defn topology$auto-offset-reset
 
-  ;; Cf. `dvlopt.kstreams.low/add-source` amongst other.
+  ;; Cf. `dvlopt.kstreams.topology/add-source` amongst other.
 
   ^Topology$AutoOffsetReset
 
@@ -1233,7 +1233,7 @@
 
 (defn key-value
 
-  ;; Cf. `dvlopt.kstreams.stores/kv-put`
+  ;; Cf. `dvlopt.kstreams.store/kv-put`
 
   (^KeyValue
 
@@ -1258,7 +1258,7 @@
 
 (defn timestamp-extractor
 
-  ;; Cf. `dvlopt.kstreams.low/add-source`
+  ;; Cf. `dvlopt.kstreams.topology/add-source`
 
   ^TimestampExtractor
 
@@ -1277,7 +1277,7 @@
 
 (defn topic-name-extractor
 
-  ;; Cf. `dvlopt.kstreams.high.streams/sink-topic`
+  ;; Cf. `dvlopt.kstreams.stream/sink-topic`
 
   ^TopicNameExtractor
 
@@ -1297,7 +1297,7 @@
 
 (defn stream-partitioner
 
-  ;; Cf. `dvlopt.kstreams.low/add-sink`
+  ;; Cf. `dvlopt.kstreams.topology/add-sink`
 
   ^StreamPartitioner
 
@@ -1318,7 +1318,7 @@
 
 (defn processor
 
-  ;; Cf. `dvlopt.kstreams.low/add-processor`
+  ;; Cf. `dvlopt.kstreams.topology/add-processor`
 
   ^Processor
 
@@ -1357,7 +1357,7 @@
 
 (defn processor-supplier
 
-  ;; Cf. `dvlopt.kstreams.low/add-processor`
+  ;; Cf. `dvlopt.kstreams.topology/add-processor`
 
   ^ProcessorSupplier
 
@@ -1435,7 +1435,7 @@
   [store-name options]
 
   (Stores/lruMap store-name
-                 (void/obtain :dvlopt.kstreams.stores/lru-size
+                 (void/obtain :dvlopt.kstreams.store/lru-size
                               options
                               K/defaults)))
 
@@ -1461,7 +1461,7 @@
   [store-name options]
 
   (Stores/persistentSessionStore store-name
-                                 (to-milliseconds (void/obtain :dvlopt.kstreams.stores/retention
+                                 (to-milliseconds (void/obtain :dvlopt.kstreams.store/retention
                                                                options
                                                                K/defaults))))
 
@@ -1475,15 +1475,15 @@
   [store-name options]
 
   (Stores/persistentWindowStore store-name
-                                (to-milliseconds (void/obtain :dvlopt.kstreams.stores/retention
+                                (to-milliseconds (void/obtain :dvlopt.kstreams.store/retention
                                                               options
                                                               K/defaults))
-                                (int (void/obtain :dvlopt.kstreams.stores/segments
+                                (int (void/obtain :dvlopt.kstreams.store/segments
                                                   options
                                                   K/defaults))
-                                (to-milliseconds (-required-arg :dvlopt.kstreams.stores/interval
-                                                                (:dvlopt.kstreams.stores/interval options)))
-                                (void/obtain :dvlopt.kstreams.stores/duplicate-keys?
+                                (to-milliseconds (-required-arg :dvlopt.kstreams.store/interval
+                                                                (:dvlopt.kstreams.store/interval options)))
+                                (void/obtain :dvlopt.kstreams.store/duplicate-keys?
                                              options
                                              K/defaults)))
 
@@ -1492,18 +1492,18 @@
 
 (defn store-builder
 
-  ;; Cf. `dvlopt.kstreams.low/add-store`
+  ;; Cf. `dvlopt.kstreams.topology/add-store`
 
   ^StoreBuilder
 
   [options]
 
-  (let [              store-name   (or (:dvlopt.kstreams.stores/name options)
+  (let [              store-name   (or (:dvlopt.kstreams.store/name options)
                                        (-store-name))
                       serde-key'   (serde-key options)
                       serde-value' (serde-value options)
         ^StoreBuilder builder      (condp identical?
-                                         (void/obtain :dvlopt.kstreams.stores/type
+                                         (void/obtain :dvlopt.kstreams.store/type
                                                       options
                                                       K/defaults)
                                     :kv.in-memory (Stores/keyValueStoreBuilder (key-value-bytes-store-supplier--in-memory store-name)
@@ -1524,15 +1524,15 @@
                                                                                                           options)
                                                                              serde-key'
                                                                              serde-value'))]
-    (when (void/obtain :dvlopt.kstreams.stores/cache?
+    (when (void/obtain :dvlopt.kstreams.store/cache?
                        options
                        K/defaults)
       (.withCachingEnabled builder))
-    (if (void/obtain :dvlopt.kstreams.stores/changelog?
+    (if (void/obtain :dvlopt.kstreams.store/changelog?
                      options
                      K/defaults)
       (.withLoggingEnabled builder
-                           (or (:dvlopt.kstreams.stores/configuration.changelog options)
+                           (or (:dvlopt.kstreams.store/configuration.changelog options)
                                {}))
       (.withLoggingDisabled builder))
     builder))
@@ -1545,7 +1545,7 @@
 
 (defn serialized
 
-  ;; Cf. `dvlopt.kstreams.high.streams/group-by`
+  ;; Cf. `dvlopt.kstreams.stream/group-by`
 
   ^Serialized
 
@@ -1559,7 +1559,7 @@
 
 (defn produced
 
-  ;; Cf. `dvlopt.kstreams.high.streams/through-topic` for instance
+  ;; Cf. `dvlopt.kstreams.stream/through-topic` for instance
 
   ^Produced
 
@@ -1584,16 +1584,16 @@
   (doto materialized
     (.withKeySerde   (serde-key   options))
     (.withValueSerde (serde-value options)))
-  (if (void/obtain :dvlopt.kstreams.stores/cache?
+  (if (void/obtain :dvlopt.kstreams.store/cache?
                    options
                    K/defaults)
     (.withCachingEnabled materialized)
     (.withCachingDisabled materialized))
-  (if (void/obtain :dvlopt.kstreams.stores/changelog?
+  (if (void/obtain :dvlopt.kstreams.store/changelog?
                    options
                    K/defaults)
     (.withLoggingEnabled materialized
-                         (or (:dvlopt.kstreams.stores/configuration.changelog options)
+                         (or (:dvlopt.kstreams.store/configuration.changelog options)
                              {}))
     (.withLoggingDisabled materialized))
   materialized)
@@ -1603,13 +1603,13 @@
 
 (defn materialized--by-name
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-*`
+  ;; Cf. `dvlopt.kstreams.stream/reduce-*`
 
   ^Materialized
 
   [options]
 
-  (let [^String store-name (or (:dvlopt.kstreams.stores/name options)
+  (let [^String store-name (or (:dvlopt.kstreams.store/name options)
                                (-store-name))
         materialized       (Materialized/as store-name)]
     (-materialized--configure materialized
@@ -1629,10 +1629,10 @@
 
   [options]
 
-  (let [store-name (or (:dvlopt.kstreams.stores/name options)
+  (let [store-name (or (:dvlopt.kstreams.store/name options)
                        (-store-name))
         supplier   (condp identical?
-                          (void/obtain :dvlopt.kstreams.stores/type
+                          (void/obtain :dvlopt.kstreams.store/type
                                        options
                                        K/defaults)
                      :kv.in-memory (key-value-bytes-store-supplier--in-memory store-name)
@@ -1645,7 +1645,7 @@
 
 (defn merger
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-session-windows`
+  ;; Cf. `dvlopt.kstreams.stream/reduce-session-windows`
 
   ^Merger
 
@@ -1665,7 +1665,7 @@
 
 (defn predicate
 
-  ;; Cf. `dvlopt.kstreams.high.streams`
+  ;; Cf. `dvlopt.kstreams.stream/filter-kv`
 
   ^Predicate
 
@@ -1684,7 +1684,7 @@
 
 (defn value-mapper-with-key
 
-  ;; Cf. `dvlopt.kstreams.high.streams/map-values`
+  ;; Cf. `dvlopt.kstreams.stream/map-values`
 
   ^ValueMapperWithKey
 
@@ -1703,7 +1703,7 @@
 
 (defn key-value-mapper
 
-  ;; Cf. `dvlopt.kstreams.high.streams/map`
+  ;; Cf. `dvlopt.kstreams.stream/map`
 
   ^KeyValueMapper
 
@@ -1722,7 +1722,7 @@
 
 (defn key-value-mapper--raw
 
-  ;; Cf. `dvlopt.kstreams.high.streams/group-by` amongst other
+  ;; Cf. `dvlopt.kstreams.stream/group-by` amongst other
 
   ^KeyValueMapper
 
@@ -1741,7 +1741,7 @@
 
 (defn key-value-mapper--flat
 
-  ;; Cf. `dvlopt.kstreams.high.streams/fmap`
+  ;; Cf. `dvlopt.kstreams.stream/fmap`
 
   [f]
 
@@ -1759,7 +1759,7 @@
 
 (defn value-joiner
 
-  ;; Cf. `dvlopt.kstreams.high.streams/join-with-stream` and variations
+  ;; Cf. `dvlopt.kstreams.stream/join-with-stream` and variations
 
   ^ValueJoiner
 
@@ -1778,14 +1778,14 @@
 
 (defn join-windows
 
-  ;; Cf. `dvlopt.kstreams.high.streams/join-with-stream` and variations
+  ;; Cf. `dvlopt.kstreams.stream/join-with-stream` and variations
 
   ^JoinWindows
 
   [interval options]
 
   (doto (JoinWindows/of (to-milliseconds interval))
-    (.until (to-milliseconds (void/obtain :dvlopt.kstreams.stores/retention
+    (.until (to-milliseconds (void/obtain :dvlopt.kstreams.store/retention
                                           options
                                           K/defaults)))))
 
@@ -1794,7 +1794,7 @@
 
 (defn joined
 
-  ;; Cf. `dvlopt.kstreams.high.streams/join-with-stream` and variations
+  ;; Cf. `dvlopt.kstreams.stream/join-with-stream` and variations
 
   ^Joined
 
@@ -1809,7 +1809,7 @@
 
 (defn initializer
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-*` for instance
+  ;; Cf. `dvlopt.kstreams.stream/reduce-*` for instance
 
   ^Initializer
 
@@ -1827,7 +1827,7 @@
 
 (defn aggregator
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-*` for instance
+  ;; Cf. `dvlopt.kstreams.stream/reduce-*` for instance
 
   ^Aggregator
 
@@ -1847,7 +1847,7 @@
 
 (defn reducer
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-*` for instance
+  ;; Cf. `dvlopt.kstreams.stream/reduce-*` for instance
 
   ^Initializer
 
@@ -1872,7 +1872,7 @@
 
 (defn aggregator
 
-  ;; Cf. `dvlopt.kstreams.high.streams/reduce-*` for instance
+  ;; Cf. `dvlopt.kstreams.stream/reduce-*` for instance
 
   ^Aggregator
 
@@ -2023,7 +2023,7 @@
 
 (defn foreach-action
 
-  ;; Cf. `dvlopt.kstreams.high.streams/do-kv`
+  ;; Cf. `dvlopt.kstreams.stream/do-kv`
 
   ^ForeachAction
 
@@ -2042,8 +2042,7 @@
 
 (defn time-windows
 
-  ;; Cf. `dvlopt.kstreams.high.streams.grouped/window-by-interval`
-  ;; Cf. `dvlopt.kstreams.high.streams/window`
+  ;; Cf. `dvlopt.kstreams.stream/window`
 
   ^TimeWindows
 
@@ -2051,10 +2050,10 @@
 
   (let [window (TimeWindows/of (to-milliseconds interval))]
     (.until window
-            (to-milliseconds (void/obtain :dvlopt.kstreams.stores/retention
+            (to-milliseconds (void/obtain :dvlopt.kstreams.store/retention
                                           options
                                           K/defaults)))
-    (if-let [slide (:dvlopt.kstreams.stores/hop options)]
+    (if-let [slide (:dvlopt.kstreams.store/hop options)]
       (.advanceBy window
                   (to-milliseconds slide))
       window)))
@@ -2064,14 +2063,14 @@
 
 (defn session-windows
 
-  ;; Cf. `dvlopt.kstreams.high.streams/window-by-session`
+  ;; Cf. `dvlopt.kstreams.stream/window-by-session`
 
   ^SessionWindows
 
   [interval options]
 
   (doto (SessionWindows/with interval)
-    (.until (to-milliseconds (void/obtain :dvlopt.kstreams.stores/retention
+    (.until (to-milliseconds (void/obtain :dvlopt.kstreams.store/retention
                                           options
                                           K/defaults)))))
 
@@ -2094,7 +2093,7 @@
 
 (defn windowed
 
-  ;; Cf. `dvlopt.kstreams.stores/ss-put`
+  ;; Cf. `dvlopt.kstreams.store/ss-put`
 
   ^Windowed
 

@@ -1,4 +1,4 @@
-(ns dvlopt.kstreams.low
+(ns dvlopt.kstreams.topology
 
   "Low level API for Kafka Streams.
   
@@ -29,7 +29,7 @@
    the hood in order to do so. A regular state store is distributed following partitions. A global one always sources data from
    all partitions at the same time.
   
-   Cf. `dvlopt.kstreams.stores` for more"
+   Cf. `dvlopt.kstreams.store` for more"
 
   {:author "Adam Helinski"}
 
@@ -86,7 +86,7 @@
        :dvlopt.kstreams/source.name
         Name of the source node fetching records from the topic.
 
-       :dvlopt.kstreams.stores/name
+       :dvlopt.kstreams.store/name
         Name of the global store.
 
      Subgraphs of type :subtopology contains
@@ -276,7 +276,7 @@
   "Adds a state store to the topology which can later be used by the given processors.
 
 
-   A map of options may be given, all options described in `dvlopt.kstreams.stores`."
+   A map of options may be given, all options described in `dvlopt.kstreams.store`."
 
   (^Topology
 
@@ -305,7 +305,7 @@
 
    A processor is needed in order to update the global state.
 
-   A map of options may be given, options for the store as described in `dvlopt.kstreams.stores` as well as :
+   A map of options may be given, options for the store as described in `dvlopt.kstreams.store` as well as :
   
      :dvlopt.kstreams/extract-timestamp
       Function accepting the previous timestamp of the last record and a record, and returning

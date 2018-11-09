@@ -11,7 +11,7 @@
    This API revolves mainly around these abstractions :
 
    
-     Streams (`dvlopt.kstreams.high.streams`)
+     Streams (`dvlopt.kstreams.stream`)
      ----------------------------------------
 
      A stream represent a sequence of records which need to be somehow transformed (mapped, filtered, etc). It is distributed by partitions.
@@ -23,7 +23,7 @@
 
      Grouped streams, windowed or not, are intermediary representations. Aggregating values always result in a table.
 
-     Tables (`dvlopt.kstreams.high.tables`)
+     Tables (`dvlopt.kstreams.table`)
      --------------------------------------
 
      A table associates a unique value to a key. For a given key, a new record represents an update. It can be created right away from a topic or be the
@@ -46,7 +46,7 @@
    ===========
 
    Values can be reduced by key. An aggregation is done much like in clojure itself : a reducing (fn [aggregated key value). Before processing the first record
-   of a key, a function is called for obtaining a seed (ie. first aggregated value). The value is aggregated against the seed, this bootstrapping the
+   of a key, a function is called for obtaining a seed (ie. first aggregated value). The value is aggregated against the seed, thus bootstrapping the
    aggregation.
 
 
@@ -56,7 +56,7 @@
    Just like in the low-level API, state stores are used for stateful operations. Those stores are typically created automatically and need not much more
    else than serializers and deserializers as described in `dvlopt.kafka`.
   
-   Cf. `dvlopt.kstreams.stores` for more about stores.
+   Cf. `dvlopt.kstreams.store` for more about stores.
 
    Any operation acting on the keys of the records will result in a repartioning of data at some point, either right away or later. This means the library
    will persist the new records in an internal topic named '$APPLICATION_ID-$GENERATED_NAME-repartition'. This is needed because the way keys are partioned
@@ -117,7 +117,7 @@
   "Once ready, a builder can be transformed to a topology in order to make a Kafka Stream application or to add some low-level
    processing.
   
-   Cf. `dvlopt.kstreams.low` namespace."
+   Cf. `dvlopt.kstreams.topology` namespace."
 
   ^Topology
 
@@ -130,7 +130,7 @@
 
 (defn stream
 
-  "Adds a stream sourcing its data from a topic, a list of topics or a regular expression for topics.
+  "Adds and returns a stream sourcing its data from a topic, a list of topics or a regular expression for topics.
 
    This stream can be used with the `dvlopt.kstreams.high.stream` namespace.
   
@@ -178,7 +178,7 @@
 
 (defn table
 
-  "Adds a table which can be used with the `dvlopt.kstreams.high.tables` namespace.
+  "Adds and returns a table which can be used with the `dvlopt.kstreams.table` namespace.
 
    A map of options may be given :
 
@@ -192,10 +192,10 @@
      :dvlopt.kstreams/offset-reset
       Cf. `stream`
 
-     :dvlopt.kstreams.stores/cache?
-     :dvlopt.kstreams.stores/name
-     :dvlopt.kstreams.stores/type
-      Cf. `dvlopt.kstreams.stores`
+     :dvlopt.kstreams.store/cache?
+     :dvlopt.kstreams.store/name
+     :dvlopt.kstreams.store/type
+      Cf. `dvlopt.kstreams.store`
       The type is restricted to #{:kv.in-memory :kv.regular}.
       Other options related to stores are not needed. No changelog topic is required because the table is created
       directly from an original topic."
@@ -223,7 +223,7 @@
 
 (defn global-table
 
-  "Creates a global table which, unlike a regular one, will source its date from all the partitions of a topic at the
+  "Adds a global table which, unlike a regular one, will source its date from all the partitions of a topic at the
    same time.
   
    Cf. `table`"
@@ -257,7 +257,7 @@
    can be find in the low-level API. Those might need an access to a manually created state store.
 
 
-   A map of options may be given, all options described in `dvlopt.kstreams.stores`."
+   A map of options may be given, all options described in `dvlopt.kstreams.store`."
 
 
   (^StreamsBuilder
@@ -280,7 +280,7 @@
 
 (defn add-global-store
 
-  "Adds a global state store just like `dvlopt.kstreams.low/add-global-store`."
+  "Adds a global state store just like `dvlopt.kstreams.topology/add-global-store`."
 
   ^StreamsBuilder
 

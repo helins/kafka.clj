@@ -122,7 +122,7 @@
 
   "Retrieves a writable key-value store.
   
-   Cf. `dvlopt.kstreams.stores`"
+   Cf. `dvlopt.kstreams.store`"
 
   ^KeyValueStore
 
@@ -138,7 +138,7 @@
 
   "Retrieves a writable window store.
 
-   Cf. `dvlopt.kstreams.stores`"
+   Cf. `dvlopt.kstreams.store`"
 
   ^WindowStore
 
@@ -154,7 +154,7 @@
 
   "Retrieves a writable session store.
 
-   Cf. `dvlopt.kstreams.stores`"
+   Cf. `dvlopt.kstreams.store`"
 
   ^SessionStore
 

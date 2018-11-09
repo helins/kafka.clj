@@ -2,7 +2,7 @@
 
   "Creation and handling of Kafka Streams applications.
 
-   The user can either write a low-level implementation by building himself a topology of processing nodes (cf. dvlopt.kstreams.low) or
+   The user can either write a low-level implementation by building himself a topology of processing nodes (cf. dvlopt.kstreams.topology) or
    use the high-level API presenting a more functional approach (cf. dvlopt.kstreams.high)."
 
   {:author "Adam Helinski"}
@@ -241,7 +241,7 @@
      :dvlopt.kafka/topic-partitions
       List of [topic partition]'s the remote instance is handling.
 
-     :dvlopt.kstreams.stores/names
+     :dvlopt.kstreams.store/names
       List of the store names the instance is handling."
 
   [^KafkaStreams app]

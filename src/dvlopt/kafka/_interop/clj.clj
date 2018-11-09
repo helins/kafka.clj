@@ -916,8 +916,8 @@
 
   [^TopologyDescription$Processor td$p]
 
-  {:dvlopt.kstreams/name        (.name td$p)
-   :dvlopt.kstreams.stores/name (into #{}
+  {:dvlopt.kstreams/name       (.name td$p)
+   :dvlopt.kstreams.store/name (into #{}
                                       (.stores td$p))})
 
 
@@ -947,7 +947,7 @@
     {::K/topic                       (.topics td$s)
      :dvlopt.kstreams/processor.name (.name td$p)
      :dvlopt.kstreams/source.name    (.name td$s)
-     :dvlopt.kstreams.stores/name    (first (.stores td$p))
+     :dvlopt.kstreams.store/name     (first (.stores td$p))
      :dvlopt.kstreams/subgraph-type :global-store}))
 
 
@@ -972,7 +972,7 @@
 
 (defn topology-description
 
-  ;; Cf. `dvlopt.kstreams.low/describe`
+  ;; Cf. `dvlopt.kstreams.topology/describe`
 
   [^TopologyDescription tp]
 
@@ -1076,7 +1076,7 @@
 
 (defn key-value-iterator
 
-  ;; Cf. `dvlopt.kstreams.stores/kv-get` and variations
+  ;; Cf. `dvlopt.kstreams.store/kv-get` and variations
 
   (^AutoCloseable
 
@@ -1139,12 +1139,12 @@
 
   [^StreamsMetadata sm]
 
-  {::K/host                      (.host sm)
-   ::K/port                      (.port sm)
-   ::K/topic-partitions          (into #{}
-                                       (map topic-partition)
-                                       (.topicPartitions sm))
-   :dvlopt.kstreams.stores/names (into #{}
+  {::K/host                     (.host sm)
+   ::K/port                     (.port sm)
+   ::K/topic-partitions         (into #{}
+                                      (map topic-partition)
+                                      (.topicPartitions sm))
+   :dvlopt.kstreams.store/names (into #{}
                                        (.stateStoreNames sm))})
 
 

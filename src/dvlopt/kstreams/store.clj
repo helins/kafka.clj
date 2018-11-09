@@ -1,4 +1,4 @@
-(ns dvlopt.kstreams.stores
+(ns dvlopt.kstreams.store
 
   "Handling of Kafka Streams state stores.
 
@@ -122,7 +122,7 @@
 
    Ex. ;; Eargerly sum all values.
     
-       (with-open [kvs (dvlopt.kstreams.stores/kv-range my-store)]
+       (with-open [kvs (dvlopt.kstreams.store/kv-range my-store)]
          (reduce (fn [sum kv]
                    (+ sum
                       (:dvlopt.kafka/value kv)))
