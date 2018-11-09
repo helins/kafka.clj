@@ -2,7 +2,7 @@
 
   "Handling of streams.
 
-   Cf. `dvlopt.kstreams.high` for the big picture and details
+   Cf. `dvlopt.kstreams.builder` for the big picture and details
 
 
    A stream can be transformed by various functions. Those functions returns themselves a new stream representing the transformation.
@@ -92,7 +92,7 @@
   "Returns a new stream mapping key-values from the given one.
 
    Marks the resulting stream for repartioning.
-   Cf. `dvlopt.kstreams.high`
+   Cf. `dvlopt.kstreams.builder`
 
    
    Ex. ;; The key is an ip address mapped to a country and the value is a collection mapped to its
@@ -118,7 +118,7 @@
   "Returns a new stream efficiently mapping keys from the given one.
 
    Marks the resulting stream for repartioning.
-   Cf. `dvlopt.kstreams.high`
+   Cf. `dvlopt.kstreams.builder`
 
    
    Ex. ;; The key is an ip address mapped to a country.
@@ -165,7 +165,7 @@
   "Returns a new stream mapping key-values from the given one into a collection of [key value]'s (or nil).
   
    Marks the resulting stream for repartioning.
-   Cf. `dvlopt.kstreams.high`
+   Cf. `dvlopt.kstreams.builder`
 
   
    Ex. ;; The value is a list of tokens and we want to count them individually so that we end up with
@@ -228,14 +228,14 @@
        :dvlopt.kstreams/processor.on-record may be used to explicitly forward records using the associated context.
 
    Marks the topic for repartioning.
-   Cf. `dvlopt.kstreams.high`
+   Cf. `dvlopt.kstreams.builder`
 
 
    A map of options may be given :
 
      :dvlopt.kstreams.store/names
       List of state store names previously added to the underlying builder this processor need to access.
-      Cf. `dvlopt.kstreams.high/add-store`"
+      Cf. `dvlopt.kstreams.builder/add-store`"
 
   (^KStream
 
@@ -311,7 +311,7 @@
    Input streams are repartitioned if they were marked for repartitioning and a store will be generated for
    each of them.
 
-   Cf. `dvlopt.kstreams.high` for requirements related to joins
+   Cf. `dvlopt.kstreams.builder` for requirements related to joins
 
 
    A map of options may be given :
@@ -532,7 +532,7 @@
 
 
 
-(defn join-left-with-global-table
+(defn left-join-with-global-table
 
   "Exactly like `join-with-global-table` but the join is triggered even if the global table does not contain the mapped
    key. In such case, the right value supplied during the join is nil."
@@ -559,7 +559,7 @@
    Drops records leading to a nil chosen key.
   
    Because a new key is explicitly selected, the data is repartioned.
-   Cf. `dvlopt.kstreams.high` about repartioning.
+   Cf. `dvlopt.kstreams.builder` about repartioning.
 
    A map of options may be given :
 
@@ -850,7 +850,7 @@
       Cf. `dvlopt.kafka` for description of serializers and deserializers.
 
      :dvlopt.kstreams/select-partition
-      Cf. `dvlopt.kstreams.high`"
+      Cf. `dvlopt.kstreams.builder`"
 
   (^KStream
 

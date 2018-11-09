@@ -15,8 +15,19 @@
                                       ;[org.clojure/clojure    "1.10.0-beta4"]
                                       [org.clojure/clojure    "1.9.0"]
                                       [org.clojure/test.check "0.10.0-alpha2"]]
-                       :plugins      [[lein-codox      "0.10.3"]
+                       :plugins      [[lein-codox      "0.10.5"]
                                       [venantius/ultra "0.5.1"]]
-                       :codox        {:output-path  "doc/auto"
+                       :codox        {:namespaces   [dvlopt.kafka
+                                                     dvlopt.kafka.admin
+                                                     dvlopt.kafka.in
+                                                     dvlopt.kafka.out
+                                                     dvlopt.kstreams
+                                                     dvlopt.kstreams.builder
+                                                     dvlopt.kstreams.ctx
+                                                     dvlopt.kstreams.store
+                                                     dvlopt.kstreams.stream
+                                                     dvlopt.kstreams.table
+                                                     dvlopt.kstreams.topology]
+                                      :output-path  "doc/auto"
                                       :source-paths ["src"]}
                        :global-vars  {*warn-on-reflection* true}}})

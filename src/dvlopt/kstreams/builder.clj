@@ -1,4 +1,4 @@
-(ns dvlopt.kstreams.high
+(ns dvlopt.kstreams.builder
 
   "High level API for Kafka Streams.
   
@@ -101,7 +101,10 @@
 
 (defn builder
 
-  "A builder is used as a starting point for the functional API. It actually builds a topology under the hood."
+  "A builder is used as a starting point for the high-level functional API (ie. this namespace).
+
+   When ready, it can go through `dvlopt.kstreams.topology/topology` in order to build a topology which can be augmented with the imperative low-level
+   api or used right away for making a Kafka Streams application."
 
   ^StreamsBuilder
 
@@ -112,27 +115,11 @@
 
 
 
-(defn topology
-
-  "Once ready, a builder can be transformed to a topology in order to make a Kafka Stream application or to add some low-level
-   processing.
-  
-   Cf. `dvlopt.kstreams.topology` namespace."
-
-  ^Topology
-
-  [^StreamsBuilder builder]
-
-  (.build builder))
-
-
-
-
 (defn stream
 
   "Adds and returns a stream sourcing its data from a topic, a list of topics or a regular expression for topics.
 
-   This stream can be used with the `dvlopt.kstreams.high.stream` namespace.
+   This stream can be used with the `dvlopt.kstreams.stream` namespace.
   
 
    A map of options may be given :
@@ -221,7 +208,7 @@
 
 
 
-(defn global-table
+(defn add-global-table
 
   "Adds a global table which, unlike a regular one, will source its date from all the partitions of a topic at the
    same time.
@@ -232,9 +219,9 @@
 
    [builder source]
 
-   (global-table builder
-                 source
-                 nil))
+   (add-global-table builder
+                     source
+                     nil))
 
 
   (^GlobalKTable

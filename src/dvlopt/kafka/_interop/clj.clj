@@ -1051,7 +1051,7 @@
 
 (defn record-context
 
-  ;; Cf. `dvlopt.kstreams.high.stream/sink-partition
+  ;; Cf. `dvlopt.kstreams.stream/sink-partition
 
   [^RecordContext rc]
 

@@ -53,15 +53,24 @@
 ;;;;;;;;;;
 
 
-(defn topology
+(defn make
 
-  "Creates a new topology."
+  "Creates a new topology from scratch or from a builder.
 
-  ^Topology
+   Cf. `dvlopt.kstreams.build/builder`"
 
-  []
+  (^Topology
 
-  (Topology.))
+   []
+
+   (Topology.))
+
+
+  (^Topology
+
+   [^StreamsBuilder builder]
+
+   (.build builder)))
 
 
 

@@ -1214,7 +1214,7 @@
 
 (defn consumed
 
-  ;; Cf. `dvlopt.kstreams.high/stream` amongst other
+  ;; Cf. `dvlopt.kstreams.builder/stream` amongst other
 
   ^Consumed
 
@@ -1892,7 +1892,7 @@
 
 (defn transformer
 
-  ;; Cf. `dvlopt.kstreams.high.stream/process`
+  ;; Cf. `dvlopt.kstreams.stream/process`
 
   ^Transformer
 
@@ -1932,7 +1932,7 @@
 
 (defn transformer-supplier
 
-  ;; Cf. `dvlopt.kstreams.high.stream/process`
+  ;; Cf. `dvlopt.kstreams.stream/process`
 
   ^TransformerSupplier
 
@@ -1957,7 +1957,7 @@
 
 (defn value-transformer-with-key
 
-  ;; Cf. `dvlopt.kstreams.high.stream/process-values`
+  ;; Cf. `dvlopt.kstreams.stream/process-values`
 
   ^ValueTransformerWithKey
 
@@ -1998,7 +1998,7 @@
 
 (defn value-transformer-with-key-supplier
 
-  ;; Cf. `dvlopt.kstreams.high.stream/process-values`
+  ;; Cf. `dvlopt.kstreams.stream/process-values`
 
   ^ValueTransformerWithKeySupplier
 

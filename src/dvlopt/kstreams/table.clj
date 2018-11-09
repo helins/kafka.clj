@@ -2,7 +2,7 @@
 
   "Handling of tables.
   
-   Cf. `dvlopt.kstreams.high` for the big picture and details
+   Cf. `dvlopt.kstreams.builder` for the big picture and details
 
 
    A table can be transformed by various functions. Those functions always return a new table representing the transformation.
@@ -152,7 +152,7 @@
 
    Records with nil values removes the corresponding key from the resulting table. Records with nil keys will be dropped.
 
-   Cf. `dvlopt.kstreams.high` for requirements related to joins
+   Cf. `dvlopt.kstreams.builder` for requirements related to joins
 
    
    Standard options can be provided (cf. namespace description).
@@ -250,7 +250,7 @@
    Drops mapped records with nil keys.
   
    Because a new key is explicitly selected, the data is repartioned.
-   Cf. `dvlopt.kstreams.high` about repartioning.
+   Cf. `dvlopt.kstreams.builder` about repartioning.
 
    A map of options may be given :
 

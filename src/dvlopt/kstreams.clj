@@ -3,7 +3,7 @@
   "Creation and handling of Kafka Streams applications.
 
    The user can either write a low-level implementation by building himself a topology of processing nodes (cf. dvlopt.kstreams.topology) or
-   use the high-level API presenting a more functional approach (cf. dvlopt.kstreams.high)."
+   use the high-level API presenting a more functional approach (cf. dvlopt.kstreams.builder)."
 
   {:author "Adam Helinski"}
 
