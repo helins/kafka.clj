@@ -1,6 +1,7 @@
 (ns dvlopt.kstreams.store
 
-  "Handling of Kafka Streams state stores.
+  "Kafka Streams state stores.
+
 
    Streaming applications often need to store some kind of state. This is the purposes of state stores which are typically backed-up
    to compacted Kafka topics called changelogs in order to be fault-tolerant. Those changelogs topics are named '$APPLICATION_ID-$GENERATED_NAME-changelog`.
@@ -18,7 +19,7 @@
      which is great for cloud environments where applications are started from scratch everytime. However, an in-memory key-value
      store will have to catch up with its corresponding changelog everytime the application is restarted.
 
-     Persistentwindow stores
+     Persistent window stores
      -----------------------------
 
      In window stores, each value is associated with a key but also a timestamp. They are used for computing over fixed time intervals.
@@ -49,7 +50,7 @@
 
     ::changelog?
      In order for state stores to be fault tolerant, they are continuously backed up to a changelog topic behind the scenes.
-     Default is true and this option should not be disabled unless needed.
+     Default is true and this option should not be disabled unless specifically needed.
 
     ::configuration.changelog
      Map of Kafka topic properties for configuring the changelog topic.
@@ -78,7 +79,7 @@
        Time period for which the state store will retain historical data, cannot be smaller than the chosen interval.
        During any kind of stream processing, it is common that data arrives late or out of order and instead of dropping this data,
        it is better to update past time windows. However, because disks are not unlimited, one cannot keep the data for all time windows
-       just in case. Hence the need for this option. The higher the retention period and the later can data arrive.
+       just in case. Hence the need for this option. The higher the retention period and the later can data arrive, but the more is stored.
        Default is [1 :days].
 
     Window stores have these additional options and mandatory arguments :
@@ -135,14 +136,14 @@
   (:require [dvlopt.kafka               :as K]
             [dvlopt.kafka.-interop.clj  :as K.-interop.clj]
             [dvlopt.kafka.-interop.java :as K.-interop.java])
-  (:import org.apache.kafka.streams.processor.StateStore
+  (:import java.lang.AutoCloseable
+           org.apache.kafka.streams.processor.StateStore
            (org.apache.kafka.streams.state KeyValueStore
                                            ReadOnlyKeyValueStore
                                            ReadOnlySessionStore
                                            ReadOnlyWindowStore
                                            SessionStore
-                                           WindowStore)
-           java.lang.AutoCloseable))
+                                           WindowStore)))
 
 
 
@@ -152,9 +153,7 @@
 
 (defn close-cursor
 
-  "Closes the storage engine.
-
-   Typically, a store is closed automatically when the Kafka Streams application is shutdown."
+  "Closes a cursor."
 
   [^AutoCloseable cursor]
 
@@ -331,7 +330,7 @@
 
 (defn ws-multi-get
 
-  "Returns a cursor for with several windows for the given key in the window store.
+  "Returns a cursor for several windows for the given key in the window store.
 
 
    A map of options may be given :

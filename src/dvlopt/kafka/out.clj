@@ -1,6 +1,6 @@
 (ns dvlopt.kafka.out
 
-  "Handling of Kafka producers."
+  "Kafka producers."
 
   {:author "Adam Helinski"}
 
@@ -159,7 +159,7 @@
 
   "Must be called exactly once at the start of each new transaction.
 
-   <!> `trx-init` must be called before any transaction."
+   <!> `trx-init` must be called before any transaction. <!>"
 
   ^KafkaProducer
 
@@ -173,7 +173,7 @@
 
 (defn trx-commit
 
-  "Requests a Commit of the ongoing transaction.
+  "Requests a commit of the ongoing transaction.
 
    A transaction succeeds only if every step succeeds.
 
@@ -294,9 +294,9 @@
 
   "Flushes the producer.
   
-   Sends all buffered messages immediately, even if \"'linger.ms\" is greater than 0, and blocks until
-   completion. Other threads can continue sending messages but no garantee is made they will be part
-   of the current flush."
+   Sends all buffered messages immediately, even if \"linger.ms\" (producer configuration) is greater than 0, and blocks
+   until completion. Other threads can continue sending messages but no garantee is made they will be part of the current
+   flush."
 
   [^KafkaProducer producer]
 
@@ -310,7 +310,7 @@
 
   "Requests metrics about this producer.
 
-   Returns a map of metric group name -> map of metric name -> map containing
+   Returns a map of metric group name -> (map of metric name -> map) containing :
 
      :dvlopt.kafka/description (when available)
       String description for human consumption.

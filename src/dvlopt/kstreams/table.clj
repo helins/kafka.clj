@@ -1,6 +1,6 @@
 (ns dvlopt.kstreams.table
 
-  "Handling of tables.
+  "Kafka Streams' abstraction of tables.
   
    Cf. `dvlopt.kstreams.builder` for the big picture and details
 

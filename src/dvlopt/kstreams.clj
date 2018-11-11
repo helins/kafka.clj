@@ -1,9 +1,15 @@
 (ns dvlopt.kstreams
 
-  "Creation and handling of Kafka Streams applications.
+  "Kafka Streams applications.
 
-   The user can either write a low-level implementation by building himself a topology of processing nodes (cf. dvlopt.kstreams.topology) or
-   use the high-level API presenting a more functional approach (cf. dvlopt.kstreams.builder)."
+
+   An app is a topology of nodes sourcing, processing, and sending records. Such a topology can be built in a rather imperative fashion
+   by using the `dvlopt.kstreams.topology` namespace, the so-called \"low-level API\". The `dvlopt.kstreams.builder` namespace is the
+   entry point of the so-called \"high-level API\". It provides a \"builder\" which will build a topology for the user while he/she enjoys
+   the rather functional API. Both APIs are actually complementary. Once a builder produces a topology, it can be augmented using the
+   low-level API if needed.
+  
+   The high-level API is usually prefered."
 
   {:author "Adam Helinski"}
 
@@ -29,9 +35,9 @@
 
 (defn app 
 
-  "Given a low-level topology or a high-level builder, creates a Kafka Streams application.
+  "Given a topology, creates a Kafka Streams application.
   
-   In order to release the ressource associated with an application, always call `disband`, even if the
+   In order to release the ressource associated with an application, `disband` must be always called when done, even if the
    application has not been started.
 
    Works with clojure's `with-open` which behaves like calling `disband` without options.
@@ -107,7 +113,7 @@
 
 (defn disband
 
-  "Releases resources acquired for a Kafka Streams application (after stopping it if it was running).
+  "Releases resources acquired for the Kafka Streams application (after stopping it if it was running).
 
    A map of options may be given :
 

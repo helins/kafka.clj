@@ -1,6 +1,6 @@
 (ns dvlopt.kafka.in
 
-  "Handle Kafka consumers."
+  "Kafka consumers."
 
   {:author "Adam Helinski"}
 

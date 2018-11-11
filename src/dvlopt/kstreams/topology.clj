@@ -1,17 +1,15 @@
 (ns dvlopt.kstreams.topology
 
-  "Low level API for Kafka Streams.
-  
-   Rather imperative.
+  "Kafka Streams low level API, rather imperative.
   
   
-   This namespace is about building a topology of nodes. Three types of nodes exist :
+   This namespace is about building a topology of nodes manually. Three types of nodes exist :
 
      Sources
      -------
 
-     A source act as the entry point of a topology. It retrieves records from one or several topics and forwards them
-     to processors or sinks.
+     A source act as one of the the entry points of a topology. It retrieves records from one or several topics and forwards
+     them to processors or sinks.
 
      Processors
      ----------
@@ -53,7 +51,7 @@
 ;;;;;;;;;;
 
 
-(defn make
+(defn topology
 
   "Creates a new topology from scratch or from a builder.
 
@@ -195,11 +193,12 @@
    A processor is a map or a function producing a map containing any of those functions :
 
      :dvlopt.kstreams/processor.init  (fn [ctx])
-      Given a context (cf. `dvlopt.kstreams.ctx`), initializes processing.
+      Given a context initializes processing.
       The returned value is considered as an in-memory state that will be passed to :dvlopt.kstreams/processor.on-record everytime.
+      Cf. `dvlopt.kstreams.ctx`
 
      :dvlopt.kstreams/processor.on-record  (fn [ctx user-state record])
-      Given a context and some user state produced by :init, processes a record.
+      Given a context and some user state produced by :dvlopt.kstreams/processor.init, processes a record.
 
      :dvlopt.kstreams/processor.close  (fn [])
       For producing a side-effect when the processor is shutting down, such as releasing resources.
@@ -212,7 +211,7 @@
                       {:dvlopt.kstreams/processor.init      (fn [ctx]
                                                               (dvlopt.kstreams.ctx/kv-store ctx
                                                                                             \"my-store\"))
-                       :dvlopt.kstreams/processor.on-record (fn [ctx my-state-store record]
+                       :dvlopt.kstreams/processor.on-record (fn [ctx my-store record]
                                                               ...)
                        :dvlopt.kstreams/processor.on-close  (fn []
                                                               (println \"Bye bye processor\"))})"
@@ -309,14 +308,14 @@
 
 (defn add-global-store
 
-  "Adds a global state store to the topology which, unlike a regular one, sources data from all the partition of the
-   given topic.
+  "Adds a global state store to the topology which, unlike a regular one, is directly connected to a topic and sources
+   records from all its partitions.
 
    A processor is needed in order to update the global state.
 
    A map of options may be given, options for the store as described in `dvlopt.kstreams.store` as well as :
   
-     :dvlopt.kstreams/extract-timestamp
+     :dvlopt.kstreams/extract-timestamp  (fn [last-timestamp record])
       Function accepting the previous timestamp of the last record and a record, and returning
       the timestamp chosen for the current record."
 

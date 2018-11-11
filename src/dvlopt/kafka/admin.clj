@@ -26,7 +26,7 @@
 
 (defn admin 
 
-  "Builds an admin client.
+  "Creates an admin client.
 
    A map of options may be given :
 
@@ -212,7 +212,7 @@
 
    Returns a map of topic name -> future throwing if an error occured.
 
-   New topics are specified by a map of topic names -> argument maps.
+   New topics are specified by a map of topic name -> argument map.
 
    An argument map consists of either the number of partitions with the replication factor or
    a manual assignment of partition numbers  to replica ids. Although not inforced, it is generally a
@@ -230,7 +230,7 @@
    Ex. (create-topics admin
                       {\"first-new-topic\"  {::number-of-partitions 4
                                              ::replication-factor   1
-                                             ::topic-configuration  {\"cleanup.policy\" \"compact\"}}
+                                             ::configuration.topic  {\"cleanup.policy\" \"compact\"}}
                        \"second-new-topic\" {::replica-assignments  {0 [0 1]
                                                                      1 [2 3]}}}
                       {:dvlopt.kafka/timeout [5 :seconds]})"
@@ -352,7 +352,7 @@
 
   "Requests the deletion of all records prior to the offset given for each [topic partition].
 
-   Returns a map of [topic partition] -> future resolving to {:dvlopt.kafka/lowest-offset ...} of
+   Returns a map of [topic partition] -> future resolving to {:dvlopt.kafka/lowest-offset ...} or
    throwing in case of error.
   
 

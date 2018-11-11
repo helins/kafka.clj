@@ -601,7 +601,7 @@
                                (void/obtain :dvlopt.kafka.admin/replication-factor
                                             options
                                             K/defaults)))]
-    (some->> (:dvlopt.kafka.admin/topic-configuration options)
+    (some->> (:dvlopt.kafka.admin/configuration.topic options)
              (.configs new-topic))
     new-topic))
 

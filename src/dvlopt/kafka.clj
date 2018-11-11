@@ -1,7 +1,9 @@
 (ns dvlopt.kafka
 
-  "This library aims to be clojure idiomatic while not being too smart about wrapping the java libraries, so that upgrading
-   will not be too laborious in the future.
+  "Start here.
+  
+   This library aims to be clojure idiomatic while not being too smart about wrapping the java libraries, so that upgrading
+   will not be laborious in the future.
 
    It is organized by specific namespaces. Producers (dvlopt.kafka.out) produce records, consumers (dvlopt.kafka.in)
    consume records, and administrators can alter Kafka (dvlopt.kafka.admin). For anything related to Kafka Streams, see the
@@ -39,7 +41,7 @@
    Within Kafka, records are kept as transparent byte arrays. When sending records, the key and the value need to be
    serialized and when consuming some, deserialized. 
 
-   A serializer is a function mapping some data to a byte array or nil. It is needed for producing records. It receives
+   A serializer is a function mapping some data to a byte array or nil. It is needed for producing records.
 
    Ex. (fn serializer [data metadata]
          (some-> v

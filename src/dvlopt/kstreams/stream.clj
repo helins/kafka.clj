@@ -1,6 +1,6 @@
 (ns dvlopt.kstreams.stream
 
-  "Handling of streams.
+  "Kafka Streams' abstraction of streams.
 
    Cf. `dvlopt.kstreams.builder` for the big picture and details
 
@@ -37,12 +37,12 @@
 (defn branch
 
   "Given a list of predicate functions, returns a vector of new corresponding streams such that as soon as a key-value from
-   the original stream returns true on a predicate, it is send to the corresponding stream (and only that one).
+   the original stream returns true on a predicate, it is sent to the corresponding stream (and only that one).
 
    A record is dropped if it matches no predicate.
 
 
-   Ex. ;; Divives a stream into 3 streams containing respectively :red values, :black ones, and any other ones.
+   Ex. ;; Divives a stream into 3 new streams containing respectively :red values, :black ones, and any other ones.
   
        (branch stream
                [(fn only-red [k v]
@@ -176,10 +176,9 @@
                   (reduce (fn [hmap token]
                             (assoc hmap
                                    token
-                                   (or (some-> (get hmap
-                                                    token)
-                                               inc)
-                                       1)))
+                                   (inc (get hmap
+                                             token
+                                             0))))
                           {}
                           v)))"
 
@@ -321,7 +320,7 @@
 
      :dvlopt.kstreams/left
      :dvlopt.kstreams/right
-      Maps which containing value ser/de :
+      Maps which may contain value ser/de :
 
         :dvlopt.kafka/deserializer.value
         :dvlopt.kafka/serializer.value
@@ -501,12 +500,12 @@
      - Allows for joining on a different key.
 
    Each record of the input stream is mapped to a new key which triggers a join if the global table contains that mapped
-   key.  The value resulting from the join is associated with the key of the original record.
+   key. The value resulting from the join is associated with the key of the original record.
 
    Records from the input stream with a nil key or value are ignored. Records from the global table with a nil value
    removes the corresponding key from this global table.
 
-   The intput stream is repartitioned if it was marked for repartitioning.
+   The input stream is repartitioned if it was marked for repartitioning.
 
 
    Ex. ;; Enrich a stream of users by adding the most popular song of the country they are from.

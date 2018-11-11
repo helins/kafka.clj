@@ -1,6 +1,6 @@
 (ns dvlopt.kstreams.ctx
 
-  "Contexts are needed for low-level processing."
+  "Contexts are needed for low-level processors."
 
   {:author "Adam Helinski"}
 

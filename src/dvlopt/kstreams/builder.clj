@@ -1,8 +1,6 @@
 (ns dvlopt.kstreams.builder
 
-  "High level API for Kafka Streams.
-  
-   Rather functional.
+  "Kafka Streams high level API, rather functional.
   
 
    Overview
@@ -16,7 +14,7 @@
 
      A stream represent a sequence of records which need to be somehow transformed (mapped, filtered, etc). It is distributed by partitions.
 
-     Often, some kind of aggregated values need to be computed. Fist, values need to be grouped by key to form a grouped stream. It is as if the stream is
+     Often, some kind of aggregated values need to be computed. Fist, values must be grouped by key to form a grouped stream. It is as if the stream is
      being divided into substreams, one for every key. Although useful, such a grouped stream does not have a notion of time. Hence, before applying any
      aggregation, a grouped stream can be windowed if needed. For instance, if keys are user names and values are clicks, we can group the stream by key,
      window per day, and then aggregate the values by counting the clicks. This would be for computing the number of clicks per user, per day.
@@ -74,7 +72,7 @@
    It is the responsability of the user to garantee the same number of partitions otherwise an exception will be thrown. For instance, if needed, a stream
    can be redirected to an adequate pre-created topic. It is easiest to use the default partitioning strategy. Other than that, a producer might decide the
    partition number of the records it is sending. In Kafka Streams, the partition number can be decided when writing to a topic by using the
-   :dvlopt.kstreams/select-partition options. It is a function taking the total number of partitions of the topic a record is being sent to, as well as the
+   :dvlopt.kstreams/select-partition option. It is a function taking the total number of partitions of the topic a record is being sent to, as well as the
    key and the value of this record.
 
    All of this do not apply to joins with global tables as they sources data from all the available partitions."
@@ -103,8 +101,8 @@
 
   "A builder is used as a starting point for the high-level functional API (ie. this namespace).
 
-   When ready, it can go through `dvlopt.kstreams.topology/topology` in order to build a topology which can be augmented with the imperative low-level
-   api or used right away for making a Kafka Streams application."
+   When ready, it can go through `dvlopt.kstreams.topology/topology` in order to build an actual topology which can be augmented with the imperative
+   low-level API or used right away for making a Kafka Streams application."
 
   ^StreamsBuilder
 
@@ -241,7 +239,7 @@
   "Manually adds a state store.
 
    Typically, stores are created automatically. However, this high-level API also offers a few operations akin to what
-   can be find in the low-level API. Those might need an access to a manually created state store.
+   can be find in the low-level API. Those probably need an access to a manually created state store.
 
 
    A map of options may be given, all options described in `dvlopt.kstreams.store`."
