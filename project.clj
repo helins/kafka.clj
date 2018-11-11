@@ -1,8 +1,8 @@
 (defproject dvlopt/kafka
-            "1.0.0-alpha0"
+            "1.0.0-beta0"
 
   :description  "Clojure client for Kafka"
-  :url          "https://github.com/dvlopt/milena"
+  :url          "https://github.com/dvlopt/kafka.clj"
   :license      {:name "Eclipse Public License"
                  :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[dvlopt/void                    "0.0.1"]
