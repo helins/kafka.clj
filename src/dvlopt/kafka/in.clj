@@ -49,7 +49,7 @@
        Idem, but for values.
 
 
-   Ex. (consumer {::configuration                  {\"group.id\"           \"m-_group\"
+   Ex. (consumer {::configuration                  {\"group.id\"           \"my-group\"
                                                     \"enable.auto.commit\" false}
                   :dvlopt.kafka/nodes              [[\"some_host\"] 9092]
                   :dvlopt.kafka/deserializer.key   :string
