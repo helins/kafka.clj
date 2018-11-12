@@ -15,7 +15,8 @@ fully supported.
 ## Usage
 
 First, read the fairly detailed
-[API](https://dvlopt.github.io/doc/clojure/dvlopt/kafka/index.html).
+[API](https://dvlopt.github.io/doc/clojure/dvlopt/kafka/index.html). Specially
+if you have not used the java libraries and its concepts.
 
 Then, have a look at the following examples. Just so we are prepared, let us 
 require all namespaces involved.
@@ -42,7 +43,7 @@ require all namespaces involved.
 
 ### Administration
 
-We will simply create a topic using the `dvlopt.kafka.admin` namespace.
+Creating topic "my-topic" using the `dvlopt.kafka.admin` namespace.
 
 ```clj
 (with-open [admin (K.admin/admin)]
@@ -56,8 +57,7 @@ We will simply create a topic using the `dvlopt.kafka.admin` namespace.
 
 ### Producing records
 
-We will send 25 records to the previously created topic using the
-`dvlopt.kafka.out` namespace.
+Sending 25 records to "my-topic" using the `dvlopt.kafka.out` namespace.
 
 ```clj
 (with-open [producer (K.out/producer {::K/nodes             [["localhost" 9092]]
@@ -79,8 +79,8 @@ We will send 25 records to the previously created topic using the
 
 ### Consuming records
 
-We will read a batch of records from our test topic and manually commit the
-offset of where we are using the `dvlopt.kafka.in` namespace.
+Reding a batch of records from "my-topic" and manually commit the offset of
+where we are using the `dvlopt.kafka.in` namespace.
 
 ```clj
 (with-open [consumer (K.in/consumer {::K/nodes              [["localhost" 9092]]
@@ -105,6 +105,11 @@ offset of where we are using the `dvlopt.kafka.in` namespace.
 
 Useless but simple example of grouping records in two categories based on their
 key, "odd" and "even", and continuously summing values in each category.
+
+First, we create a topology. We then add a source node fetching records from
+"my-topic". Those records are processed by "my-processor" which needs
+"my-store" in order to persist the current sum for each category. Finally, a
+sink node receives processed records and sends them to "my-topic-2".
 
 
 ```clj
@@ -157,6 +162,8 @@ key, "odd" and "even", and continuously summing values in each category.
               ::KS/on-exception (fn [exception _thread]
                                   (println "Exception : " exception))}))
 
+
+(KS/start app)
 ```
 
 
@@ -166,8 +173,15 @@ Same example as previously but in a more functional style. In addition, values
 are aggregated in 2 seconds windows (it is best to run the producer example a
 few times first).
 
+First, we need a builder. Then we add a stream fetching records from "my-topic".
+Records are then grouped into our categories and then each category is windowed
+in 2 seconds windows. Each window is then reduced for computing a sum. Then we
+are ready and we can build a topology out of our builder. It is always a good
+idea to have a look at the description of the built topology to have a better
+idea of what is created by the high-level API.
+
 A window store is then retrieved and then each window for each category is
-printed.
+printed. 
 
 ```clj
 (def topology
@@ -208,12 +222,20 @@ printed.
        (KS.topology/topology builder)))
 
 
+;; Always interesting to see what is the actual topology.
+
+(KS.topology/describe topology)
+
+
 (def app
      (KS/app "my-app-2"
              topology
              {::K/nodes         [["localhost" 9092]]
               ::KS/on-exception (fn [exception _thread]
                                   (println "Exception : " exception))}))
+
+
+(KS/start app)
 
 
 (def my-store
