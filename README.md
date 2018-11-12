@@ -64,11 +64,11 @@ We will send 25 records to the previously created topic using the
                                       ::K/serializer.key    (K/serializers :long)
                                       ::K/serializer.value  :long
                                       ::K.out/configuration {"client.id" "my-producer"}})]
-  (doseq [i 25]
+  (doseq [i (range 25)]
     (K.out/send producer
                 {::K/topic "my-topic"
                  ::K/key   i
-                 ::K/value (* 100 i)
+                 ::K/value (* 100 i)}
                 (fn callback [exception metadata]
                   (println (format "Record %d : %s"
                                    i
