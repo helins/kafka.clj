@@ -65,7 +65,7 @@
       Cf. https://kafka.apache.org/documentation/#streamsconfigs
 
      ::on-exception
-      Callback taking a Thread and an Exception, called when an error occurs during runtime.
+      Callback taking an Exception and a Thread, called when an error occurs during runtime.
 
      ::on-state-change
       Callback accepting an old state and a new one, called everytime the state changes.
@@ -88,6 +88,7 @@
                              (K.-interop.java/streams-config application-id
                                                              options))]
      (some->> (::on-exception options)
+              K.-interop.java/thread$uncaught-exception-handler
               (.setUncaughtExceptionHandler app'))
      (some->> (::on-state-change options)
               K.-interop.java/kafka-streams$state-listener

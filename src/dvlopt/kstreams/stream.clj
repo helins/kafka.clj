@@ -760,9 +760,11 @@
 (defn reduce-windows
 
   "Returns a new table aggregating values for each time window of each key of the given time-windowed stream.
+   Cf. `reduce-values`
   
 
    A map of standard table options may be given (cf. `dvlopt.kstreams.table`)."
+  
 
   (^KTable
 

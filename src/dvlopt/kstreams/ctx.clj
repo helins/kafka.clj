@@ -65,8 +65,8 @@
   (let [to (if-let [child (::KS/child options)]
              (To/child child)
              (To/all))]
-    (->> (::K/timestamp options)
-         (.withTimestamp to))
+    (some->> (::K/timestamp options)
+             (.withTimestamp to))
     (.forward ctx
               (::K/key options)
               (::K/value options)
