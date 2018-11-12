@@ -86,8 +86,9 @@ offset of where we are using the `dvlopt.kafka.in` namespace.
 (with-open [consumer (K.in/consumer {::K/nodes              [["localhost" 9092]]
                                      ::K/deserializer.key   :long
                                      ::K/deserializer.value :long
-                                     ::K.in/configuration   {"group.id"           "my-group"
-                                                             "enable.auto.commit" false}})]
+                                     ::K.in/configuration   {"auto.offset.reset" "earliest"
+                                                             "enable.auto.commit" false
+                                                             "group.id"           "my-group"}})]
   (K.in/register-for consumer
                      ["my-topic"])
   (doseq [record (K.in/poll consumer
@@ -98,6 +99,135 @@ offset of where we are using the `dvlopt.kafka.in` namespace.
                      (::K/key record)
                      (::K/value record))))
   (K.in/commit-offsets consumer))
+```
+
+### Kafka Streams low-level API
+
+Useless but simple example of grouping records in two categories based on their
+key, "odd" and "even", and continuously summing values in each category.
+
+
+```clj
+(def topology
+     (-> (KS.topology/topology)
+         (KS.topology/add-source "my-source"
+                                 ["my-topic"]
+                                 {::K/deserializer.key   :long
+                                  ::K/deserializer.value :long
+                                  ::KS/offset-reset      :earliest})
+         (KS.topology/add-processor "my-processor"
+                                    ["my-source"]
+                                    {::KS/processor.init      (fn [ctx]
+                                                                (KS.ctx/kv-store ctx
+                                                                                 "my-store"))
+                                     ::KS/processor.on-record (fn [ctx my-store record]
+                                                                (println "Processing record : " record)
+                                                                (let [key' (if (odd? (::K/key record))
+                                                                             "odd"
+                                                                             "even")
+                                                                      sum  (+ (or (KS.store/kv-get my-store
+                                                                                                   key')
+                                                                                  0)
+                                                                              (::K/value record))]
+                                                                  (KS.store/kv-put my-store
+                                                                                   key'
+                                                                                   sum)
+                                                                  (KS.ctx/forward ctx
+                                                                                  {::K/key   key'
+                                                                                   ::K/value sum})))})
+         (KS.topology/add-store ["my-processor"]
+                                {::K/deserializer.key   :string
+                                 ::K/deserializer.value :long
+                                 ::K/serializer.key     :string
+                                 ::K/serializer.value   :long
+                                 ::KS.store/name        "my-store"
+                                 ::KS.store/type        :kv.in-memory
+                                 ::KS.store/cache?      false})
+         (KS.topology/add-sink "my-sink"
+                               ["my-processor"]
+                               "my-topic-2"
+                               {::K/serializer.key   :string
+                                ::K/serializer.value :long})))
+
+
+(def app
+     (KS/app "my-app-1"
+             topology
+             {::K/nodes         [["localhost" 9092]]
+              ::KS/on-exception (fn [exception _thread]
+                                  (println "Exception : " exception))}))
+
+```
+
+
+### Kafka Streams high-level API
+
+Same example as previously but in a more functional style. In addition, values
+are aggregated in 2 seconds windows (it is best to run the producer example a
+few times first).
+
+A window store is then retrieved and then each window for each category is
+printed.
+
+```clj
+(def topology
+     (let [builder (KS.builder/builder)]
+       (-> builder
+           (KS.builder/stream ["my-topic"]
+                              {::K/deserializer.key   :long
+                               ::K/deserializer.value :long
+                               ::KS/offset-reset      :earliest})
+           (KS.stream/group-by (fn [k v]
+                                 (println (format "Grouping [%d %d]"
+                                                  k
+                                                  v))
+                                 (if (odd? k)
+                                   "odd"
+                                   "even"))
+                               {::K/deserializer.key   :string
+                                ::K/deserializer.value :long
+                                ::K/serializer.key     :string
+                                ::K/serializer.value   :long})
+           (KS.stream/window [2 :seconds])
+           (KS.stream/reduce-windows (fn reduce-window [sum k v]
+                                       (println (format "Adding value %d to sum %s for key '%s'"
+                                                        v
+                                                        sum
+                                                        k))
+                                       (+ sum
+                                          v))
+                                     (fn seed []
+                                       0)
+                                     {::K/deserializer.key   :string
+                                      ::K/deserializer.value :long
+                                      ::K/serializer.key     :string
+                                      ::K/serializer.value   :long
+                                      ::KS.store/name        "my-store"
+                                      ::KS.store/type        :kv.in-memory
+                                      ::KS.store/cache?      false}))
+       (KS.topology/topology builder)))
+
+
+(def app
+     (KS/app "my-app-2"
+             topology
+             {::K/nodes         [["localhost" 9092]]
+              ::KS/on-exception (fn [exception _thread]
+                                  (println "Exception : " exception))}))
+
+
+(def my-store
+     (KS/window-store app
+                      "my-store"))
+
+
+(with-open [cursor (KS.store/ws-multi-range my-store)]
+  (doseq [db-record (iterator-seq cursor)]
+    (println (format "Aggregated key = '%s', time windows = [%d;%d), value = %d"
+                     (::K/key db-record)
+                     (::K/timestamp.from db-record)
+                     (::K/timestamp.to db-record)
+                     (::K/value db-record)))))
 ```
 
 ## License
