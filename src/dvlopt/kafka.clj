@@ -65,6 +65,7 @@
      :byte-buffer
      :double
      :integer
+     :keyword
      :long
      :string
   
@@ -144,6 +145,16 @@
               :byte-buffer (ByteBufferDeserializer.)
               :double      (DoubleDeserializer.)
               :integer     (IntegerDeserializer.)
+              :keyword     (reify Deserializer
+
+                             (close [_]
+                               nil)
+
+                             (configure [_ _ _]
+                               nil)
+
+                             (deserialize [_ _topic ba]
+                               (keyword ((deserializers :string) ba))))
               :long        (LongDeserializer.)
               :string      (StringDeserializer.)}))
 
@@ -188,6 +199,20 @@
               :byte-buffer (ByteBufferSerializer.)
               :double      (DoubleSerializer.)
               :integer     (IntegerSerializer.)
+              :keyword     (reify Serializer
+
+                             (close [_]
+                               nil)
+
+                             (configure [_ _ _]
+                               nil)
+
+                             (serialize [_ _topic kw]
+                               (when kw
+                                 ((serializers :string) (let [name-str (name kw)]
+                                                          (if-let [namespace-str (namespace kw)]
+                                                            (str namespace-str "/" name-str)
+                                                            name-str))))))
               :long        (LongSerializer.)
               :string      (StringSerializer.)}))
 
