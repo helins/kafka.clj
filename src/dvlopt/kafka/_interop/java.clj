@@ -1781,13 +1781,13 @@
       ValueTransformerWithKeySupplier
 
         (get [_]
-          (transformer (x))))
+          (value-transformer-with-key (x))))
     (reify
 
       ValueTransformerWithKeySupplier
 
         (get [_]
-          (transformer x)))))
+          (value-transformer-with-key x)))))
 
 
 
