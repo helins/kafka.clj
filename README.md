@@ -12,11 +12,13 @@ It provides namespaces for handling consumers, producers, and doing some
 administration. Also, we have the pleasure to announce that Kafka Streams is
 fully supported.
 
+Ready for Kafka 2.0.0.
+
 ## Usage
 
 First, read the fairly detailed
 [API](https://dvlopt.github.io/doc/clojure/dvlopt/kafka/index.html). Specially
-if you have not used the java libraries and its concepts.
+if you are not used to the java libraries and their various concepts.
 
 Then, have a look at the following examples. Just so we are prepared, let us 
 require all namespaces involved.
@@ -79,7 +81,7 @@ Sending 25 records to "my-topic" using the `dvlopt.kafka.out` namespace.
 
 ### Consuming records
 
-Reding a batch of records from "my-topic" and manually commit the offset of
+Reading a batch of records from "my-topic" and manually commit the offset of
 where we are using the `dvlopt.kafka.in` namespace.
 
 ```clj
@@ -173,15 +175,14 @@ Same example as previously but in a more functional style. In addition, values
 are aggregated in 2 seconds windows (it is best to run the producer example a
 few times first).
 
-First, we need a builder. Then we add a stream fetching records from "my-topic".
-Records are then grouped into our categories and then each category is windowed
-in 2 seconds windows. Each window is then reduced for computing a sum. Then we
-are ready and we can build a topology out of our builder. It is always a good
-idea to have a look at the description of the built topology to have a better
-idea of what is created by the high-level API.
+First, we need a builder. Then, we add a stream fetching records from
+"my-topic".  Records are then grouped into our categories and then each category
+is windowed in 2 seconds windows. Each window is then reduced for computing a
+sum. Then, we are ready and we can build a topology out of our builder. It is
+always a good idea to have a look at the description of the built topology to
+have a better idea of what is created by the high-level API.
 
-A window store is then retrieved and then each window for each category is
-printed. 
+A window store is then retrieved and each window for each category is printed. 
 
 ```clj
 (def topology
