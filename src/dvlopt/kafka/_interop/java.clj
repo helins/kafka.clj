@@ -215,6 +215,23 @@
 
 
 
+(defn properties
+
+  ^Properties
+
+  [hmap]
+
+  (let [properties (Properties.)]
+    (doseq [[k
+             v] hmap]
+      (.setProperty properties
+                    k
+                    v))
+    properties))
+
+
+
+
 (defn thread$uncaught-exception-handler
 
   ;; Used by `dvlopt.kstreams/app`.
@@ -1409,6 +1426,8 @@
 
   ;; Helper for `materialized--*`.
 
+  ;; Changelog configuration must implement .clear, so a persistent map will not do.
+
   ^Materialized
 
   [^Materialized materialized options]
@@ -1425,8 +1444,7 @@
                    options
                    K/defaults)
     (.withLoggingEnabled materialized
-                         (or (:dvlopt.kstreams.store/configuration.changelog options)
-                             {}))
+                         (properties (:dvlopt.kstreams.store/configuration.changelog options)))
     (.withLoggingDisabled materialized))
   materialized)
 

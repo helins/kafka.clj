@@ -208,7 +208,7 @@
 
 (defn add-global-table
 
-  "Adds a global table which, unlike a regular one, will source its date from all the partitions of a topic at the
+  "Adds a global table which, unlike a regular one, will source its data from all the partitions of a topic at the
    same time.
   
    Cf. `table`"
