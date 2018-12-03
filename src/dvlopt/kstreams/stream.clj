@@ -281,7 +281,7 @@
 
   (^KStream
 
-   [^KStream stream options processor]
+   [^KStream stream processor options]
 
    (.transformValues stream
                      (K.-interop.java/value-transformer-with-key-supplier processor)
