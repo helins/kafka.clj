@@ -4,15 +4,21 @@
 Project](https://img.shields.io/clojars/v/dvlopt/kafka.svg)](https://clojars.org/dvlopt/kafka)
 
 This [Apache Kafka](https://kafka.apache.org/) client library is a Clojure
-wrapper for the [official java libraries](https://kafka.apache.org/). It strives
-for a balance between being idiomatic but not too clever. Users used to the java
-libraries will be right at home, although it is not a prerequisite.
+wrapper for the [official Java libraries](https://kafka.apache.org/). It strives
+for a balance between being idiomatic but not too clever. Users accustomed to
+the java libraries will be right at home, although it is not a prerequisite.
 
 It provides namespaces for handling consumers, producers, and doing some
 administration. Also, we have the pleasure to announce that Kafka Streams is
 fully supported.
 
-Ready for Kafka 2.0.0.
+Ready for Kafka 2.0.0. Previously known as "Milena", the API of this iteration
+is considered stable unless something significantly changes in the Java
+libraries. In general, only the namespace relative to administration is at risk.
+
+We try to provide good documention because many important concepts are poorly
+explained or confusing in the Java libraries. Feel free to provide feedback,
+contribute, and let us know if something is not clear.
 
 ## Usage
 
