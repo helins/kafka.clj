@@ -12,7 +12,7 @@ It provides namespaces for handling consumers, producers, and doing some
 administration. Also, we have the pleasure to announce that Kafka Streams is
 fully supported.
 
-Ready for Kafka 2.0.0. Previously known as "Milena", the API of this iteration
+Ready for Kafka 2.1.0. Previously known as "Milena", the API of this iteration
 is considered stable unless something significantly changes in the Java
 libraries. In general, only the namespace relative to administration is at risk.
 
@@ -28,6 +28,9 @@ if you are not used to the java libraries and their various concepts.
 
 Then, have a look at the following examples. Just so we are prepared, let us 
 require all namespaces involved.
+
+You can clone this repo and start a REPL, everything needed is imported in the
+dev namespace.
 
 ```clj
 ;; For Kafka :
@@ -261,7 +264,7 @@ A window store is then retrieved and each window for each category is printed.
 
 ## License
 
-Copyright © 2017-2018 Adam Helinski
+Copyright © 2017 Adam Helinski
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
