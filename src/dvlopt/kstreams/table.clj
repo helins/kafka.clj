@@ -260,15 +260,18 @@
      :dvlopt.kafka/serializer.value
       Cf. `dvlopt.kafka` for description of serializers and deserializers
 
+     :dvlopt.kstreams/repartition-name
+      Cf. `dvlopt.kstreams.builder` section \"State and repartitioning\"
+
 
    Ex. ;; Re-groups a table on countries while remembering from which user are the values.
   
-       (regroup-by table
-                   (fn [k v]
-                     [(:country v)
-                      (assoc v
-                             :user-id
-                             k)]))"
+       (map-and-group-by table
+                         (fn [k v]
+                           [(:country v)
+                            (assoc v
+                                   :user-id
+                                   k)]))"
 
   (^KGroupedTable
 
@@ -285,8 +288,7 @@
 
    (.groupBy table
              (K.-interop.java/key-value-mapper f)
-             (K.-interop.java/serialized options))))
-
+             (K.-interop.java/grouped options))))
 
 
 

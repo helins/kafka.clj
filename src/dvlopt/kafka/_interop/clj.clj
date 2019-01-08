@@ -957,6 +957,8 @@
     {::K/topic                       (.topics td$s)
      :dvlopt.kstreams/processor.name (.name td$p)
      :dvlopt.kstreams/source.name    (.name td$s)
+     :dvlopt.kstreams/source.topics  (into #{}
+                                           (.topicSet td$s)) 
      :dvlopt.kstreams.store/name     (first (.stores td$p))
      :dvlopt.kstreams/subgraph-type :global-store}))
 

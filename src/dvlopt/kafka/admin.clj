@@ -88,6 +88,17 @@
 
 
 
+(defn metrics
+
+  "Requests metrics about this admin client, exactly like `dvlopt.kafka.out/metrics`."
+
+  [^AdminClient admin]
+
+  (K.-interop.clj/metrics (.metrics admin)))
+
+
+
+
 ;;;;;;;;;; Misc
 
 

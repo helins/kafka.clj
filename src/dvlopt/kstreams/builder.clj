@@ -56,9 +56,10 @@
   
    Cf. `dvlopt.kstreams.store` for more about stores.
 
-   Any operation acting on the keys of the records will result in a repartioning of data at some point, either right away or later. This means the library
-   will persist the new records in an internal topic named '$APPLICATION_ID-$GENERATED_NAME-repartition'. This is needed because the way keys are partioned
-   is very important for a lot of stateful operations such as joins. Operations which might lead to repartioning document this behavior.
+   Any operation acting on the keys of the records typically result in a repartioning of data at some point, either right away or later. This means the library
+   will persist the new records in an internal topic named '$APPLICATION_ID-$NAME-repartition'. This is needed because the way keys are partioned is very important
+   for a lot of stateful operations such as joins. Operations which might lead to repartioning document this behavior. $NAME is either generated or given by the
+   :dvlotp.kstreams/repartition-name option when documented. 
   
 
    Joins and Co-partitioning

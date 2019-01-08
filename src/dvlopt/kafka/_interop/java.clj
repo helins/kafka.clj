@@ -74,6 +74,7 @@
            (org.apache.kafka.streams.kstream Aggregator
                                              Consumed
                                              ForeachAction
+                                             Grouped
                                              Initializer
                                              Joined
                                              JoinWindows
@@ -1314,6 +1315,21 @@
       (apply [_ k v]
         (f k
            v))))
+
+
+
+
+(defn grouped
+
+  ;;
+
+  ^Grouped
+
+  [options]
+
+  (Grouped/with (:dvlopt.kstreams/repartition-name options)
+                (serde-key options)
+                (serde-value options)))
 
 
 

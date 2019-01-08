@@ -63,6 +63,20 @@
                                   predicates)))))
 
 
+(defn merge-stream
+
+  "Returns a new stream merging the two given ones.
+  
+   There is no guarantee about the ordering of the records between streams. However, order is preserved for each stream."
+
+  ^KStream
+
+  [^KStream stream ^KStream other-stream]
+
+  (.merge stream
+          other-stream))
+
+
 
 
 (defn filter-kv
@@ -568,6 +582,9 @@
      :dvlopt.kafka/serializer.value
       Cf. `dvlopt.kafka` for description of deserializers
 
+     :dvlopt.kstreams/repartition-name
+      Cf. `dvlopt.kstreams.builder` section \"State and repartitioning\"
+
 
    Ex. (group-by stream
                  (fn by-country [k v]
@@ -588,7 +605,7 @@
 
    (.groupBy kstream
              (K.-interop.java/key-value-mapper--raw f)
-             (K.-interop.java/serialized options))))
+             (K.-interop.java/grouped options))))
 
 
 

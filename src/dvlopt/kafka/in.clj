@@ -114,6 +114,17 @@
 
 
 
+(defn metrics
+
+  "Requests metrics about this consumer, exactly like `dvlopt.kafka.out/metrics`."
+
+  [^KafkaConsumer consumer]
+
+  (K.-interop.clj/metrics (.metrics consumer)))
+
+
+
+
 ;;;;;;;;;; Handling consumers
 
 
@@ -929,14 +940,3 @@
                                         (.committed consumer
                                                     tp))]
          (.offset om)))))
-
-
-
-
-(defn metrics
-
-  "Requests metrics about this consumer, exactly like `dvlopt.kafka.out/metrics`."
-
-  [^KafkaConsumer consumer]
-
-  (K.-interop.clj/metrics (.metrics consumer)))
