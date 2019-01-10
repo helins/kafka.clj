@@ -38,7 +38,8 @@
                                               ConsumerRecords
                                               OffsetAndMetadata
                                               OffsetAndTimestamp)
-           org.apache.kafka.clients.producer.RecordMetadata
+           (org.apache.kafka.clients.producer ProducerRecord
+                                              RecordMetadata)
            (org.apache.kafka.common ConsumerGroupState
                                     Metric
                                     MetricName
@@ -489,6 +490,21 @@
 
 
 ;;;;;;;;;; org.apache.kafka.clients.producer.*
+
+
+(defn producer-record
+
+  ;; Cf. `dvlopt.kafka.out.mock/send-history`
+
+  [^ProducerRecord pr]
+
+  (void/assoc-some {::K/topic (.topic pr)}
+                   ::K/headers   (headers (.headers pr))
+                   ::K/key       (.key pr)
+                   ::K/timestamp (.timestamp pr)
+                   ::K/value     (.value pr)))
+
+
 
 
 (defn record-metadata
