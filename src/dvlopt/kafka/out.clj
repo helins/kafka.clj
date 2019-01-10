@@ -12,7 +12,8 @@
             [dvlopt.kafka.-interop.java :as K.-interop.java]
             [dvlopt.void                :as void])
   (:import java.util.concurrent.TimeUnit
-           org.apache.kafka.clients.producer.KafkaProducer))
+           (org.apache.kafka.clients.producer KafkaProducer
+                                              MockProducer)))
 
 
 

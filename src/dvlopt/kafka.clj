@@ -238,6 +238,7 @@
    :dvlopt.kafka.admin/permission           :any
    :dvlopt.kafka.admin/replication-factor   1
    :dvlopt.kafka.admin/resource-type        :any
+   :dvlopt.kafka.out.mock/auto-complete?    true
    :dvlopt.kstreams/offset-reset            :earliest
    :dvlopt.kstreams.store/cache?            true
    :dvlopt.kstreams.store/changelog?        true

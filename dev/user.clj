@@ -12,6 +12,7 @@
             [dvlopt.kafka.-interop.java           :as K.-interop.java]
             [dvlopt.kafka.admin                   :as K.admin]
             [dvlopt.kafka.in                      :as K.in]
+            [dvlopt.kafka.out.mock                :as K.out.mock]
             [dvlopt.kafka.out                     :as K.out]
             [dvlopt.kstreams                      :as KS]
             [dvlopt.kstreams.builder              :as KS.builder]
