@@ -13,7 +13,7 @@
             [dvlopt.void                :as void])
   (:import java.util.concurrent.TimeUnit
            (org.apache.kafka.clients.producer KafkaProducer
-                                              MockProducer)))
+                                              Producer)))
 
 
 
@@ -83,13 +83,13 @@
       Blocks until all requests finish or the given timeout is reached, failing unsent and unacked records immediately.
       Cf. `dvlopt.kafka` for description of time intervals"
 
-  ([^KafkaProducer producer]
+  ([^Producer producer]
 
    (.close producer)
    nil)
 
 
-  ([^KafkaProducer producer options]
+  ([^Producer producer options]
 
    (if-let [[timeout-duration
              unit]            (:dvlopt.kafka/timeout options)]
@@ -98,6 +98,28 @@
              (K.-interop.java/time-unit unit))
      (.close producer))
    nil))
+
+
+
+
+(defn metrics
+
+  "Requests metrics about this producer.
+
+   Returns a map of metric group name -> (map of metric name -> map) containing :
+
+     :dvlopt.kafka/description (when available)
+      String description for human consumption.
+
+     :dvlopt.kafka/properties
+      Map of keywords to strings, additional arbitrary key-values.
+
+     :dvlopt.kafka/floating-value
+      Numerical value."
+
+  [^Producer producer]
+
+  (K.-interop.clj/metrics (.metrics producer)))
 
 
 
@@ -126,7 +148,7 @@
      :dvlopt.kafka/topic
       Topic name."
 
-  [^KafkaProducer producer topic]
+  [^Producer producer topic]
 
   (map K.-interop.clj/partition-info
        (.partitionsFor producer
@@ -146,9 +168,9 @@
 
    Of course, brokers need to support transactions."
 
-  ^KafkaProducer
+  ^Producer
 
-  [^KafkaProducer producer]
+  [^Producer producer]
 
   (.initTransactions producer)
   producer)
@@ -162,9 +184,9 @@
 
    <!> `trx-init` must be called before any transaction. <!>"
 
-  ^KafkaProducer
+  ^Producer
 
-  [^KafkaProducer producer]
+  [^Producer producer]
 
   (.beginTransaction producer)
   producer)
@@ -181,9 +203,9 @@
    If any record commit hit an irrecoverable error, this function will rethrow that exception and the transaction
    will not be committed."
 
-  ^KafkaProducer
+  ^Producer
 
-  [^KafkaProducer producer]
+  [^Producer producer]
 
   (.commitTransaction producer)
   producer)
@@ -208,9 +230,9 @@
                     \"my-consumer-group\"
                     {[\"some-topic\" 0] 65})"
 
-  ^KafkaProducer
+  ^Producer
 
-  [^KafkaProducer producer consumer-group topic-partition->offset]
+  [^Producer producer consumer-group topic-partition->offset]
 
   (.sendOffsetsToTransaction producer
                              (K.-interop.java/topic-partition->offset-and-metadata topic-partition->offset)
@@ -224,9 +246,9 @@
 
   "Aborts the ongoing transaction."
 
-  ^KafkaProducer
+  ^Producer
 
-  [^KafkaProducer producer]
+  [^Producer producer]
 
   (.abortTransaction producer)
   producer)
@@ -280,7 +302,7 @@
          nil))
 
 
-  ([^KafkaProducer producer record callback]
+  ([^Producer producer record callback]
 
    (K.-interop/future-proxy (.send producer
                                    (K.-interop.java/producer-record record)
@@ -299,29 +321,9 @@
    until completion. Other threads can continue sending messages but no garantee is made they will be part of the current
    flush."
 
-  [^KafkaProducer producer]
+  ^Producer
+
+  [^Producer producer]
 
   (.flush producer)
   producer)
-
-
-
-
-(defn metrics
-
-  "Requests metrics about this producer.
-
-   Returns a map of metric group name -> (map of metric name -> map) containing :
-
-     :dvlopt.kafka/description (when available)
-      String description for human consumption.
-
-     :dvlopt.kafka/properties
-      Map of keywords to strings, additional arbitrary key-values.
-
-     :dvlopt.kafka/floating-value
-      Numerical value."
-
-  [^KafkaProducer producer]
-
-  (K.-interop.clj/metrics (.metrics producer)))
