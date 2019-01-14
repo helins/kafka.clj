@@ -12,7 +12,8 @@
   (:import java.util.Collection
            java.util.concurrent.TimeUnit
            java.util.regex.Pattern
-           (org.apache.kafka.clients.consumer ConsumerRecords
+           (org.apache.kafka.clients.consumer Consumer
+                                              ConsumerRecords
                                               KafkaConsumer
                                               OffsetAndMetadata)
            org.apache.kafka.common.TopicPartition
@@ -97,13 +98,13 @@
       timeout, the consumer will be force closed.
       Cf. `dvlopt.kafka` for description of time intervals"
 
-  ([^KafkaConsumer consumer]
+  ([^Consumer consumer]
 
    (.close consumer)
    nil)
 
 
-  ([^KafkaConsumer consumer options]
+  ([^Consumer consumer options]
 
    (if-let [timeout (::K/timeout options)]
      (.close consumer
@@ -118,7 +119,7 @@
 
   "Requests metrics about this consumer, exactly like `dvlopt.kafka.out/metrics`."
 
-  [^KafkaConsumer consumer]
+  [^Consumer consumer]
 
   (K.-interop.clj/metrics (.metrics consumer)))
 
@@ -145,7 +146,7 @@
            nil))
 
 
-  ([^KafkaConsumer consumer options]
+  ([^Consumer consumer options]
 
    (reduce (fn reduce-topics [topic->partition-infos [topic pis]]
              (assoc topic->partition-infos
@@ -179,7 +180,7 @@
                nil))
 
 
-  ([^KafkaConsumer consumer topic options]
+  ([^Consumer consumer topic options]
 
    (map K.-interop.clj/partition-info
         (if-let [timeout (::K/timeout options)]
@@ -230,18 +231,18 @@
                      [[\"my-topic\"      0]
                       [\"another-topic\" 3]])"
 
-  (^KafkaConsumer
+  (^Consumer
 
-   [^KafkaConsumer consumer source]
+   [^Consumer consumer source]
 
    (register-for consumer
                  source
                  nil))
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer source options]
+   [^Consumer consumer source options]
    
    (.unsubscribe consumer)
    (let [on-rebalance (some-> (::on-rebalance options)
@@ -272,9 +273,9 @@
 
   "Unregisters a consumer from all the sources it is consuming."
 
-  ^KafkaConsumer
+  ^Consumer
    
-  [^KafkaConsumer consumer]
+  [^Consumer consumer]
 
   (.unsubscribe consumer)
   consumer)
@@ -293,7 +294,7 @@
       Set of all topics the consumer is subscribed to, if any."
 
 
-  [^KafkaConsumer consumer]
+  [^Consumer consumer]
 
   {::assignments   (into #{}
                          (map K.-interop.clj/topic-partition
@@ -330,9 +331,9 @@
               [[\"my-topic\"      0]
                [\"another-topic\" 3]])"
 
-  ^KafkaConsumer
+  ^Consumer
 
-  [^KafkaConsumer consumer topic-partitions]
+  [^Consumer consumer topic-partitions]
 
   (.pause consumer
           (map K.-interop.java/topic-partition
@@ -346,7 +347,7 @@
 
   "Returns a set of the currently paused [topic partition]'s."
 
-  [^KafkaConsumer consumer]
+  [^Consumer consumer]
 
   (into #{}
         (map K.-interop.clj/topic-partition
@@ -369,9 +370,7 @@
        (resume [[\"my-topic\"      0]
                 [\"another-topic\" 3]])"
 
-  ^KafkaConsumer
-
-  (^KafkaConsumer
+  (^Consumer
     
    [consumer]
 
@@ -379,9 +378,9 @@
            (paused consumer)))
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer topic-partitions]
+   [^Consumer consumer topic-partitions]
 
    (.resume consumer
             (map K.-interop.java/topic-partition
@@ -418,7 +417,7 @@
                       nil))
 
 
-  ([^KafkaConsumer consumer topic-partitions options]
+  ([^Consumer consumer topic-partitions options]
 
    (let [topic-partitions' (map K.-interop.java/topic-partition
                                 topic-partitions)]
@@ -438,14 +437,14 @@
 
    Works like `beginning-offsets`."
 
-  ([^KafkaConsumer consumer topic-partitions]
+  ([^Consumer consumer topic-partitions]
 
    (end-offsets consumer
                 topic-partitions
                 nil))
 
 
-  ([^KafkaConsumer consumer topic-partitions options]
+  ([^Consumer consumer topic-partitions options]
 
    (let [topic-partitions' (map K.-interop.java/topic-partition
                                 topic-partitions)]
@@ -491,7 +490,7 @@
                            nil))
 
 
-  ([^KafkaConsumer consumer topic-partition->timestamp options]
+  ([^Consumer consumer topic-partition->timestamp options]
   
    (reduce (fn reduce-offsets [offsets [topic-partition oat]]
              (assoc offsets
@@ -538,7 +537,7 @@
                 nil))
 
 
-  ([^KafkaConsumer consumer [topic partition] options]
+  ([^Consumer consumer [topic partition] options]
 
    (let [tp      (K.-interop.java/topic-partition topic
                                                   partition)
@@ -564,9 +563,9 @@
               {[\"my-topic\"      0] 42
                [\"another-topic\" 3] 84})"
 
-  ^KafkaConsumer
+  ^Consumer
 
-  [^KafkaConsumer consumer topic-partition->offset]
+  [^Consumer consumer topic-partition->offset]
 
   (doseq [[topic-partition
            offset]         topic-partition->offset]
@@ -595,7 +594,7 @@
                [[\"my-topic\"      0]
                 [\"another-topic\" 3]])"
 
-  (^KafkaConsumer
+  (^Consumer
     
    [consumer]
 
@@ -603,9 +602,9 @@
            []))
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer topic-partitions]
+   [^Consumer consumer topic-partitions]
 
    (.seekToBeginning consumer
                      (map K.-interop.java/topic-partition
@@ -637,7 +636,7 @@
                      [[\"my-topic\"      0]
                       [\"another-topic\" 3]])"
 
-  (^KafkaConsumer
+  (^Consumer
     
    [consumer]
 
@@ -645,9 +644,9 @@
                  []))
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer topic-partitions]
+   [^Consumer consumer topic-partitions]
 
    (.seekToEnd consumer
                (map K.-interop.java/topic-partition
@@ -663,7 +662,7 @@
 
   ^ConsumerRecords
    
-  [^KafkaConsumer consumer options]
+  [^Consumer consumer options]
 
   (let [^ConsumerRecords raw-records (try
                                        (if-let [timeout (::K/timeout options)]
@@ -823,17 +822,17 @@
                         ::topic-partition->offset {[\"my-topic\"      0] 24
                                                    [\"another-topic\" 3] 84})"
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer]
+   [^Consumer consumer]
 
    (.commitSync consumer)
    consumer)
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer options]
+   [^Consumer consumer options]
 
    (let [timeout                 (some-> (::K/timeout options)
                                          K.-interop.java/duration)
@@ -882,17 +881,17 @@
                                                             ...))
                               ::topic-partition->offset {[\"some_topic\" 0]} 42})"
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer]
+   [^Consumer consumer]
 
    (.commitAsync consumer)
    consumer)
 
 
-  (^KafkaConsumer
+  (^Consumer
     
-   [^KafkaConsumer consumer options]
+   [^Consumer consumer options]
 
    ;; `on-committed` may be nil without NPE later.
 
@@ -929,7 +928,7 @@
                      nil))
 
 
-  ([^KafkaConsumer consumer [topic partition] options]
+  ([^Consumer consumer [topic partition] options]
 
    (let [tp (K.-interop.java/topic-partition topic
                                              partition)]
