@@ -34,7 +34,8 @@
                                            RecordsToDelete)
            (org.apache.kafka.clients.consumer ConsumerRebalanceListener
                                               OffsetAndMetadata
-                                              OffsetCommitCallback)
+                                              OffsetCommitCallback
+                                              OffsetResetStrategy)
            (org.apache.kafka.clients.producer Callback
                                               ProducerRecord)
            org.apache.kafka.common.TopicPartition
@@ -688,6 +689,24 @@
                             (.offset om)))
                    {}
                    offsets)))))
+
+
+
+
+(defn offset-reset-strategy
+
+  ;; Cf. `dvlopt.kafka.in.mock/mock-consumer`
+
+  ^OffsetResetStrategy
+
+  [kw]
+
+  (condp identical?
+         kw
+    :earliest OffsetResetStrategy/EARLIEST
+    :latest   OffsetResetStrategy/LATEST
+    :none     OffsetResetStrategy/NONE))
+
 
 
 

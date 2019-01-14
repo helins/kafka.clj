@@ -226,24 +226,25 @@
 
   "Default values and options used throughout this library."
 
-  {::deserializer.key                       :byte-array
-   ::deserializer.value                     :byte-array
-   ::internal?                              false
-   ::nodes                                  [["localhost" 9092]]
-   ::serializer.key                         :byte-array
-   ::serializer.value                       :byte-array
-   :dvlopt.kafka.admin/name-pattern         [:any]
-   :dvlopt.kafka.admin/number-of-partitions 1
-   :dvlopt.kafka.admin/operation            :all
-   :dvlopt.kafka.admin/permission           :any
-   :dvlopt.kafka.admin/replication-factor   1
-   :dvlopt.kafka.admin/resource-type        :any
-   :dvlopt.kafka.out.mock/auto-complete?    true
-   :dvlopt.kstreams/offset-reset            :earliest
-   :dvlopt.kstreams.store/cache?            true
-   :dvlopt.kstreams.store/changelog?        true
-   :dvlopt.kstreams.store/duplicate-keys?   false
-   :dvlopt.kstreams.store/lru-size          0
-   :dvlopt.kstreams.store/retention         [1 :days]
-   :dvlopt.kstreams.store/segments          2
-   :dvlopt.kstreams.store/type              :kv.regular})
+  {::deserializer.key                          :byte-array
+   ::deserializer.value                        :byte-array
+   ::internal?                                 false
+   ::nodes                                     [["localhost" 9092]]
+   ::serializer.key                            :byte-array
+   ::serializer.value                          :byte-array
+   :dvlopt.kafka.admin/name-pattern            [:any]
+   :dvlopt.kafka.admin/number-of-partitions    1
+   :dvlopt.kafka.admin/operation               :all
+   :dvlopt.kafka.admin/permission              :any
+   :dvlopt.kafka.admin/replication-factor      1
+   :dvlopt.kafka.admin/resource-type           :any
+   :dvlopt.kafka.in.mock/offset-reset-strategy :latest
+   :dvlopt.kafka.out.mock/auto-complete?       true
+   :dvlopt.kstreams/offset-reset               :earliest
+   :dvlopt.kstreams.store/cache?               true
+   :dvlopt.kstreams.store/changelog?           true
+   :dvlopt.kstreams.store/duplicate-keys?      false
+   :dvlopt.kstreams.store/lru-size             0
+   :dvlopt.kstreams.store/retention            [1 :days]
+   :dvlopt.kstreams.store/segments             2
+   :dvlopt.kstreams.store/type                 :kv.regular})

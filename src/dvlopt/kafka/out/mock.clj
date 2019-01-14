@@ -19,7 +19,7 @@
 
 (defn mock-producer
 
-  "Builds a mock Kafka producer for testing purposes. It can use the `dvlopt.kafka.out` API.
+  "Builds a mock Kafka producer for testing purposes. It can use the `dvlopt.kafka.out` API like a regular producer.
   
    A map of options may be given :
 
