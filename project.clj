@@ -1,5 +1,5 @@
 (defproject dvlopt/kafka
-            "1.1.0-beta0"
+            "1.2.0-beta0"
 
   :description  "Clojure client for Kafka"
   :url          "https://github.com/dvlopt/kafka.clj"
@@ -19,7 +19,9 @@
                        :codox        {:namespaces   [dvlopt.kafka
                                                      dvlopt.kafka.admin
                                                      dvlopt.kafka.in
+                                                     dvlopt.kafka.in.mock
                                                      dvlopt.kafka.out
+                                                     dvlopt.kafka.out.mock
                                                      dvlopt.kstreams
                                                      dvlopt.kstreams.builder
                                                      dvlopt.kstreams.ctx
