@@ -63,7 +63,7 @@
    once.
   
   
-   Cf. `dvlopt.kafka.in/poll` for the structure of a record."
+   Cf. `dvlopt.kafka.in/poll` for the structure of a record (headers not supported)"
 
   ^MockConsumer
 

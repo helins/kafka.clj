@@ -268,12 +268,15 @@
    This function returns a future when synchronous behaviour is needed. Derefing the future will throw if a failure
    occured or it will provide the same metadata passed to the optional callback.
 
-   A record is a map containing at least the :dvlopt.kafka/topic and can also hold :
+   A record is a map possibly containing :
 
+     :dvlopt.kafka/headers
      :dvlopt.kafka/key
      :dvlopt.kafka/partition
      :dvlopt.kafka/timestamp
+     :dvlopt.kafka/topic     (mandatory)
      :dvlopt.kafka/value
+      Cf. `dvlopt.kafka` section \"Records\"
 
    If the partition is missing, it is automatically selected based on the hash of the key.
 

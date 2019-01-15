@@ -698,27 +698,15 @@
 
    A record is a map possibly containing :
     
-     :dvlopt.kafka/key (mandatory)
-      Deserialized key.
-
-     :dvlopt.kafka/offset (mandatory)
-      Record offset.
-
-     :dvlopt.kafka/partition (mandatory)
-      Partition number.
-
-     :dvlopt.kafka/timestamp (mandatory)
-      Unix timestamp.
-
+     :dvlopt.kafka/headers
+     :dvlopt.kafka/key
+     :dvlopt.kafka/offset         (mandatory)
+     :dvlopt.kafka/partition      (mandatory)
+     :dvlopt.kafka/timestamp      (mandatory)
      :dvlopt.kafka/timestamp.type
-      The timestamp can either refering to when the record was :create or when it was :log-append.
-      
-
-     :dvlopt.kafka/topic
-      Topic name.
-
+     :dvlopt.kafka/topic          (mandatory)
      :dvlopt.kafka/value
-      Deserialized value."
+      Cf. `dvlopt.kafka` section \"Records\""
 
   ([consumer]
 

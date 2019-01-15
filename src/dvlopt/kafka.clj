@@ -16,15 +16,26 @@
    A record is a map containing at least a ::topic. It might also hold :
 
      ::headers
+       List of [Key Value] where the `Key` is an arbitrary string and `Value` is an arbitrary byte array which can be missing.
+       Keys can appear more than once.
+
      ::offset
+       Offset of the record in the topic-partition.
+
      ::key
+       Key of the record, serialized or deserialized. Can be nil.
+
      ::timestamp
+       Timestamp of the record.
+
+     ::timestamp.type
+       A timestamp can refer to when the record was created (:create) or sent (:log-append).
+
      ::value
+       Value of the record, serializer of deserializer. Can be nil
 
    Obviously, the offset cannot be decided by the user when sending the record. Headers allow records to have metadata
-   clearly distinct from the value. They exerce the same role as in other protocols such as HTTP. They consist of a list
-   of key-values where the order might be important. Keys are arbitrary strings and can appear more than once. Values are
-   arbitrary byte arrays or may be missing.
+   clearly distinct from the value. They exerce the same role as in other protocols such as HTTP. 
 
 
    Connecting to nodes
