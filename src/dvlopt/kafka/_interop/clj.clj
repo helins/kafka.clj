@@ -57,6 +57,7 @@
                                            ConfigResource$Type)
            (org.apache.kafka.common.header Header
                                            Headers)
+           org.apache.kafka.common.record.TimestampType
            (org.apache.kafka.common.resource PatternType
                                              ResourcePattern
                                              ResourcePatternFilter
@@ -97,6 +98,7 @@
          resource-pattern
          resource-pattern-filter
          resource-type
+         timestamp-type
          topic-description
          topic-partition
          topic-partition-info
@@ -468,11 +470,16 @@
 
   (void/assoc-some {::K/offset    (.offset    cr)
                     ::K/partition (.partition cr)
-                    ::K/timestamp (.timestamp cr)
                     ::K/topic     (.topic     cr)}
-                   ::K/headers (headers (.headers cr))
-                   ::K/key     (.key cr)
-                   ::K/value   (.value cr)))
+                   ::K/headers        (headers (.headers cr))
+                   ::K/key            (.key cr)
+                   ::K/timestamp      (let [timestamp (.timestamp cr)]
+                                        (if (= timestamp
+                                               ConsumerRecord/NO_TIMESTAMP)
+                                          nil
+                                          timestamp))
+                   ::K/timestamp.type (timestamp-type (.timestampType cr))
+                   ::K/value         (.value cr)))
 
 
 
@@ -822,6 +829,24 @@
 
   (not-empty (map header
                   (.toArray hs))))
+
+
+
+
+;;;;;;;;;; org.apache.kafka.common.record.TimestampType
+
+
+(defn timestamp-type
+
+  ;; Cf. `consumer-record`
+
+  [^TimestampType tt]
+
+  (condp identical?
+         tt
+    TimestampType/CREATE_TIME       :create
+    TimestampType/LOG_APPEND_TIME   :log-append
+    TimestampType/NO_TIMESTAMP_TYPE nil))
 
 
 

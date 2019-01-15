@@ -1,6 +1,8 @@
 (ns dvlopt.kafka.out
 
-  "Kafka producers."
+  "Kafka producers.
+  
+   This API can also be used by mock producers (cf. dvlopt.kafka.out.mock namespace)."
 
   {:author "Adam Helinski"}
 

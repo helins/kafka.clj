@@ -33,6 +33,7 @@
                                            NewTopic
                                            RecordsToDelete)
            (org.apache.kafka.clients.consumer ConsumerRebalanceListener
+                                              ConsumerRecord
                                               OffsetAndMetadata
                                               OffsetCommitCallback
                                               OffsetResetStrategy)
@@ -47,7 +48,9 @@
                                         AclPermissionType)
            (org.apache.kafka.common.config ConfigResource
                                            ConfigResource$Type)
-           org.apache.kafka.common.header.Header
+           (org.apache.kafka.common.header Header
+                                           Headers)
+           org.apache.kafka.common.record.TimestampType
            (org.apache.kafka.common.resource PatternType
                                              ResourcePattern
                                              ResourcePatternFilter
@@ -130,6 +133,7 @@
          resource-type
          stream-partitioner
          timestamp-extractor
+         timestamp-type
          topic-partition
          topology$auto-offset-reset
          session-bytes-store-supplier
@@ -669,6 +673,34 @@
 
 
 
+(defn consumer-record
+
+  ;; Cf. `dvlopt.kafka.in.mock/add-record`
+
+  ^ConsumerRecord
+
+  [record]
+
+  (ConsumerRecord. (::K/topic record)
+                   (if-let [partition (::K/partition record)]
+                     partition
+                     (throw (IllegalArgumentException. ":dvlopt.kafka/partition must be provided")))
+                   (if-let [offset (::K/offset record)]
+                     offset
+                     (throw (IllegalArgumentException. ":dvlopt.kafka/offset must be provided")))
+                   (if-let [timestamp (::K/timestamp record)]
+                     timestamp
+                     ConsumerRecord/NO_TIMESTAMP)
+                   (timestamp-type (::K/timestamp.type record))
+                   ConsumerRecord/NULL_CHECKSUM
+                   0
+                   0
+                   (::K/key record)
+                   (::K/value record)))
+
+
+
+
 (defn offset-commit-callback
 
   ;; Cf. `dvlopt.kafka.in/commit-offsets-async`
@@ -979,6 +1011,25 @@
  
        (value [_]
          v))))
+
+
+
+;;;;;;;;;; org.apache.kafka.common.record.TimestampType
+
+
+(defn timestamp-type
+
+  ;; Cf. `consumer-record`
+
+  ^TimestampType
+
+  [kw]
+
+  (condp identical?
+         kw
+    :create     TimestampType/CREATE_TIME
+    :log-append TimestampType/LOG_APPEND_TIME
+    nil         TimestampType/NO_TIMESTAMP_TYPE))
 
 
 
@@ -2139,3 +2190,20 @@
                                 (void/obtain :dvlopt.kstreams.store/duplicate-keys?
                                              options
                                              K/defaults)))
+
+
+
+
+;;;;;;;;;; Misc
+
+
+(defn topic-partition->offset
+
+  [topic-partition->offset]
+
+  (reduce-kv (fn convert-tp [topic-partition->offset' topic-partition' offset]
+               (assoc topic-partition->offset'
+                      (topic-partition topic-partition')
+                      offset))
+             {}
+             topic-partition->offset))

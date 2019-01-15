@@ -1,6 +1,8 @@
 (ns dvlopt.kafka.in
 
-  "Kafka consumers."
+  "Kafka consumers.
+  
+   This API can also be used by mock consumers (cf. dvlopt.kafka.in.mock namespace)."
 
   {:author "Adam Helinski"}
 
@@ -584,6 +586,9 @@
    Actually happens lazily on the next call to `poll` or `next-offset`.
 
 
+   <!> Has no effect on mock consumers. <!>
+
+
    Ex. ;; rewind all currently registered [topic partition]'s
        
        (rewind consumer)
@@ -626,6 +631,9 @@
    the \"last stable\" ones.
   
 
+   <!> Has no effect on mock consumers. <!>
+
+
    Ex. ;; fast-forward all currently registered [topic partition]'s
 
        (fast-forward consumer)
@@ -664,17 +672,13 @@
    
   [^Consumer consumer options]
 
-  (let [^ConsumerRecords raw-records (try
-                                       (if-let [timeout (::K/timeout options)]
-                                         (.poll consumer
-                                                (K.-interop.java/duration timeout))
-                                         (.poll consumer
-                                                Long/MAX_VALUE))
-                                       (catch IllegalStateException _
-                                         ;; When the consumer is not subscribed nor assigned.
-                                         nil))]
+  (let [^ConsumerRecords raw-records (if-let [timeout (::K/timeout options)]
+                                       (.poll consumer
+                                              (K.-interop.java/duration timeout))
+                                       (.poll consumer
+                                              Long/MAX_VALUE))]
     (when (and raw-records
-               (not (.isEmpty raw-records)))
+               (not (zero? (.count raw-records))))
       raw-records)))
 
 
@@ -692,19 +696,23 @@
       Cf. `dvlopt.kafka` for description of time intervals
 
 
-   A record is a map containing :
+   A record is a map possibly containing :
     
-     :dvlopt.kafka/key
+     :dvlopt.kafka/key (mandatory)
       Deserialized key.
 
-     :dvlopt.kafka/offset
+     :dvlopt.kafka/offset (mandatory)
       Record offset.
 
-     :dvlopt.kafka/partition
+     :dvlopt.kafka/partition (mandatory)
       Partition number.
 
-     :dvlopt.kafka/timestamp
+     :dvlopt.kafka/timestamp (mandatory)
       Unix timestamp.
+
+     :dvlopt.kafka/timestamp.type
+      The timestamp can either refering to when the record was :create or when it was :log-append.
+      
 
      :dvlopt.kafka/topic
       Topic name.
