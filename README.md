@@ -262,6 +262,12 @@ A window store is then retrieved and each window for each category is printed.
                      (::K/value db-record)))))
 ```
 
+### Testing
+
+It is possible to create mock consumers (dvlopt.kafka.in.mock namespace) and producers
+(dvlopt.kafka.out.mock) for testing purposes. They can use the normal API
+without needing to contact a Kafka cluster.
+
 ## License
 
 Copyright © 2017 Adam Helinski
