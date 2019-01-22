@@ -190,21 +190,6 @@
 
 
 
-(defn window-store
-
-  "Retrieves a read-only window store used by the application."
-
-  ^ReadOnlyWindowStore
-
-  [^KafkaStreams app store-name]
-
-  (.store app
-          store-name
-          (QueryableStoreTypes/windowStore)))
-
-
-
-
 (defn session-store
 
   "Retrieves a read-only session store used by the application."
@@ -216,6 +201,21 @@
   (.store app
           store-name
           (QueryableStoreTypes/sessionStore)))
+
+
+
+
+(defn window-store
+
+  "Retrieves a read-only window store used by the application."
+
+  ^ReadOnlyWindowStore
+
+  [^KafkaStreams app store-name]
+
+  (.store app
+          store-name
+          (QueryableStoreTypes/windowStore)))
 
 
 

@@ -9,7 +9,10 @@
             [dvlopt.kafka.-interop.java :as K.-interop.java]
             [dvlopt.void                :as void])
   (:import (org.apache.kafka.streams Topology
-                                     TopologyTestDriver)))
+                                     TopologyTestDriver)
+           (org.apache.kafka.streams.state KeyValueStore
+                                           SessionStore
+                                           WindowStore)))
 
 
 
@@ -104,3 +107,60 @@
                                                                             options
                                                                             K/defaults)))
            K.-interop.clj/producer-record)))
+
+
+
+
+(defn advance
+
+  ""
+
+  ^TopologyTestDriver
+
+  [^TopologyTestDriver mock-app interval]
+
+  (.advanceWallClockTime mock-app
+                         (K.-interop.java/to-milliseconds interval))
+  mock-app)
+
+
+
+
+(defn kv-store
+
+  ""
+
+  ^KeyValueStore
+
+  [^TopologyTestDriver mock-app store-name]
+
+  (.getKeyValueStore mock-app
+                     store-name))
+
+
+
+
+(defn session-store
+
+  ""
+
+  ^SessionStore
+
+  [^TopologyTestDriver mock-app store-name]
+
+  (.getSessionStore mock-app
+                    store-name))
+
+
+
+
+(defn window-store
+
+  ""
+
+  ^WindowStore
+
+  [^TopologyTestDriver mock-app store-name]
+
+  (.getWindowStore mock-app
+                   store-name))
