@@ -7,7 +7,8 @@
                  :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[dvlopt/void                    "0.0.1"]
                  [org.apache.kafka/kafka-clients "2.1.0"]
-                 [org.apache.kafka/kafka-streams "2.1.0"]]
+                 [org.apache.kafka/kafka-streams "2.1.0"]
+                 [org.apache.kafka/kafka-streams-test-utils "2.1.0"]]
   :profiles     {:dev {:source-paths ["dev"]
                        :main         user
                        :dependencies [[com.taoensso/nippy     "2.13.0"]

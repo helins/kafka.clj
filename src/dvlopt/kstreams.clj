@@ -30,7 +30,7 @@
 
 
 
-;;;;;;;;;; Create and handle a Kafka Streams application
+;;;;;;;;;; Creating and handling a Kafka Streams application
 
 
 (defn app 
