@@ -690,7 +690,7 @@
                      (throw (IllegalArgumentException. ":dvlopt.kafka/offset must be provided")))
                    (if-let [timestamp (::K/timestamp record)]
                      timestamp
-                     ConsumerRecord/NO_TIMESTAMP)
+                     0)
                    (timestamp-type (::K/timestamp.type record))
                    ConsumerRecord/NULL_CHECKSUM
                    0

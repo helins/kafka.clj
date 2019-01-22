@@ -52,7 +52,7 @@
 
 
 
-;;;;;;;;;;
+;;;;;;;;;; Stateful operations
 
 
 (defn add-record
