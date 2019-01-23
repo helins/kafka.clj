@@ -198,7 +198,8 @@
       Cf. `dvlopt.kstreams.ctx`
 
      :dvlopt.kstreams/processor.on-record  (fn [ctx user-state record])
-      Given a context and some user state produced by :dvlopt.kstreams/processor.init, processes a record.
+      Given a context and some user state produced by :dvlopt.kstreams/processor.init, processes a record. When needed, arbitrary key-values
+      can be sent downstream to childs nodes using `dvlopt.kstreams.ctx/forward` on the context.
 
      :dvlopt.kstreams/processor.close  (fn [])
       For producing a side-effect when the processor is shutting down, such as releasing resources.

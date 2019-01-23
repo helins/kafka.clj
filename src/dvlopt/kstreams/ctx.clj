@@ -23,7 +23,7 @@
 
 (defn commit
 
-  "Manually requests a commit of the current state.
+  "Manually requests a commit of the current progress.
 
    Commits are handle automatically by the library. This function request the next commit to happen as soon
    as possible."
@@ -40,7 +40,8 @@
 
 (defn forward
 
-  "Forwards a key-value to child nodes during processing.
+  "Forwards a key-value to child nodes. Can be used in the :dvlopt.kstreams/processor.on-record function of a processor
+   or during the execution of a function added with `schedule`.
   
    A map of options may be given :
 
@@ -49,7 +50,8 @@
 
      :dvlopt.kafka/timestamp
       Chosen timestamp.
-      If missing, selects the timestamp of the record being processed.
+      If missing, selects the timestamp of the record being processed by :dvlopt.kstreams/processor.on-record or the
+      moment the scheduled function executes.
 
      :dvlopt.kafka/value
       Unserialized value.
@@ -79,7 +81,7 @@
 (defn schedule
 
   "Schedules a periodic operation for processors (may be used during :dvlopt.kstreams/processor.init and/or
-   :dvlopt.kstreams/processor.on-record).
+   :dvlopt.kstreams/processor.on-record). Can be called multiple times on the same context.
 
    The time interval must be as described in `dvlopt.kafka` (best effort for millisecond precision).
 
