@@ -26,6 +26,7 @@
                                                      dvlopt.kstreams
                                                      dvlopt.kstreams.builder
                                                      dvlopt.kstreams.ctx
+                                                     dvlopt.kstreams.mock
                                                      dvlopt.kstreams.store
                                                      dvlopt.kstreams.stream
                                                      dvlopt.kstreams.table

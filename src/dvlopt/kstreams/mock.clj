@@ -1,6 +1,6 @@
 (ns dvlopt.kstreams.mock
 
-  "Building a fake Kafka Streams app."
+  "Building a mock Kafka Streams application which do not need a Kafka cluster."
 
   {:author "Adam Helinski"}
 
@@ -22,7 +22,22 @@
 
 (defn mock-app
 
-  ""
+  "Given a topology, creates a mock Kafka Streams application which can simulate a cluster. It is
+   very useful for testing and fiddling at the REPL.
+
+   It is mainly operated by using `pipe-record` and `read-record`.
+
+  
+   A map of options may be given :
+
+     ::wall-clock (defaults to 0)
+      Timestamp for initiating the mock application.
+      Cf. `dvlopt.kstreams.ctx/schedule` for a description of the difference between :wall-clock-time
+          and :stream-time  
+
+     :dvlopt.kstreams/configuration
+      Cf. `dvlopt.kstreams/app`, many properties are ignored but it is useful to supply something
+          realistic."
 
   (^TopologyTestDriver
 
@@ -40,17 +55,17 @@
    (TopologyTestDriver. topology
                         (K.-interop.java/streams-config application-id
                                                         (::configuration options))
-                        (or (some-> (::clock options)
+                        (or (some-> (::wall-clock options)
                                     K.-interop.java/to-milliseconds)
                             (get K/defaults
-                                 ::clock)))))
+                                 ::wall-clock)))))
 
 
 
 
 (defn disband
 
-  ""
+  "Closes the mock application and releases all associated resources."
 
   [^TopologyTestDriver mock-app]
 
@@ -61,7 +76,7 @@
 
 (defn metrics
 
-  ""
+  "Cf. `dvlopt.kstreams/metrics`"
 
   [^TopologyTestDriver mock-app]
 
@@ -72,7 +87,9 @@
 
 (defn pipe-record
 
-  ""
+  "Processes the given records by the mock application. 
+
+   Cf. `dvlopt.kafka.in/poll` for the structure of a record ready to be consumed (headers not supported)"
 
   ^TopologyTestDriver
 
@@ -87,7 +104,10 @@
 
 (defn read-record
 
-  ""
+  "Records processed after using `pipe-record` may produce an output depending on the topology
+   of the mock application.
+
+   Cf. `dvlopt.kafka.out/send` for the structure of a record produced by the mock application"
 
   ([mock-app topic]
 
@@ -113,7 +133,7 @@
 
 (defn advance
 
-  ""
+  "Advances the wall-clock time of the mock application."
 
   ^TopologyTestDriver
 
@@ -128,7 +148,7 @@
 
 (defn kv-store
 
-  ""
+  "Retrieves a writable key-value store used by the mock application."
 
   ^KeyValueStore
 
@@ -142,7 +162,7 @@
 
 (defn session-store
 
-  ""
+  "Retrieves a writable session store used by the application."
 
   ^SessionStore
 
@@ -156,7 +176,7 @@
 
 (defn window-store
 
-  ""
+  "Retrieves a read-only window store used by the application."
 
   ^WindowStore
 

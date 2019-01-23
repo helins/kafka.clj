@@ -252,7 +252,7 @@
    :dvlopt.kafka.in.mock/offset-reset-strategy :latest
    :dvlopt.kafka.out.mock/auto-complete?       true
    :dvlopt.kstreams/offset-reset               :earliest
-   :dvlopt.kstreams.mock/clock                 0
+   :dvlopt.kstreams.mock/wall-clock            0
    :dvlopt.kstreams.store/cache?               true
    :dvlopt.kstreams.store/changelog?           true
    :dvlopt.kstreams.store/duplicate-keys?      false
