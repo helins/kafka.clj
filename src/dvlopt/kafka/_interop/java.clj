@@ -126,6 +126,7 @@
          acl-permission-type
          config-entry
          header
+         headers
          key-value-bytes-store-supplier--in-memory
          key-value-bytes-store-supplier--regular
          resource-pattern
@@ -696,7 +697,8 @@
                    0
                    0
                    (::K/key record)
-                   (::K/value record)))
+                   (::K/value record)
+                   #_(headers (::K/headers record))))
 
 
 
@@ -1011,6 +1013,68 @@
  
        (value [_]
          v))))
+
+
+
+
+(defn headers
+
+  ;; Specially for creating consumer records.
+
+  ([]
+
+   (headers nil))
+
+
+  ([headers]
+
+   (let [v*headers (volatile! (mapv header
+                                    headers))]
+     (reify
+
+       Iterable
+
+         (iterator [_]
+           (.iterator ^Iterable @v*headers))
+
+
+       Headers
+
+         (add [this header]
+           (vswap! v*headers
+                   conj
+                   header)
+           this)
+
+         (add [this k v]
+           (.add this
+                 (header k
+                         v))
+           this)
+
+         (headers [_ k]
+           (filter (fn select-key [^Header header]
+                     (= (.key header)
+                        k))
+                   @v*headers))
+
+         (lastHeader [this k]
+           (last (.headers this
+                           k)))
+
+         (remove [this k]
+           (vswap! v*headers
+                   (fn remove-key [headers]
+                     (filterv (fn without-key [^Header header]
+                                (not= (.key header)
+                                      k))
+                              headers)))
+           this)
+
+         (toArray [_]
+           (into-array Header
+                       @v*headers))))))
+
 
 
 

@@ -89,7 +89,7 @@
 
   "Processes the given records by the mock application. 
 
-   Cf. `dvlopt.kafka.in/poll` for the structure of a record ready to be consumed (headers not supported)"
+   Cf. `dvlopt.kafka.in/poll` for the structure of a record ready to be consumed"
 
   ^TopologyTestDriver
 
