@@ -369,7 +369,8 @@
    (.join left-stream
           right-stream
           (K.-interop.java/value-joiner f)
-          (K.-interop.java/join-windows interval)
+          (K.-interop.java/join-windows interval
+                                        options)
           (K.-interop.java/joined options))))
 
 
@@ -398,7 +399,8 @@
     (.leftJoin left-stream
                right-stream
                (K.-interop.java/value-joiner f)
-               (K.-interop.java/join-windows interval)
+               (K.-interop.java/join-windows interval
+                                             options)
                (K.-interop.java/joined options))))
 
 
@@ -427,7 +429,8 @@
    (.outerJoin left-stream
                right-stream
                (K.-interop.java/value-joiner f)
-               (K.-interop.java/join-windows interval)
+               (K.-interop.java/join-windows interval
+                                             options)
                (K.-interop.java/joined options))))
 
 
