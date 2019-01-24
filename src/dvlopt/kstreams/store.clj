@@ -371,13 +371,17 @@
 
   "Like `ws-multi-get` but for a range of keys (or all of them if no range is provided."
 
-  ([window-store]
+  (^AutoCloseable
+    
+   [window-store]
 
    (ws-multi-range window-store
                    nil))
 
 
-  ([^ReadOnlyWindowStore window-store options]
+  (^AutoCloseable
+
+   [^ReadOnlyWindowStore window-store options]
 
    (K.-interop.clj/key-value-iterator--windowed (.fetchAll window-store
                                                            (or (::K/timestamp.from options)
@@ -444,14 +448,18 @@
   
    For internal reasons, only writable session stores can work with options."
 
-  ([session-store k]
+  (^AutoCloseable
+    
+   [session-store k]
 
    (ss-multi-get session-store
                  k
                  nil))
 
 
-  ([session-store k options]
+  (^AutoCloseable
+    
+   [session-store k options]
 
    (if options
      (K.-interop.clj/key-value-iterator--windowed (.findSessions ^SessionStore session-store
@@ -473,7 +481,9 @@
   
    For internal reasons, only writable session stores can work with options."
 
-  ([session-store from-key to-key]
+  (^AutoCloseable
+    
+   [session-store from-key to-key]
 
    (ss-multi-range session-store
                    from-key
@@ -481,7 +491,9 @@
                    nil))
 
 
-  ([session-store from-key to-key options]
+  (^AutoCloseable
+    
+   [session-store from-key to-key options]
 
    (if options
      (K.-interop.clj/key-value-iterator--windowed (.findSessions ^SessionStore session-store
