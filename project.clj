@@ -1,5 +1,5 @@
 (defproject dvlopt/kafka
-            "1.2.0-beta1"
+            "1.3.0-beta0"
 
   :description  "Clojure client for Kafka"
   :url          "https://github.com/dvlopt/kafka.clj"
