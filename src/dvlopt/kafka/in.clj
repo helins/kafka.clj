@@ -692,7 +692,7 @@
    A map of options may be given :
 
       :dvlopt.kafka/timeout
-      An emtpy interval such as [0 :milliseconds] returns what is available in the consumer buffer without blocking.
+      An empty interval such as [0 :milliseconds] returns what is available in the consumer buffer without blocking.
       Cf. `dvlopt.kafka` for description of time intervals
 
 
