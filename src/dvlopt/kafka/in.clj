@@ -497,7 +497,9 @@
    (reduce (fn reduce-offsets [offsets [topic-partition oat]]
              (assoc offsets
                     (K.-interop.clj/topic-partition topic-partition)
-                    (K.-interop.clj/offset-and-timestamp oat)))
+                    (if (nil? oat) 
+                      nil
+                      (K.-interop.clj/offset-and-timestamp oat))))
            {}
            (let [topic-partition->timestamp' (reduce-kv (fn reduce-timestamps [hmap topic-partition timestamp]
                                                           (assoc hmap
